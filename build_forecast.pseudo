@@ -1,0 +1,31 @@
+# This builds the most up to date forecast.
+
+#####################
+#Create downscaled weather forecast
+#####################
+# compile needed weather data
+    # Get latest operational reanalysis
+    # Get actual latest forecasts + recent ones for ensemble
+    # latest forecasts + last 10 or so
+
+# end up with:
+# nc file for todays date. containing, for each ensemble member,
+# daily timeseries for mean temp (and potentially precip)
+# make sure to write in metadata too
+    
+######################
+#create phenology forecasts
+######################
+# for each plant/phenophase
+# model (including model parameters)
+#   for each ensemble in the most recent downscaled forecast
+#       apply model
+#       get spatial map of doy predictions
+#
+# end up with:
+#   nc file with num_species/phenophase * num_members spatial map
+#   of doy prediction
+    
+############################
+#create cool maps
+############################
