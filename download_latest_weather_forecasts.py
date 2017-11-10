@@ -3,7 +3,7 @@ from ftplib import FTP
 import datetime
 
 
-class ftp_info():
+class cfs_ftp_info:
     def __init__(self, host, base_dir, user='anonymous',passwd='abc123'):
         self.host=host
         self.base_dir=base_dir
@@ -17,19 +17,18 @@ class ftp_info():
     def latest_forecast_timestamp(self, dirs_in_tree=4):
         dir_to_list = self.base_dir
         for dirs_in_tree in range(dirs_in_tree):
-            print(dir_to_list)
             dir_listing = self.con.nlst(dir_to_list)
             last_entry = self._last_element(dir_listing)
             dir_to_list+='/'+last_entry
         return last_entry
     
-    def string_to_date(self, s):
+    def _string_to_date(self, s):
         return datetime.datetime.strptime(s, '%Y%m%d%H')
     
-    def date_to_string(self,d):
+    def _date_to_string(self,d):
         return d.strftime('%Y%m%d%H')
     
-    def build_full_path(self, forecast_time):
+    def _build_full_path(self, forecast_time):
         year = forecast_time.strftime('%Y')
         month= forecast_time.strftime('%m')
         day  = forecast_time.strftime('%d')
@@ -40,20 +39,54 @@ class ftp_info():
     def last_n_forecasts(self, n = 10):
         all_forecasts = []
         latest_forecast_str = self.latest_forecast_timestamp()
-        latest_forecast_time = self.string_to_date(latest_forecast_str)
+        latest_forecast_time = self._string_to_date(latest_forecast_str)
         
         all_forecasts.append({'forecast_time':latest_forecast_str,
-                              'forecst_path':self.build_full_path(latest_forecast_time)})
+                              'forecst_path':self._build_full_path(latest_forecast_time)})
         
         six_hours = datetime.timedelta(hours=6)
         for i in range(n-1):
             latest_forecast_time-=six_hours
-            latest_forecast_str = self.date_to_string(latest_forecast_time)
+            latest_forecast_str = self._date_to_string(latest_forecast_time)
             
             all_forecasts.append({'forecast_time':latest_forecast_str,
-                                  'forecst_path':self.build_full_path(latest_forecast_time)})
+                                  'forecast_path':self.build_full_path(latest_forecast_time)})
         return all_forecasts
     
 
-ftp = ftp_info(host = 'nomads.ncdc.noaa.gov',
-               base_dir = 'modeldata/cfsv2_forecast_ts_9mon/')
+class prism_ftp_info:
+    def __init__(self, host='prism.nacse.org', base_dir='daily/tmean', 
+                 user='anonymous',passwd='abc123'):
+        self.host=host
+        self.base_dir=base_dir
+        self.con = FTP(host=self.host, user=user, passwd=passwd)
+        self.folder_file_lists={}
+        
+    #Ensure that each folder is only queried once
+    def get_folder_listing(self, folder):
+        if folder in self.folder_file_lists:
+            return self.folder_file_list[folder]
+        else:
+            dir_listing = self.con.nlst(folder)
+            self.folder_file_lists[folder]=dir_listing
+            return dir_listing
+
+    # The folder a daily date should be in
+    def get_date_folder(self,date):
+        year = date.strftime('%Y')
+        return self.base_dir+'/'+year+'/'
+    
+    # returns stable,provisional,early, or none
+    def get_date_status(self,date):
+        folder_to_check = self.get_date_folder(date)
+        #get dates and statuses from folder listings
+        #if date in dates_from_folder
+        # return status
+        #else return none "implying it's not there"
+        pass
+    
+
+
+#ftp = ftp_info(host = 'nomads.ncdc.noaa.gov',
+#               base_dir = 'modeldata/cfsv2_forecast_ts_9mon/')
+ftp = prism_ftp_info()
