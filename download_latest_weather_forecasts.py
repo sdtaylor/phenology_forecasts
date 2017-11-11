@@ -157,6 +157,24 @@ def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
 
     return xr_dataset
 
+def download_day(date, varname, status):
+    pass
+
+# PRISM file status are stable > provisional > early
+def newer_file_available(current_status, available_status):
+    if current_status == available_status:
+        return False
+    elif current_status=='stable':
+        return False
+    elif current_status=='provisional' and available_status=='stable':
+        return True
+    elif current_status=='early' and available_status in ['provisional','stable']:
+        return True
+    elif current_status=='None':
+        pass
+    else:
+        raise Exception('status comparison uknown: '+current_status+' , '+available_status)
+
 if __name__=='__main__':
     with open('config.yaml', 'r') as f:
         config = yaml.load(f)
@@ -179,7 +197,7 @@ if __name__=='__main__':
     
     prism = prism_ftp_info()
     
-    for day in prism_days_to_add[0:4]:
+    for day in prism_days_to_add:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
         if day_status is not None:
@@ -198,7 +216,11 @@ if __name__=='__main__':
             pass
             # make a blank array for this day with status None
             
-    
+    for day in observed_weather.time.values:
+        current_status = observed_weather.sel(time=day).status.values.tolist()
+        ftp_status = prism.get_date_status(pd.Timestamp(day).to_pydatetime())
+        if newer_file_available(current_status, ftp_status):
+            print('file_to_update')
     # Iterate thru the weather xarray again and attempt to update
     # anything that has changed status
     
