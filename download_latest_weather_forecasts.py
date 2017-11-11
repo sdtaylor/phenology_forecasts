@@ -1,10 +1,19 @@
 #import xarray as xr
 from ftplib import FTP
 import datetime
+import xarray as xr
+import numpy as np
+import pandas as pd
+import yaml
+import os
+import zipfile
+import urllib
 
 
 class cfs_ftp_info:
-    def __init__(self, host, base_dir, user='anonymous',passwd='abc123'):
+    def __init__(self, host='nomads.ncdc.noaa.gov', 
+                 base_dir='modeldata/cfsv2_forecast_ts_9mon/',
+                 user='anonymous',passwd='abc123'):
         self.host=host
         self.base_dir=base_dir
         self.con = FTP(host=self.host, user=user, passwd=passwd)
@@ -53,9 +62,10 @@ class cfs_ftp_info:
                                   'forecast_path':self.build_full_path(latest_forecast_time)})
         return all_forecasts
     
-
+# Ways to query the PRISM ftp server in meaningful and efficient ways
 class prism_ftp_info:
-    def __init__(self, host='prism.nacse.org', base_dir='daily/tmean', 
+    def __init__(self, host='prism.nacse.org', 
+                 base_dir='daily/tmean', 
                  user='anonymous',passwd='abc123'):
         self.host=host
         self.base_dir=base_dir
@@ -91,6 +101,10 @@ class prism_ftp_info:
         else:
             return matching[0]
             
+    def get_download_url(self, date):
+        date_filename = self._get_date_filename(date)
+        return 'ftp://'+self.host+'/'+date_filename
+
     # returns stable,provisional,early, or none
     def get_date_status(self, date):
         date_filename = self._get_date_filename(date)
@@ -100,7 +114,104 @@ class prism_ftp_info:
         else:
             return None
         
+# a single day matching dataset d
+# with NA values and status = None
+def make_blank_day_like(d):
+    pass
 
-#ftp = ftp_info(host = 'nomads.ncdc.noaa.gov',
-#               base_dir = 'modeldata/cfsv2_forecast_ts_9mon/')
-ftp = prism_ftp_info()
+def string_to_date(s, hour=False):
+    if hour:
+        return datetime.datetime.strptime(s, '%Y%m%d%H')
+    else:
+        return datetime.datetime.strptime(s, '%Y%m%d')
+
+def current_growing_season():
+    today = datetime.datetime.today()
+    year = today.strftime('%Y')
+    cutoff = datetime.datetime.strptime(year+'1101', '%Y%m%d')
+    if today >  cutoff:
+        year = str(int(year) + 1)
+    return year
+
+def round_to_current_day(t):
+    return t - datetime.timedelta(hours=t.hour, 
+                                  minutes=t.minute, 
+                                  seconds=t.second, 
+                                  microseconds=t.microsecond)
+
+def cleanup_tmp_folder():
+    for f in os.listdir(config['tmp_folder']):
+        os.remove(config['tmp_folder']+f)
+
+def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
+    bil = xr.open_rasterio(bil_filename)
+    lon, lat = bil.x.values, bil.y.values
+    data=bil.values
+    data[data==mask_value]=np.nan
+    
+    xr_dataset = xr.Dataset(data_vars = {varname: (('time','lat','lon'), data),
+                                         'status':(('time'), [status])},
+                            coords =    {'time':[date],'lat':lat, 'lon':lon},
+                            attrs =     {'crs':bil.crs,
+                                         'units':'C'})
+
+    return xr_dataset
+
+if __name__=='__main__':
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f)
+    data_dir = config['data_folder']
+    current_season=current_growing_season()
+    observed_weather_file = data_dir+current_season+'_observed_weather.nc'
+    
+    if os.path.isfile(observed_weather_file):
+        observed_weather = xr.open_dataset(observed_weather_file)
+    else:
+        print('observed weather file not found')
+    
+    today = round_to_current_day(datetime.datetime.today())
+    yesterday = today - datetime.timedelta(days=1)
+    
+    # The last entry in this seasons observed weather
+    latest_observed_day = observed_weather.time.values[-1]
+    
+    prism_days_to_add = pd.date_range(latest_observed_day, np.datetime64(yesterday), closed='right')
+    
+    prism = prism_ftp_info()
+    
+    for day in prism_days_to_add[0:4]:
+        day = day.to_pydatetime()
+        day_status = prism.get_date_status(day)
+        if day_status is not None:
+            download_url = prism.get_download_url(day)
+            dest_path  = config['tmp_folder']+os.path.basename(download_url)
+            urllib.request.urlretrieve(download_url, dest_path)
+            z = zipfile.ZipFile(dest_path, 'r')
+            z.extractall(path = config['tmp_folder'])
+            z.close()
+            bil_filename = dest_path.split('.')[0]+'.bil'
+            day_xr = prism_to_xarray(bil_filename, varname='tmean', date=day, status=day_status)
+
+            observed_weather = observed_weather.combine_first(day_xr)
+            
+        else:
+            pass
+            # make a blank array for this day with status None
+            
+    
+    # Iterate thru the weather xarray again and attempt to update
+    # anything that has changed status
+    
+    cleanup_tmp_folder()
+
+
+
+
+
+
+
+
+
+
+
+

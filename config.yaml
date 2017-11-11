@@ -1,0 +1,15 @@
+
+variables_to_use:
+    tmean:
+        cfs_name: tmp2m
+        prism_name: tmean
+    precip:
+        cfs_name: prpwtr
+        prism_name: prp
+        
+data_folder: /home/shawn/data/phenology_forecasting/
+
+tmp_folder: /home/shawn/data/phenology_forecasting/tmp/
+
+season_month_begin: 11
+season_day_being: 1
