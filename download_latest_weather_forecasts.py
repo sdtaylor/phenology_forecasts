@@ -72,6 +72,8 @@ class prism_ftp_info:
         self.con = FTP(host=self.host, user=user, passwd=passwd)
         self._folder_file_lists={}
         
+    def close(self):
+        self.con.close()
     #Ensure that each folder is only queried once
     def _get_folder_listing(self, folder):
         if folder in self._folder_file_lists:
@@ -114,7 +116,7 @@ class prism_ftp_info:
         else:
             return None
         
-# a single day matching dataset d
+# a single xarray day matching dataset d
 # with NA values and status = None
 def make_blank_day_like(d):
     pass
@@ -128,7 +130,8 @@ def string_to_date(s, hour=False):
 def current_growing_season():
     today = datetime.datetime.today()
     year = today.strftime('%Y')
-    cutoff = datetime.datetime.strptime(year+'1101', '%Y%m%d')
+    season_begin = year+config['season_month_begin']+config['season_day_begin']
+    cutoff = datetime.datetime.strptime(season_begin, '%Y%m%d')
     if today >  cutoff:
         year = str(int(year) + 1)
     return year
@@ -197,7 +200,7 @@ if __name__=='__main__':
     
     prism = prism_ftp_info()
     
-    for day in prism_days_to_add:
+    for day in prism_days_to_add[1:3]:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
         if day_status is not None:
@@ -224,6 +227,7 @@ if __name__=='__main__':
     # Iterate thru the weather xarray again and attempt to update
     # anything that has changed status
     
+    prism.close()
     cleanup_tmp_folder()
 
 
