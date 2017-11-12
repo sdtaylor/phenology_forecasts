@@ -160,8 +160,17 @@ def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
 
     return xr_dataset
 
-def download_day(date, varname, status):
-    pass
+# Download a file for a particualar day and convert to an
+# xarray object for inclusion in main dataset
+def download_and_process_day(prism_info, date, varname, status):
+    download_url = prism_info.get_download_url(date)
+    dest_path  = config['tmp_folder']+os.path.basename(download_url)
+    urllib.request.urlretrieve(download_url, dest_path)
+    z = zipfile.ZipFile(dest_path, 'r')
+    z.extractall(path = config['tmp_folder'])
+    z.close()
+    bil_filename = dest_path.split('.')[0]+'.bil'
+    return prism_to_xarray(bil_filename, varname=varname, date=day, status=status)
 
 # PRISM file status are stable > provisional > early
 def newer_file_available(current_status, available_status):
@@ -204,28 +213,25 @@ if __name__=='__main__':
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
         if day_status is not None:
-            download_url = prism.get_download_url(day)
-            dest_path  = config['tmp_folder']+os.path.basename(download_url)
-            urllib.request.urlretrieve(download_url, dest_path)
-            z = zipfile.ZipFile(dest_path, 'r')
-            z.extractall(path = config['tmp_folder'])
-            z.close()
-            bil_filename = dest_path.split('.')[0]+'.bil'
-            day_xr = prism_to_xarray(bil_filename, varname='tmean', date=day, status=day_status)
-
+            day_xr= download_and_process_day(prism_info=prism, date=day,
+                                             varname='tmean', status=day_status)
             observed_weather = observed_weather.combine_first(day_xr)
-            
         else:
             pass
             # make a blank array for this day with status None
-            
+        
+    # Iterate thru the weather xarray again and attempt to update
+    # anything that has changed status
     for day in observed_weather.time.values:
         current_status = observed_weather.sel(time=day).status.values.tolist()
         ftp_status = prism.get_date_status(pd.Timestamp(day).to_pydatetime())
         if newer_file_available(current_status, ftp_status):
+            updated_day_xr = download_and_process_day(prism_info=prism, date=day,
+                                                      varname='tmean', status=ftp_status)
+            
+            
             print('file_to_update')
-    # Iterate thru the weather xarray again and attempt to update
-    # anything that has changed status
+
     
     prism.close()
     cleanup_tmp_folder()
