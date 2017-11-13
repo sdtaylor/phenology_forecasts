@@ -187,6 +187,11 @@ def newer_file_available(current_status, available_status):
     else:
         raise Exception('status comparison uknown: '+current_status+' , '+available_status)
 
+def update_day(ds, new_day_ds):
+    to_keep = ds.time.values!=new_day_ds.time.values
+    ds = ds.isel(time=to_keep).copy()
+    return ds.combine_first(new_day_ds)
+
 if __name__=='__main__':
     with open('config.yaml', 'r') as f:
         config = yaml.load(f)
@@ -209,7 +214,7 @@ if __name__=='__main__':
     
     prism = prism_ftp_info()
     
-    for day in prism_days_to_add[1:3]:
+    for day in prism_days_to_add[0:3]:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
         if day_status is not None:
@@ -226,9 +231,10 @@ if __name__=='__main__':
         current_status = observed_weather.sel(time=day).status.values.tolist()
         ftp_status = prism.get_date_status(pd.Timestamp(day).to_pydatetime())
         if newer_file_available(current_status, ftp_status):
+            day = pd.Timestamp(day).to_pydatetime()
             updated_day_xr = download_and_process_day(prism_info=prism, date=day,
                                                       varname='tmean', status=ftp_status)
-            
+            observed_weather = update_day(observed_weather, updated_day_xr)
             
             print('file_to_update')
 
