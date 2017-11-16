@@ -1,4 +1,4 @@
-#import xarray as xr
+import xarray as xr
 from ftplib import FTP
 import datetime
 import xarray as xr
@@ -68,17 +68,45 @@ class cfs_ftp_info:
             all_forecasts.append({'forecast_time':latest_forecast_str,
                                   'forecast_path':self._build_full_path(latest_forecast_timestamp)})
         return all_forecasts
+
+def preprocess_cfs_forecast(cfs, cfs_initial_time):
+    pass
+    # times in the cfs forecasts are a delta from the initial time
+    # convert that to the actual date of the timestep, round to the
+    # day and then take the daily average of the 6 hour forecasts
+    timestamps = np.datetime64(cfs_initial_time) + cfs.forecast_time0.values
+    timestamps_day_only = pd.DatetimeIndex(timestamps, freq='6H').floor('D')
+    cfs['forecast_time0'] = timestamps_day_only
     
     
+def open_cfs_forecast(filename):
+    return xr.open_dataset(filename, engine='pynio')
+
+def string_to_date(s, hour=False):
+    if hour:
+        return datetime.datetime.strptime(s, '%Y%m%d%H')
+    else:
+        return datetime.datetime.strptime(s, '%Y%m%d')
+
+import xmap
+
+prism = xr.open_dataset('~/data/phenology_forecasting/2018_observed_weather.nc')
+
 if __name__=='__main__':
     with open('config.yaml', 'r') as f:
         config = yaml.load(f)
     cfs = cfs_ftp_info()
     
-    for forecast in cfs.last_n_forecasts(n=2):
-        download_url = forecast['forecast_path']
-        dest_path  = config['tmp_folder']+os.path.basename(download_url)
-        urllib.request.urlretrieve(download_url, dest_path)
+    cfs_path = '/home/shawn/data/phenology_forecasting/tmp2m.01.2017111218.daily.grb2'
+    cfs_initial_time=string_to_date('2017111218', hour=True)
+    cfs_object = open_cfs_forecast(cfs_path)
+    #cfs_object = preprocess_cfs_forecast(cfs_object, cfs_initial_time)
     
+    #for forecast in cfs.last_n_forecasts(n=2):
+        #download_url = forecast['forecast_path']
+        #dest_path  = config['tmp_folder']+os.path.basename(download_url)
+        #urllib.request.urlretrieve(download_url, dest_path)
+    
+        #cfs_object = open_cfs_forecast(dest_path)
     #grib_file = '/home/shawn/data/foo/tmp2m.01.2017111118.daily.grb2'
     #t = xr.open_dataset(grib_file)
