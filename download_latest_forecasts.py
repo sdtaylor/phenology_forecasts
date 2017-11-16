@@ -100,6 +100,15 @@ if __name__=='__main__':
     cfs_path = '/home/shawn/data/phenology_forecasting/tmp2m.01.2017111218.daily.grb2'
     cfs_initial_time=string_to_date('2017111218', hour=True)
     cfs_object = open_cfs_forecast(cfs_path)
+    
+    test_xmap = xmap.XMap(cfs_object['TMP_P0_L103_GGA0'])
+    test_xmap.set_coords('lon_0','lat_0','forecast_time0')
+    # This works but does not account for a different CRS, and does not explicitely
+    # account for CFS being worldwide and prism being N. america, but deals with
+    # that anyway. Probably something to do with the kdtree nearest neighbor lookup
+    
+    downscaled_cfs = test_xmap.remap_like(prism['tmean'][0], xcoord='lon', ycoord='lat')
+    
     #cfs_object = preprocess_cfs_forecast(cfs_object, cfs_initial_time)
     
     #for forecast in cfs.last_n_forecasts(n=2):
