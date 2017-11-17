@@ -1,4 +1,4 @@
-import xarray as xr
+#import xarray as xr
 from ftplib import FTP
 import datetime
 
@@ -60,32 +60,46 @@ class prism_ftp_info:
         self.host=host
         self.base_dir=base_dir
         self.con = FTP(host=self.host, user=user, passwd=passwd)
-        self.folder_file_lists={}
+        self._folder_file_lists={}
         
     #Ensure that each folder is only queried once
-    def get_folder_listing(self, folder):
-        if folder in self.folder_file_lists:
-            return self.folder_file_list[folder]
+    def _get_folder_listing(self, folder):
+        if folder in self._folder_file_lists:
+            return self._folder_file_lists[folder]
         else:
             dir_listing = self.con.nlst(folder)
-            self.folder_file_lists[folder]=dir_listing
+            self._folder_file_lists[folder]=dir_listing
             return dir_listing
 
     # The folder a daily date should be in
-    def get_date_folder(self,date):
+    def _get_date_folder(self, date):
         year = date.strftime('%Y')
         return self.base_dir+'/'+year+'/'
     
-    # returns stable,provisional,early, or none
-    def get_date_status(self,date):
-        folder_to_check = self.get_date_folder(date)
-        #get dates and statuses from folder listings
-        #if date in dates_from_folder
-        # return status
-        #else return none "implying it's not there"
+    def _build_prism_filename(self, date):
         pass
     
-
+    def _get_date_filename(self, date):
+        folder_to_check = self._get_date_folder(date)
+        folder_contents = self._get_folder_listing(folder_to_check)
+        date_str = date.strftime('%Y%m%d')
+        matching = [filename for filename in folder_contents if date_str in filename]
+        assert len(matching)<=1, 'More than 1 matching filename in folder'
+        
+        if len(matching)==0:
+            return None
+        else:
+            return matching[0]
+            
+    # returns stable,provisional,early, or none
+    def get_date_status(self, date):
+        date_filename = self._get_date_filename(date)
+        if date_filename is not None:
+            status = date_filename.split(sep='_')[-4]
+            return status
+        else:
+            return None
+        
 
 #ftp = ftp_info(host = 'nomads.ncdc.noaa.gov',
 #               base_dir = 'modeldata/cfsv2_forecast_ts_9mon/')
