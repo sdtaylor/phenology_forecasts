@@ -22,6 +22,7 @@
 #####################
 #Create past (today-1 : Nov. 1) weather using PRISM
 #One netcdf file for each year
+#prism in python: https://stackoverflow.com/questions/23816545/reading-zipped-esri-bil-files-with-python
 #maybe a tag in the  netcdf file for each day: (stable, provisional, early, none)
 #for current year.
 #   get day of most recent observation from netcdf.
