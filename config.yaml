@@ -11,5 +11,7 @@ data_folder: /home/shawn/data/phenology_forecasting/
 
 tmp_folder: /home/shawn/data/phenology_forecasting/tmp/
 
+mask_file: land_mask.nc
+
 season_month_begin: '11'
 season_day_begin: '01'
