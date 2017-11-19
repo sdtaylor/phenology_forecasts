@@ -1,11 +1,12 @@
 
 variables_to_use:
     tmean:
-        cfs_name: tmp2m
+        cfs_nc_name: TMP_P0_L103_GGA0
+        cfs_file_prefix: tmp2m
         prism_name: tmean
-    precip:
-        cfs_name: prpwtr
-        prism_name: prp
+#    precip:
+#        cfs_name: prpwtr
+#        prism_name: prp
         
 data_folder: /home/shawn/data/phenology_forecasting/
 
