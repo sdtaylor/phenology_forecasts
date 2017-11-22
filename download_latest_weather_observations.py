@@ -5,11 +5,10 @@ import numpy as np
 import pandas as pd
 import yaml
 import os
-import prism_utils
+from tools import prism_utils
+
 with open('config.yaml', 'r') as f:
     config = yaml.load(f)
-
-
 
 if __name__=='__main__':
     data_dir = config['data_folder']

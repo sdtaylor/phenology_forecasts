@@ -69,12 +69,6 @@ class prism_ftp_info:
 def make_blank_day_like(d):
     pass
 
-def string_to_date(s, hour=False):
-    if hour:
-        return datetime.datetime.strptime(s, '%Y%m%d%H')
-    else:
-        return datetime.datetime.strptime(s, '%Y%m%d')
-
 def current_growing_season():
     today = datetime.datetime.today()
     year = today.strftime('%Y')
@@ -89,10 +83,6 @@ def round_to_current_day(t):
                                   minutes=t.minute, 
                                   seconds=t.second, 
                                   microseconds=t.microsecond)
-
-def cleanup_tmp_folder():
-    for f in os.listdir(config['tmp_folder']):
-        os.remove(config['tmp_folder']+f)
 
 def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
     bil = xr.open_rasterio(bil_filename)
