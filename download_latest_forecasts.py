@@ -14,6 +14,7 @@ if __name__=='__main__':
     land_mask = xr.open_dataset(config['data_folder']+config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
     
+    # TODO: download all of them
     for forecast_info in cfs.last_n_forecasts(n=10)[1:3]:
         #forecast_info = {'download_url':'/home/shawn/data/phenology_forecasting/tmp2m.01.2017111218.daily.grb2',
         #                 'initial_time':'2017111218'}

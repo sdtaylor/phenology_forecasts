@@ -30,6 +30,7 @@ if __name__=='__main__':
     
     prism = prism_utils.prism_ftp_info()
     
+    # TODO: download all of them
     for day in prism_days_to_add[0:3]:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)

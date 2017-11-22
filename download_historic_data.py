@@ -15,6 +15,7 @@ with open('config.yaml', 'r') as f:
 ####################
 
 # Collect information on available CFS forecasts
+# TODO: extend this for the full years
 begin_date = tools.string_to_date(str(config['historic_years_begin'])+'0101', h=False)
 end_date = tools.string_to_date(str(config['historic_years_end'])+'0231', h=False)
 
