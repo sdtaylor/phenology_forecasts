@@ -3,7 +3,7 @@ from ftplib import FTP
 import datetime
 import numpy as np
 import xmap
-
+from tools import tools
 
 class cfs_ftp_info:
     def __init__(self):
@@ -36,15 +36,9 @@ class cfs_ftp_info:
             dir_to_list+='/'+last_entry
         return last_entry
     
-    def _string_to_date(self, s):
-        return datetime.datetime.strptime(s, '%Y%m%d%H')
-    
-    def _date_to_string(self,d):
-        return d.strftime('%Y%m%d%H')
-    
     def forecast_available(self, forecast_time):
         if isinstance(forecast_time, str):
-            forecast_time = self._string_to_date(forecast_time)
+            forecast_time = tools.string_to_date(forecast_time, h=True)
         
         forecast_filename = self.download_path_from_timestamp(forecast_time, path_type='filename')
         folder = self.download_path_from_timestamp(forecast_time, path_type='folder')
@@ -65,7 +59,7 @@ class cfs_ftp_info:
         assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
         assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
         if isinstance(forecast_time, str):
-            forecast_time = self._string_to_date(forecast_time)
+            forecast_time = tools.string_to_date(forecast_time, h=True)
             
         year = forecast_time.strftime('%Y')
         month= forecast_time.strftime('%m')
@@ -73,10 +67,10 @@ class cfs_ftp_info:
         hour = forecast_time.strftime('%H')
         to_return={}
         if int(year) < 2011:
-            to_return['filename'] = 'tmp2m.'+self._date_to_string(forecast_time)+'.time.grb2'
+            to_return['filename'] = 'tmp2m.'+tools.date_to_string(forecast_time,h=True)+'.time.grb2'
             to_return['folder'] = self.reforecast_dir+'/'+year+month +'/'
         else:
-            to_return['filename'] = 'tmp2m.01.'+self._date_to_string(forecast_time)+'.daily.grb2'
+            to_return['filename'] = 'tmp2m.01.'+tools.date_to_string(forecast_time,h=True)+'.daily.grb2'
             to_return['folder'] = self.forecast_dir+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
         
         to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
@@ -85,7 +79,7 @@ class cfs_ftp_info:
     def last_n_forecasts(self, n = 10):
         all_forecasts = []
         latest_forecast_str = self.latest_forecast_time_str()
-        latest_forecast_timestamp = self._string_to_date(latest_forecast_str)
+        latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
                               'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
@@ -93,7 +87,7 @@ class cfs_ftp_info:
         six_hours = datetime.timedelta(hours=6)
         for i in range(n-1):
             latest_forecast_timestamp-=six_hours
-            latest_forecast_str = self._date_to_string(latest_forecast_timestamp)
+            latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
                                   'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
