@@ -6,12 +6,22 @@ import xmap
 
 
 class cfs_ftp_info:
-    def __init__(self, host='nomads.ncdc.noaa.gov', 
-                 base_dir='modeldata/cfsv2_forecast_ts_9mon/',
-                 user='anonymous',passwd='abc123'):
-        self.host=host
-        self.base_dir=base_dir
-        self.con = FTP(host=self.host, user=user, passwd=passwd)
+    def __init__(self):
+        self.host='nomads.ncdc.noaa.gov'
+        self.forecast_dir='modeldata/cfsv2_forecast_ts_9mon/'
+        self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
+        self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
+        self._folder_file_lists={}
+        
+        
+    #Ensure that each folder is only queried once
+    def _get_folder_listing(self, folder):
+        if folder in self._folder_file_lists:
+            return self._folder_file_lists[folder]
+        else:
+            dir_listing = self.con.nlst(folder)
+            self._folder_file_lists[folder]=dir_listing
+            return dir_listing
         
     def _last_element(self, list_of_entries):
         end_of_all_strings = [entry.split('/')[-1] for entry in list_of_entries]
@@ -19,7 +29,7 @@ class cfs_ftp_info:
         return(end_of_all_strings[-1])
         
     def latest_forecast_time_str(self, dirs_in_tree=4):
-        dir_to_list = self.base_dir
+        dir_to_list = self.forecast_dir
         for dirs_in_tree in range(dirs_in_tree):
             dir_listing = self.con.nlst(dir_to_list)
             last_entry = self._last_element(dir_listing)
@@ -32,28 +42,53 @@ class cfs_ftp_info:
     def _date_to_string(self,d):
         return d.strftime('%Y%m%d%H')
     
+    def forecast_available(self, forecast_time):
+        if isinstance(forecast_time, str):
+            forecast_time = self._string_to_date(forecast_time)
+        
+        forecast_filename = self.download_path_from_timestamp(forecast_time, path_type='filename')
+        folder = self.download_path_from_timestamp(forecast_time, path_type='folder')
+        folder_contents = self._get_folder_listing(folder)
+        matching = [entry for entry in folder_contents if forecast_filename in entry]
+        return len(matching)!=0
+    
     # TODO: variable filename to download precip as well
-    # Download paths look like: 
-    #ftp://nomads.ncdc.noaa.gov/modeldata/cfsv2_forecast_ts_9mon/2017/201711/20171111/2017111118/tmp2m.01.2017111118.daily.grb2
-    def _build_full_path(self, forecast_time):
+    # forecast download paths look like: 
+    # ftp://nomads.ncdc.noaa.gov/modeldata/cfsv2_forecast_ts_9mon/2017/201711/20171111/2017111118/tmp2m.01.2017111118.daily.grb2
+    # reforecast paths (prior to 2011) are:
+    # ftp://nomads.ncdc.noaa.gov/CFSRR/cfsr-rfl-ts9/tmp2m/200808/tmp2m.2008080418.time.grb2
+    # path_types: 
+    # folder returns the containing folder but not the protocal or 
+    # filename returns only the filename
+    # full path returns the full download link
+    def download_path_from_timestamp(self, forecast_time, path_type='full_path', protocal='ftp'):
+        assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
+        assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
+        if isinstance(forecast_time, str):
+            forecast_time = self._string_to_date(forecast_time)
+            
         year = forecast_time.strftime('%Y')
         month= forecast_time.strftime('%m')
         day  = forecast_time.strftime('%d')
         hour = forecast_time.strftime('%H')
+        to_return={}
+        if int(year) < 2011:
+            to_return['filename'] = 'tmp2m.'+self._date_to_string(forecast_time)+'.time.grb2'
+            to_return['folder'] = self.reforecast_dir+'/'+year+month +'/'
+        else:
+            to_return['filename'] = 'tmp2m.01.'+self._date_to_string(forecast_time)+'.daily.grb2'
+            to_return['folder'] = self.forecast_dir+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
         
-        filename = 'tmp2m.01.'+self._date_to_string(forecast_time)+'.daily.grb2'
-        full_path = 'http://'+self.host+'/'+self.base_dir+'/'
-        full_path+= year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
-        full_path+= filename
-        return full_path
-        
+        to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
+        return to_return[path_type]
+    
     def last_n_forecasts(self, n = 10):
         all_forecasts = []
         latest_forecast_str = self.latest_forecast_time_str()
         latest_forecast_timestamp = self._string_to_date(latest_forecast_str)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self._build_full_path(latest_forecast_timestamp)})
+                              'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
         
         six_hours = datetime.timedelta(hours=6)
         for i in range(n-1):
@@ -61,7 +96,7 @@ class cfs_ftp_info:
             latest_forecast_str = self._date_to_string(latest_forecast_timestamp)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self._build_full_path(latest_forecast_timestamp)})
+                                  'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
         return all_forecasts
     
     
