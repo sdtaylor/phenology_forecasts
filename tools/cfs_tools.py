@@ -12,7 +12,9 @@ class cfs_ftp_info:
         self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
         self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
         self._folder_file_lists={}
-        
+    
+    def close(self):
+        self.con.close()
         
     #Ensure that each folder is only queried once
     def _get_folder_listing(self, folder):

@@ -43,3 +43,5 @@ if __name__=='__main__':
         processed_filename = config['data_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
         # forecast_obj = statistical_downscale(forecast_obj)
+    
+    cfs.close()
