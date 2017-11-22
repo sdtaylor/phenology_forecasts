@@ -63,6 +63,9 @@ class prism_ftp_info:
             return status
         else:
             return None
+    
+    def date_available(self, date):
+        return self.get_date_status(date)!=None
         
 # a single xarray day matching dataset d
 # with NA values and status = None
