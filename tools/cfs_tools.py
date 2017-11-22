@@ -3,7 +3,13 @@ from ftplib import FTP
 import datetime
 import numpy as np
 import xmap
+import yaml
+import os
+import urllib
 from tools import tools
+
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f)
 
 class cfs_ftp_info:
     def __init__(self):
@@ -121,3 +127,29 @@ def spatial_downscale(ds, target_array):
 
 def open_cfs_forecast(filename):
     return xr.open_dataset(filename, engine='pynio')
+
+def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
+    download_path = cfs_info.download_path_from_timestamp(date, path_type='full_path')
+    forecast_filename = config['tmp_folder'] + os.path.basename(download_path)
+    
+    urllib.request.urlretrieve(download_path, forecast_filename)
+
+    forecast_obj = open_cfs_forecast(forecast_filename)
+    
+    # More reasonable variable names
+    forecast_obj.rename({'lat_0':'lat', 'lon_0':'lon', 
+                         'forecast_time0':'forecast_time',
+                         'TMP_P0_L103_GGA0':'tmean'}, inplace=True)
+    # Kelvin to celcius
+    forecast_obj['tmean'] -= 273.15
+    
+    # 6 hourly timesteps to daily timesteps
+    forecast_obj = cfs_to_daily_mean(cfs=forecast_obj, cfs_initial_time = date)
+    
+    # ~1.0 deg cfs grid to 4km prism grid.
+    if target_downscale_array is not None:
+        assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
+        forecast_obj = spatial_downscale(ds = forecast_obj, 
+                                              target_array = target_downscale_array)
+    
+    return forecast_obj
