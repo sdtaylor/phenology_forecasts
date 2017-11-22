@@ -2,6 +2,7 @@
 import yaml
 import numpy as np
 from tools import prism_tools
+from tools import tools
 
 with open('config.yaml', 'r') as f:
     config = yaml.load(f)
@@ -10,7 +11,7 @@ mask_filename = config['data_folder'] + config['mask_file']
 
 prism = prism_tools.prism_ftp_info()
 
-prism_date = prism_tools.string_to_date('20100101')
+prism_date = tools.string_to_date('20100101')
 
 prism_array = prism_tools.download_and_process_day(prism, prism_date,
                                        varname='tmean',status='stable')
