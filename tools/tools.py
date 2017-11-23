@@ -4,10 +4,10 @@ import os
 def string_to_date(s, h=False):
     assert isinstance(s, str) ,'date not a string'
     if h:
-        assert len(s)==10, 'string with hour too short: '+s
+        assert len(s)==10, 'string with hour wrong length: '+s
         return datetime.datetime.strptime(s, '%Y%m%d%H')
     else:
-        assert len(s)==8, 'string without hour too short: '+s
+        assert len(s)==8, 'string without hour wrong length: '+s
         return datetime.datetime.strptime(s, '%Y%m%d')
 
 def date_to_string(d, h=False):
