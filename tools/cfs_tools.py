@@ -157,4 +157,8 @@ def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
     date64 = np.datetime64(date)
     forecast_obj = forecast_obj['tmean'].assign_coords(initial_time=date64).expand_dims(dim='initial_time').to_dataset()
     
+    # New coordinate for the forecast lead time
+    #initial_time_day = pd.Timestampe(date64).floor('D').to_datetime64()
+    #lead_times = pd.TimedeltaIndex(forecast_obj.forecast_time - initial_time_day, freq='D')
+
     return forecast_obj
