@@ -151,5 +151,10 @@ def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
         assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
         forecast_obj = spatial_downscale(ds = forecast_obj, 
                                               target_array = target_downscale_array)
+
+    # Make a new coordinate for the forecasts initial time so it can be 
+    # differentiated from other forecasts
+    date64 = np.datetime64(date)
+    forecast_obj = forecast_obj['tmean'].assign_coords(initial_time=date64).expand_dims(dim='initial_time').to_dataset()
     
     return forecast_obj
