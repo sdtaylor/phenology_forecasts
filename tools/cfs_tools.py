@@ -6,6 +6,7 @@ import xmap
 import yaml
 import os
 import urllib
+import time
 from tools import tools
 
 with open('config.yaml', 'r') as f:
@@ -132,8 +133,18 @@ def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
     download_path = cfs_info.download_path_from_timestamp(date, path_type='full_path')
     forecast_filename = config['tmp_folder'] + os.path.basename(download_path)
     
-    urllib.request.urlretrieve(download_path, forecast_filename)
-
+    download_attempts=2
+    for attempt in range(1,download_attempts+1):
+        try:
+            urllib.request.urlretrieve(download_path, forecast_filename)
+        except:
+            if attempt==download_attempts:
+                return -1
+            else:
+                time.sleep(30)
+                continue
+        break
+    
     forecast_obj = open_cfs_forecast(forecast_filename)
     
     # More reasonable variable names
