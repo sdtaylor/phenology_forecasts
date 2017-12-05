@@ -42,6 +42,7 @@ for i, d in enumerate(date_range_6h,1):
     processed_filename = config['data_folder']+'cfsv2_'+tools.date_to_string(d,h=True)+'.nc'
     forecast_obj.to_netcdf(processed_filename, encoding={'tmean': {'zlib':True,'complevel':4,'shuffle':True}})
     print(str(i)+' of '+str(num_files))
+    tools.cleanup_tmp_folder(config)
 
 
 cfs.close()
@@ -69,6 +70,7 @@ for i, d in enumerate(date_range_daily):
         final_array = final_array.combine_first(d_array)
 
     print(str(i)+' of '+str(num_files))
+    tools.cleanup_tmp_folder(config)
 
 final_array.to_netcdf(config['historic_observations_file'], encoding={'tmean': {'zlib':True,'complevel':4,'shuffle':True}})
 

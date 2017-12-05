@@ -18,6 +18,6 @@ def date_to_string(d, h=False):
         return d.strftime('%Y%m%d')
 
 
-def cleanup_tmp_folder():
+def cleanup_tmp_folder(config):
     for f in os.listdir(config['tmp_folder']):
         os.remove(config['tmp_folder']+f)
