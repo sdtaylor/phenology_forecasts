@@ -152,13 +152,16 @@ def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
         forecast_obj = spatial_downscale(ds = forecast_obj, 
                                               target_array = target_downscale_array)
 
+
+    date64 = np.datetime64(date)
     # Make a new coordinate for the forecasts initial time so it can be 
     # differentiated from other forecasts
-    date64 = np.datetime64(date)
     forecast_obj = forecast_obj['tmean'].assign_coords(initial_time=date64).expand_dims(dim='initial_time').to_dataset()
     
     # New coordinate for the forecast lead time
-    #initial_time_day = pd.Timestampe(date64).floor('D').to_datetime64()
-    #lead_times = pd.TimedeltaIndex(forecast_obj.forecast_time - initial_time_day, freq='D')
+    #lead_times = pd.TimedeltaIndex(forecast_obj.forecast_time - day64, freq='D')
+    #forecast_obj = forecast_obj['tmean'].assign_coords(=date64).expand_dims(dim='initial_time').to_dataset()
+    #initial_time_months = pd.DatetimeIndex(all_cfs.initial_time.values, freq='6H').to_period('M')
+
 
     return forecast_obj
