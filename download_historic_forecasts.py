@@ -76,7 +76,7 @@ def boss():
     # Each job consists of a file to download along with it's associated
     # initial time
     job_list=[]
-    for d in enumerate(date_range_6h):
+    for d in date_range_6h:
         download_url = cfs.download_path_from_timestamp(forecast_time=d,
                                                          protocal='http')
         job_list.append({'download_url':download_url, 'forecast_date':d})
