@@ -2,7 +2,7 @@
 import xarray as xr
 import pandas as pd
 import yaml
-from tools import prism_tools, cfs_tools, tools
+from tools import cfs_tools, tools
 from mpi4py import MPI
 import os
 import time
@@ -13,6 +13,8 @@ with open('config.yaml', 'r') as f:
 cfs = cfs_tools.cfs_ftp_info()
 
 
+work_tag=0
+stop_tag=1
 
 def worker():
     comm = MPI.COMM_WORLD
@@ -25,7 +27,7 @@ def worker():
 
     while True:        
         forecast_date = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
-        if status.Get_tag() == 1: break
+        if status.Get_tag() == stop_tag: break
         start_time=time.time()
         forecast_obj = cfs_tools.download_and_process_forecast(cfs_info = cfs,
                                                                date=forecast_date,
@@ -50,8 +52,6 @@ def boss():
     status = MPI.Status()
     num_workers = MPI.COMM_WORLD.Get_size()
 
-    work_tag=0
-    stop_tag=1
     ##############################################
     # Collect information on available CFS forecasts
     # TODO: extend this for the full years
@@ -92,3 +92,20 @@ def boss():
     for i in range(1, num_workers):
         job_result = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
         results.append(job_result)
+        
+    #Shut down all workers
+    for i in range(1, num_workers):
+        comm.send(obj=None, dest=i, tag=stop_tag)
+        
+        
+if __name__ == "__main__":
+    rank = MPI.COMM_WORLD.Get_rank()
+    name = MPI.Get_processor_name()
+    size = MPI.COMM_WORLD.Get_size()
+
+    if rank == 0:
+        print('boss '+str(rank)+' on '+str(name))
+        boss()
+    else:
+        print('worker '+str(rank)+' on '+str(name))
+        worker()
