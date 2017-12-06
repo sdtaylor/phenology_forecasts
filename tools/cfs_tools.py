@@ -1,5 +1,6 @@
 import xarray as xr
 from ftplib import FTP
+import ftplib
 import datetime
 import numpy as np
 import xmap
@@ -28,7 +29,11 @@ class cfs_ftp_info:
         if folder in self._folder_file_lists:
             return self._folder_file_lists[folder]
         else:
-            dir_listing = self.con.nlst(folder)
+            try:
+                dir_listing = self.con.nlst(folder)
+            except ftplib.error_temp:
+                # Folder not found, aka it's empty
+                dir_listing = []
             self._folder_file_lists[folder]=dir_listing
             return dir_listing
         
@@ -48,6 +53,13 @@ class cfs_ftp_info:
     def forecast_available(self, forecast_time):
         if isinstance(forecast_time, str):
             forecast_time = tools.string_to_date(forecast_time, h=True)
+        
+        # 2011 to present is pretty complete, and also time consuming
+        # to check. So of it's in this range just assume it's there
+        cutoff_begin = tools.string_to_date('2011040100', h=True)
+        cutoff_end   = tools.string_to_date('2017070100', h=True)
+        if forecast_time >= cutoff_begin and forecast_time <= cutoff_end:
+            return True
         
         forecast_filename = self.download_path_from_timestamp(forecast_time, path_type='filename')
         folder = self.download_path_from_timestamp(forecast_time, path_type='folder')
