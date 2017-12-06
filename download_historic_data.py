@@ -48,7 +48,7 @@ for i, d in enumerate(date_range_6h,1):
     time_dims = len(forecast_obj.forecast_time)
     forecast_obj.to_netcdf(processed_filename, encoding={'tmean': {'zlib':True, 'complevel':1, 'chunksizes':(1,time_dims,10,10)}})
     print(str(i)+' of '+str(num_files))
-    tools.cleanup_tmp_folder(config)
+    tools.cleanup_tmp_folder(config['tmp_folder'])
 
 
 cfs.close()
@@ -76,7 +76,7 @@ for i, d in enumerate(date_range_daily):
         final_array = final_array.combine_first(d_array)
 
     print(str(i)+' of '+str(num_files))
-    tools.cleanup_tmp_folder(config)
+    tools.cleanup_tmp_folder(config['tmp_folder'])
 
 final_array.to_netcdf(config['historic_observations_file'], encoding={'tmean': {'zlib':True,'complevel':4,'shuffle':True}})
 
