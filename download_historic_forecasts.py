@@ -81,6 +81,8 @@ def boss():
                                                          protocal='http')
         job_list.append({'download_url':download_url, 'forecast_date':d})
     
+    cfs.close()
+    
     num_jobs = len(job_list)
     
     #Dole out the first round of jobs to all workers
