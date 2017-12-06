@@ -89,7 +89,11 @@ class cfs_ftp_info:
         to_return={}
         if int(year) < 2011:
             to_return['filename'] = 'tmp2m.'+tools.date_to_string(forecast_time,h=True)+'.time.grb2'
-            to_return['folder'] = self.reforecast_dir+'/'+year+month +'/'
+            if protocal=='ftp':
+                to_return['folder'] = self.reforecast_dir+'/'+year+month +'/'
+            else:
+                # http has a slightly different past for pre-2011 stuff
+                to_return['folder'] = 'data/cfsr-rfl-ts9/tmp2m/'+'/'+year+month +'/'
         else:
             to_return['filename'] = 'tmp2m.01.'+tools.date_to_string(forecast_time,h=True)+'.daily.grb2'
             to_return['folder'] = self.forecast_dir+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
