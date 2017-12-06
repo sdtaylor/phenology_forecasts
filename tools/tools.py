@@ -1,5 +1,7 @@
 import datetime
 import os
+import urllib
+import time
 
 def string_to_date(s, h=False):
     assert isinstance(s, str) ,'date not a string'
@@ -17,6 +19,17 @@ def date_to_string(d, h=False):
     else:
         return d.strftime('%Y%m%d')
 
+def download_file(download_path, dest_path, num_attempts=2):
+    for attempt in range(1,num_attempts+1):
+        try:
+            urllib.request.urlretrieve(download_path, dest_path)
+        except:
+            if attempt==num_attempts:
+                return -1
+            else:
+                time.sleep(30)
+                continue
+        break
 
 def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
