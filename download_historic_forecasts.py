@@ -21,7 +21,7 @@ def worker():
     status = MPI.Status()
     
     worker_tmp_folder = config['tmp_folder']+str(MPI.COMM_WORLD.Get_rank()) + '/'
-    os.makedirs(worker_tmp_folder, exit_ok=True)
+    os.makedirs(worker_tmp_folder, exist_ok=True)
     
     land_mask = xr.open_dataset(config['data_folder']+config['mask_file'])
 
