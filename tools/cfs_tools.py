@@ -141,9 +141,10 @@ def spatial_downscale(ds, target_array):
 def open_cfs_forecast(filename):
     return xr.open_dataset(filename, engine='pynio')
 
-def download_and_process_forecast(cfs_info, date, target_downscale_array=None):
+def download_and_process_forecast(cfs_info, date, target_downscale_array=None,
+                                  temp_folder=config['tmp_folder']):
     download_path = cfs_info.download_path_from_timestamp(date, path_type='full_path')
-    forecast_filename = config['tmp_folder'] + os.path.basename(download_path)
+    forecast_filename = temp_folder + os.path.basename(download_path)
     
     download_attempts=2
     for attempt in range(1,download_attempts+1):
