@@ -10,9 +10,6 @@ import time
 with open('config.yaml', 'r') as f:
     config = yaml.load(f)
 
-cfs = cfs_tools.cfs_ftp_info()
-
-
 work_tag=0
 stop_tag=1
 
@@ -26,22 +23,30 @@ def worker():
     land_mask = xr.open_dataset(config['data_folder']+config['mask_file'])
 
     while True:        
-        forecast_date = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
+        forecast_details = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
         if status.Get_tag() == stop_tag: break
+        download_url = forecast_details['download_url']
+        forecast_date = forecast_details['forecast_date']
+        forecast_filename = worker_tmp_folder + os.path.basename(download_url)
         start_time=time.time()
-        forecast_obj = cfs_tools.download_and_process_forecast(cfs_info = cfs,
-                                                               date=forecast_date,
-                                                               temp_folder=worker_tmp_folder,
-                                                               target_downscale_array=land_mask.to_array()[0])
+        
+        download_status = tools.download_file(download_path=download_url, dest_path=forecast_filename)
+
     
-        # Some issue with the processing
-        if (not isinstance(forecast_obj, xr.Dataset)) and forecast_obj == -1:
-            print('Processing error for date: '+str(forecast_date))
+        # Some issue with the downloading
+        if download_status != 0:
+            print('Download error for date: '+str(forecast_date))
             return_data={'status':1,'forecast_date':forecast_date}
         else:
+            forecast_obj = cfs_tools.process_forecast(forecast_filename=forecast_filename,
+                                                      date=forecast_date,
+                                                      temp_folder=worker_tmp_folder,
+                                                      target_downscale_array=land_mask.to_array()[0])
             processed_filename = config['data_folder']+'cfsv2_'+tools.date_to_string(forecast_date,h=True)+'.nc'
             time_dims = len(forecast_obj.forecast_time)
-            forecast_obj.to_netcdf(processed_filename, encoding={'tmean': {'zlib':True, 'complevel':1, 'chunksizes':(1,time_dims,10,10)}})
+            forecast_obj.to_netcdf(processed_filename, encoding={'tmean': {'zlib':True, 
+                                                                           'complevel':1, 
+                                                                           'chunksizes':(1,time_dims,10,10)}})
             tools.cleanup_tmp_folder(worker_tmp_folder)
             return_data={'status':0,'forecast_date':forecast_date}
         
@@ -68,18 +73,26 @@ def boss():
     # every 6 hours. But reforecasts from 1982-2010 are only every 5th day
     date_range_6h = [d for d in date_range_6h if cfs.forecast_available(d)]
     
-    num_jobs = len(date_range_6h)
+    # Each job consists of a file to download along with it's associated
+    # initial time
+    job_list=[]
+    for d in enumerate(date_range_6h):
+        download_url = cfs.download_path_from_timestamp(forecast_time=d,
+                                                         protocal='http')
+        job_list.append({'download_url':download_url, 'forecast_date':d})
+    
+    num_jobs = len(job_list)
     
     #Dole out the first round of jobs to all workers
     for i in range(1, num_workers):
-        d = date_range_6h.pop()
-        comm.send(obj = d, dest=i, tag=work_tag)
+        job_info = job_list.pop()
+        comm.send(obj = job_info, dest=i, tag=work_tag)
     
     #While there are new jobs to assign.
     #Collect results and assign new jobs as others are finished.
     results = []
-    while len(date_range_6h)>0:
-        next_job_date = date_range_6h.pop()
+    while len(job_list)>0:
+        next_job_info = job_list.pop()
         job_result = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
         results.append(job_result)
         num_finished_jobs=len(results)
@@ -87,7 +100,7 @@ def boss():
               str(job_result['forecast_date']) + ' ' + str(job_result) + ' ' + \
               str(job_result['processing_time_min']))
     
-        comm.send(obj=next_job_date, dest=status.Get_source(), tag=work_tag)
+        comm.send(obj=next_job_info, dest=status.Get_source(), tag=work_tag)
 
     #Collect last jobs
     for i in range(1, num_workers):

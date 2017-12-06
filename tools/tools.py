@@ -25,11 +25,11 @@ def download_file(download_path, dest_path, num_attempts=2):
             urllib.request.urlretrieve(download_path, dest_path)
         except:
             if attempt==num_attempts:
-                return -1
+                return 1
             else:
                 time.sleep(30)
                 continue
-        break
+        return 0
 
 def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
