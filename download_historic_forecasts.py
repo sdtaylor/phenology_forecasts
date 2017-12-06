@@ -37,12 +37,13 @@ def worker():
         # Some issue with the processing
         if (not isinstance(forecast_obj, xr.Dataset)) and forecast_obj == -1:
             print('Processing error for date: '+str(forecast_date))
-            return_data={'status':0,'forecast_date':forecast_date}
+            return_data={'status':1,'forecast_date':forecast_date}
         else:
             processed_filename = config['data_folder']+'cfsv2_'+tools.date_to_string(forecast_date,h=True)+'.nc'
             time_dims = len(forecast_obj.forecast_time)
             forecast_obj.to_netcdf(processed_filename, encoding={'tmean': {'zlib':True, 'complevel':1, 'chunksizes':(1,time_dims,10,10)}})
             tools.cleanup_tmp_folder(worker_tmp_folder)
+            return_data={'status':0,'forecast_date':forecast_date}
         
         return_data['processing_time_min'] = round(time.time() - start_time,0)/60
         comm.send(obj=return_data, dest=0)
