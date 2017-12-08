@@ -16,8 +16,13 @@ with open('config.yaml', 'r') as f:
 class cfs_ftp_info:
     def __init__(self):
         self.host='nomads.ncdc.noaa.gov'
-        self.forecast_dir='modeldata/cfsv2_forecast_ts_9mon/'
-        self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
+        self.forecast_dirs={'http':{'operational':'modeldata/cfsv2_forecast_ts_9mon/',
+                                    'reforecast': 'data/cfsr-rfl-ts9/tmp2m/'},
+                            'ftp':{'operational':'modeldata/cfsv2_forecast_ts_9mon/',
+                                   'reforecast':'CFSRR/cfsr-rfl-ts9/tmp2m/'}
+                            }
+        #self.forecast_dir='modeldata/cfsv2_forecast_ts_9mon/'
+        #self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
         self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
         self._folder_file_lists={}
     
@@ -43,7 +48,7 @@ class cfs_ftp_info:
         return(end_of_all_strings[-1])
         
     def latest_forecast_time_str(self, dirs_in_tree=4):
-        dir_to_list = self.forecast_dir
+        dir_to_list = self.forecast_dirs['ftp']['operational']
         for dirs_in_tree in range(dirs_in_tree):
             dir_listing = self.con.nlst(dir_to_list)
             last_entry = self._last_element(dir_listing)
@@ -89,14 +94,10 @@ class cfs_ftp_info:
         to_return={}
         if int(year) < 2011:
             to_return['filename'] = 'tmp2m.'+tools.date_to_string(forecast_time,h=True)+'.time.grb2'
-            if protocal=='ftp':
-                to_return['folder'] = self.reforecast_dir+'/'+year+month +'/'
-            else:
-                # http has a slightly different past for pre-2011 stuff
-                to_return['folder'] = 'data/cfsr-rfl-ts9/tmp2m/'+'/'+year+month +'/'
+            to_return['folder'] = self.forecast_dirs[protocal]['reforecast']+'/'+year+month +'/'
         else:
             to_return['filename'] = 'tmp2m.01.'+tools.date_to_string(forecast_time,h=True)+'.daily.grb2'
-            to_return['folder'] = self.forecast_dir+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
+            to_return['folder'] = self.forecast_dirs[protocal]['operational']+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
         
         to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
         return to_return[path_type]
