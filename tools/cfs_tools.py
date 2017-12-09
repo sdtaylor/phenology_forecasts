@@ -66,8 +66,8 @@ class cfs_ftp_info:
         if forecast_time >= cutoff_begin and forecast_time <= cutoff_end:
             return True
         
-        forecast_filename = self.download_path_from_timestamp(forecast_time, path_type='filename')
-        folder = self.download_path_from_timestamp(forecast_time, path_type='folder')
+        forecast_filename = self.forecast_url_from_timestamp(forecast_time, path_type='filename')
+        folder = self.forecast_url_from_timestamp(forecast_time, path_type='folder')
         folder_contents = self._get_folder_listing(folder)
         matching = [entry for entry in folder_contents if forecast_filename in entry]
         return len(matching)!=0
@@ -81,7 +81,7 @@ class cfs_ftp_info:
     # folder returns the containing folder but not the protocal or 
     # filename returns only the filename
     # full path returns the full download link
-    def download_path_from_timestamp(self, forecast_time, path_type='full_path', protocal='ftp'):
+    def forecast_url_from_timestamp(self, forecast_time, path_type='full_path', protocal='ftp'):
         assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
         assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
         if isinstance(forecast_time, str):
@@ -108,7 +108,7 @@ class cfs_ftp_info:
         latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
+                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp)})
         
         six_hours = datetime.timedelta(hours=6)
         for i in range(n-1):
@@ -116,7 +116,7 @@ class cfs_ftp_info:
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self.download_path_from_timestamp(latest_forecast_timestamp)})
+                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp)})
         return all_forecasts
     
     
