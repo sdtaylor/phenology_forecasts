@@ -21,6 +21,11 @@ class cfs_ftp_info:
                             'ftp':{'operational':'modeldata/cfsv2_forecast_ts_9mon/',
                                    'reforecast':'CFSRR/cfsr-rfl-ts9/tmp2m/'}
                             }
+        self.reanalysis_dirs={'http':{'operational':'modeldata/cfsv2_analysis_timeseries/',
+                                    'pre_2011': 'data/cfsr/'},
+                            'ftp':{'operational':'modeldata/cfsv2_analysis_timeseries/',
+                                   'pre_2011':'CFSR/HP_time_series/'}
+                            }
         #self.forecast_dir='modeldata/cfsv2_forecast_ts_9mon/'
         #self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
         self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
@@ -98,6 +103,27 @@ class cfs_ftp_info:
         else:
             to_return['filename'] = 'tmp2m.01.'+tools.date_to_string(forecast_time,h=True)+'.daily.grb2'
             to_return['folder'] = self.forecast_dirs[protocal]['operational']+'/'+year+'/'+year+month+'/'+year+month+day+'/'+year+month+day+hour+'/'
+        
+        to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
+        return to_return[path_type]
+    
+    def reanalysis_url_from_timestamp(self, reanalysis_time, path_type='full_path', protocal='ftp'):
+        assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
+        assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
+        if isinstance(reanalysis_time, str):
+            reanalysis_time = tools.string_to_date(reanalysis_time, h=False)
+            
+        year = reanalysis_time.strftime('%Y')
+        month= reanalysis_time.strftime('%m')
+        day  = reanalysis_time.strftime('%d')
+        assert day=='01', 'CFS Reanalysis has 1 file for every month, so days other than 1 are not supported: ' + str(day)
+        to_return={}
+        if int(year) < 2011:
+            to_return['filename'] = 'tmp2m.gdas.'+year+month+'.grb2'
+            to_return['folder'] = self.reanalysis_dirs[protocal]['pre_2011']+'/'+year+month +'/'
+        else:
+            to_return['filename'] = 'tmp2m.gdas.'+year+month+'.grib2' #seriously NOAA? Can't even have consistent extensions?
+            to_return['folder'] = self.reanalysis_dirs[protocal]['operational']+'/'+year+'/'+year+month+'/'
         
         to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
         return to_return[path_type]
