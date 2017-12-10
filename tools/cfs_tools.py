@@ -147,7 +147,7 @@ class cfs_ftp_info:
     
     
 # CFSv2 is has 6 hour timesteps, convert that to a daily mean
-def cfs_to_daily_mean(cfs, cfs_initial_time):
+def cfs_to_daily_mean(cfs, cfs_initial_time, time_dim):
     # times in the cfs forecasts are a delta from the initial time.
     # convert that to the actual date of the timestep.
     date_timestamps = np.datetime64(cfs_initial_time) + cfs.forecast_time.values
@@ -163,19 +163,20 @@ def cfs_to_daily_mean(cfs, cfs_initial_time):
 # in minute differences. It also doesn't explicitely account for CFS being
 # worldwide and prism being N. america. But the internals of xmap (a kdtree lookup)
 # seem to deal with this fine.
-def spatial_downscale(ds, target_array):
-    ds_xmap = xmap.XMap(ds['tmean'])
-    ds_xmap.set_coords(x='lon',y='lat',t='forecast_time')
+def spatial_downscale(ds, target_array, data_var='tmean', time_dim='forecast_time'):
+    assert isinstance(target_array, xr.DataArray), 'target array must be DataArray'
+    ds_xmap = xmap.XMap(ds[data_var])
+    ds_xmap.set_coords(x='lon',y='lat',t=time_dim)
     downscaled = ds_xmap.remap_like(target_array, xcoord='lon', ycoord='lat')
-    return downscaled.to_dataset(name='tmean')
+    return downscaled.to_dataset(name=data_var)
 
-def open_cfs_forecast(filename):
+def open_cfs_grib(filename):
     return xr.open_dataset(filename, engine='pynio')
 
 def process_forecast(forecast_filename, date, target_downscale_array=None,
                                   temp_folder=config['tmp_folder']):
    
-    forecast_obj = open_cfs_forecast(forecast_filename)
+    forecast_obj = open_cfs_grib(forecast_filename)
     
     # More reasonable variable names
     forecast_obj.rename({'lat_0':'lat', 'lon_0':'lon', 
@@ -189,10 +190,8 @@ def process_forecast(forecast_filename, date, target_downscale_array=None,
     
     # ~1.0 deg cfs grid to 4km prism grid.
     if target_downscale_array is not None:
-        assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
         forecast_obj = spatial_downscale(ds = forecast_obj, 
                                               target_array = target_downscale_array)
-
 
     date64 = np.datetime64(date)
     # Make a new coordinate for the forecasts initial time so it can be 
@@ -204,5 +203,32 @@ def process_forecast(forecast_filename, date, target_downscale_array=None,
     #forecast_obj = forecast_obj['tmean'].assign_coords(=date64).expand_dims(dim='initial_time').to_dataset()
     #initial_time_months = pd.DatetimeIndex(all_cfs.initial_time.values, freq='6H').to_period('M')
 
-
     return forecast_obj
+
+def process_reanalysis(filename, date, target_downscale_array=None):
+    obj = open_cfs_grib(filename)
+    
+    # Keep only the primary 6 hour timesteps
+    obj = obj.isel(forecast_time0=0).drop('forecast_time0')
+
+    # More reasonable variable names
+    obj.rename({'lat_0':'lat', 'lon_0':'lon', 
+                'initial_time0_hours':'time',
+                'TMP_P0_L103_GGA0':'tmean'}, inplace=True)
+    
+    # Kelvin to celcius
+    obj['tmean'] -= 273.15
+    
+    # Don't need these
+    obj = obj.drop(['initial_time0_encoded', 'initial_time0'])
+    
+    # Daily means
+    obj = obj.resample(time='1D').mean()
+    
+    # ~1.0 deg cfs grid to 4km prism grid.
+    if target_downscale_array is not None:
+        assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
+        obj = spatial_downscale(ds = obj, 
+                                target_array = target_downscale_array)
+    
+    return obj
