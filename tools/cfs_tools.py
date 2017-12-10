@@ -217,7 +217,7 @@ def process_reanalysis(filename, date, target_downscale_array=None):
                 'TMP_P0_L103_GGA0':'tmean'}, inplace=True)
     
     # Kelvin to celcius
-    obj['tmean'] -= 273.15
+    obj['tmean'] = obj['tmean'] - 273.15
     
     # Don't need these
     obj = obj.drop(['initial_time0_encoded', 'initial_time0'])
