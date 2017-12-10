@@ -230,6 +230,7 @@ def process_reanalysis(filename, date, target_downscale_array=None):
     if target_downscale_array is not None:
         assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
         obj = spatial_downscale(ds = obj, 
-                                target_array = target_downscale_array)
+                                target_array = target_downscale_array.
+                                time_dim='time')
     
     return obj
