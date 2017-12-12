@@ -8,10 +8,10 @@ import xarray as xr
 
 
 ###################
-# PRISM historic data
+# Download historic PRISM data and convert to netcdf
 ##################
 
-class prism_worker:
+class prism_download_worker:
     def __init__(self):
         pass
 
@@ -19,7 +19,7 @@ class prism_worker:
         with open('config.yaml', 'r') as f:
             self.config = yaml.load(f)
 
-        self.output_folder = self.config['data_folder'] + 'historic_observations/'
+        self.output_folder = self.config['historic_observations_folder']
 
     def run_job(self, job_details):
         prism_date = job_details['date']
@@ -45,7 +45,7 @@ class prism_worker:
         
         return return_data
 
-class prism_boss:
+class prism_download_boss:
     def __init__(self):
         pass
 
@@ -93,12 +93,69 @@ class prism_boss:
         for r in all_results:
             if r['status']!=0:
                 print('failed: ' + str(r['date']))
-        
-        # Write the hundreds of daily files to a single one
-        #all_dates = xr.open_mfdataset(self.output_folder+'prism_'+'tmean'+'*')
-        #time_dims = len(all_dates.time)
+
         tools.cleanup_tmp_folder(self.config['tmp_folder'])
 
+###################
+# Compile prism daily data into yearly files
+##################
+
+class prism_compile_years_worker:
+    def __init__(self):
+        pass
+
+    def setup(self):
+        with open('config.yaml', 'r') as f:
+            self.config = yaml.load(f)
+
+    def run_job(self, job_details):
+        year = job_details['year']
+
+        try:
+            search_path = self.config['historic_observations_folder']+'prism_tmean_'+str(year)+'*'
+            this_year_observations = xr.open_mfdataset(search_path)
+            year_filename = self.config['historic_observations_folder'] + 'yearly/'+'prism_tmean_'+str(year)+'.nc'
+    
+            time_dims = len(this_year_observations.time)
+            this_year_observations.to_netcdf(year_filename, encoding={'tmean':{'zlib':True, 
+                                                                               'complevel':1, 
+                                                                               'chunksizes':(10,10,time_dims)}})
+            return_status={'status':0, 'year':year}
+        except:
+            return_status={'status':1, 'year':year}
+        
+        return return_status
+    
+class prism_compile_years_boss:
+    def __init__(self):
+        pass
+
+    def setup(self):
+        with open('config.yaml', 'r') as f:
+            self.config = yaml.load(f)
+        
+        begin_year = self.config['historic_years_begin']
+        end_year =   self.config['historic_years_end']
+        
+        self.job_list = [{'year':year} for year in range(begin_year, end_year+1)]
+        self.total_jobs=len(self.job_list)
+
+    def jobs_available(self):
+        return len(self.job_list)>0
+
+    def get_next_job(self):
+        return self.job_list.pop()
+
+    def process_job_result(self, job_result):
+        pass
+
+    def process_all_results(self, all_results):
+        for r in all_results:
+            if r['status']!=0:
+                print('failed: ' + str(r['year']))
+
+        tools.cleanup_tmp_folder(self.config['tmp_folder'])
 from pySimpleMPI.framework import run_MPI
 if __name__ == "__main__":
-    run_MPI(prism_boss(), prism_worker())
+    run_MPI(prism_download_boss(), prism_download_worker())
+    run_MPI(prism_compile_years_boss(), prism_compile_years_worker())
