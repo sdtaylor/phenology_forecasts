@@ -104,8 +104,7 @@ def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
 
 # Download a file for a particualar day and convert to an
 # xarray object for inclusion in main dataset
-def download_and_process_day(prism_info, date, varname, status):
-    download_url = prism_info.get_download_url(date)
+def download_and_process_day(download_url, date, varname, status):
     dest_path  = config['tmp_folder']+os.path.basename(download_url)
     tools.download_file(download_path=download_url,
                         dest_path=dest_path)
