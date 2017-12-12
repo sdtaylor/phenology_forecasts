@@ -17,8 +17,11 @@ mask_file: land_mask.nc
 season_month_begin: '11'
 season_day_begin: '01'
 
-historic_years_begin: 2008
-historic_years_end: 2008
+historic_years_begin: 1995
+historic_years_end: 2015
 
 historic_observations_file: /home/shawn/data/phenology_forecasting/historic_observations.nc
+historic_observations_folder: /home/shawn/data/phenology_forecasting/historic_observations/
+historic_reanalysis_folder: /home/shawn/data/phenology_forecasting/historic_reanalysis/
+
 historic_forecasts_file: /home/shawn/data/phenology_forecasting/historic_forecasts.nc
