@@ -69,7 +69,7 @@ class prism_boss:
 
         
         for i, d in enumerate(date_range_daily):
-            url = prism_tools.get_download_url(d)
+            url = prism.get_download_url(d)
             day_status = prism.get_date_status(d)
             self.job_list.append({'date':d,
                                   'download_url':url,
