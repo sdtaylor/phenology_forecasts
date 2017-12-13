@@ -52,6 +52,8 @@ observations_obj = observations_obj.isel(time=observations_keep)
 #assert np.all(np.equal(observations_obj.time.values, reanalysis_obj.time.values)), 'Dates not matching up'
 
 #########################################
+# Get a list of chunks of size:size, with any leftover
+# elements in the final chunk
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 ########################################
@@ -60,6 +62,11 @@ progress=0
 pixel_processing_times=[]
 import time
 lat_lon_chunk=10
+
+# Iterate over specific chunks of the data, then within each chunk
+# load all data inter memory and iterate over specific spatial cells.
+# This could probably be improved, but it's fairly quick and memory
+# friendly. 
 
 for lat_chunk in list(chunker(land_mask.lat, lat_lon_chunk)):
     for lon_chunk in chunker(land_mask.lon, lat_lon_chunk):
