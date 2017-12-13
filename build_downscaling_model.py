@@ -44,8 +44,8 @@ model_coef=xr.Dataset({'slope':(('month','lat','lon'), empty_array),
 reanalysis_keep = [time in observations_obj.time.values for time in reanalysis_obj.time.values]
 observations_keep = [time in reanalysis_obj.time.values for time in observations_obj.time.values]
 
-reanalysis_obj = reanalysis_obj.isel(time=reanalysis_keep)
-observations_obj = observations_obj.isel(time=observations_keep)
+reanalysis_obj = reanalysis_obj.isel(time=reanalysis_keep).sortby('time')
+observations_obj = observations_obj.isel(time=observations_keep).sortby('time')
 
 assert np.all(np.equal(observations_obj.time.values, reanalysis_obj.time.values)), 'Dates not matching up'
 
