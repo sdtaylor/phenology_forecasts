@@ -24,9 +24,10 @@ if __name__=='__main__':
 
 
         forecast_obj = cfs_tools.process_forecast(local_filename,
-                                                  date = initial_time)
+                                                  date = initial_time,
+                                                  target_downscale_array=land_mask.to_array()[0])
         
         processed_filename = config['data_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
  
-    #cfs.close()
+    cfs.close()

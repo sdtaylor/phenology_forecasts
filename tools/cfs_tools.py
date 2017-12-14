@@ -170,7 +170,7 @@ def cfs_to_daily_mean(cfs, cfs_initial_time):
 # seem to deal with this fine.
 def spatial_downscale(ds, target_array, data_var='tmean', time_dim='forecast_time'):
     assert isinstance(target_array, xr.DataArray), 'target array must be DataArray'
-    ds_xmap = xmap.XMap(ds[data_var])
+    ds_xmap = xmap.XMap(ds[data_var], debug=False)
     ds_xmap.set_coords(x='lon',y='lat',t=time_dim)
     downscaled = ds_xmap.remap_like(target_array, xcoord='lon', ycoord='lat')
     return downscaled.to_dataset(name=data_var)
