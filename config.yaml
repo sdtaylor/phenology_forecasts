@@ -25,3 +25,5 @@ historic_observations_folder: /home/shawn/data/phenology_forecasting/historic_ob
 historic_reanalysis_folder: /home/shawn/data/phenology_forecasting/historic_reanalysis/
 
 historic_forecasts_file: /home/shawn/data/phenology_forecasting/historic_forecasts.nc
+
+downscaling_model_coefficients_file: /home/shawn/data/phenology_forecasting/model_coefficients.nc

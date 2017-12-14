@@ -77,11 +77,11 @@ for lat_chunk in list(chunker(land_mask.lat, lat_lon_chunk)):
         print('chunking')
         reanalysis_subset = reanalysis_obj.sel(lat=lat_chunk, lon=lon_chunk)
         observations_subset = observations_obj.sel(lat=lat_chunk, lon=lon_chunk)
-        model_coef_subset = model_coef.sel(lat=lat_chunk, lon=lon_chunk)
+        model_coef_subset = model_coef.sel(lat=lat_chunk, lon=lon_chunk).copy()
 
         print('loading re')
         reanalysis_subset.load()
-        print('loading obd')
+        print('loading obs')
         observations_subset.load()
         land_mask_subset.load()
     
@@ -114,3 +114,7 @@ for lat_chunk in list(chunker(land_mask.lat, lat_lon_chunk)):
                     pixel_processing_times.append(round(time.time() - pixel_start_time, 1))
                     print(str(progress)+'/'+str(total_pixels)+' pixels, '+str(pixel_processing_times[-1])+' sec')
                     print('avg: '+str(np.mean(pixel_processing_times)))
+
+        model_coef = model_coef.update(model_coef_subset)
+
+model_coef.to_netcdf(config['downscaling_model_coefficients_file'], encoding={'slope':{'zlib':False}, 'intercept':{'zlib':False}})
