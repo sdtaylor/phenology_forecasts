@@ -53,6 +53,8 @@ class cfs_ftp_info:
         return(end_of_all_strings[-1])
         
     def latest_forecast_time_str(self, dirs_in_tree=4):
+        # Parse thru the tree structure for the very
+        # last element
         dir_to_list = self.forecast_dirs['ftp']['operational']
         for dirs_in_tree in range(dirs_in_tree):
             dir_listing = self.con.nlst(dir_to_list)
@@ -134,20 +136,23 @@ class cfs_ftp_info:
         latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp)})
+                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
         
         six_hours = datetime.timedelta(hours=6)
-        for i in range(n-1):
+        while len(all_forecasts) < n:
             latest_forecast_timestamp-=six_hours
+            
+            if not self.forecast_available(latest_forecast_timestamp):
+                continue
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp)})
+                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
         return all_forecasts
     
     
 # CFSv2 is has 6 hour timesteps, convert that to a daily mean
-def cfs_to_daily_mean(cfs, cfs_initial_time, time_dim):
+def cfs_to_daily_mean(cfs, cfs_initial_time):
     # times in the cfs forecasts are a delta from the initial time.
     # convert that to the actual date of the timestep.
     date_timestamps = np.datetime64(cfs_initial_time) + cfs.forecast_time.values
