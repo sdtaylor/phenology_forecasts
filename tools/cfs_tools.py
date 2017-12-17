@@ -181,7 +181,7 @@ def open_cfs_grib(filename):
     return xr.open_dataset(filename, engine='pynio')
 
 def process_forecast(forecast_filename, date, target_downscale_array=None,
-                                  temp_folder=config['tmp_folder']):
+                     downscale_method='nearest', temp_folder=config['tmp_folder']):
    
     forecast_obj = open_cfs_grib(forecast_filename)
     
@@ -198,7 +198,9 @@ def process_forecast(forecast_filename, date, target_downscale_array=None,
     # ~1.0 deg cfs grid to 4km prism grid.
     if target_downscale_array is not None:
         forecast_obj = spatial_downscale(ds = forecast_obj, 
-                                              target_array = target_downscale_array)
+                                         downscale_args={'k':2},
+                                         method=downscale_method,
+                                         target_array = target_downscale_array)
 
     date64 = np.datetime64(date)
     # Make a new coordinate for the forecasts initial time so it can be 
