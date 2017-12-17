@@ -180,10 +180,10 @@ def spatial_downscale(ds, target_array, method, data_var='tmean',
 def open_cfs_grib(filename):
     return xr.open_dataset(filename, engine='pynio')
 
-def process_forecast(forecast_filename, date, target_downscale_array=None,
-                     downscale_method='nearest', temp_folder=config['tmp_folder']):
+def convert_cfs_grib_forecast(local_filename, date, target_downscale_array=None,
+                              downscale_method='nearest', temp_folder=config['tmp_folder']):
    
-    forecast_obj = open_cfs_grib(forecast_filename)
+    forecast_obj = open_cfs_grib(local_filename)
     
     # More reasonable variable names
     forecast_obj.rename({'lat_0':'lat', 'lon_0':'lon', 
