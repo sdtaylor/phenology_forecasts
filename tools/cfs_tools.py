@@ -194,13 +194,6 @@ def convert_cfs_grib_forecast(local_filename, date, target_downscale_array=None,
     
     # 6 hourly timesteps to daily timesteps
     forecast_obj = cfs_to_daily_mean(cfs=forecast_obj, cfs_initial_time = date)
-    
-    # ~1.0 deg cfs grid to 4km prism grid.
-    if target_downscale_array is not None:
-        forecast_obj = spatial_downscale(ds = forecast_obj, 
-                                         downscale_args={'k':2},
-                                         method=downscale_method,
-                                         target_array = target_downscale_array)
 
     date64 = np.datetime64(date)
     # Make a new coordinate for the forecasts initial time so it can be 
