@@ -169,7 +169,7 @@ def cfs_to_daily_mean(cfs, cfs_initial_time):
 # worldwide and prism being N. america. But the internals of xmap (a kdtree lookup)
 # seem to deal with this fine.
 def spatial_downscale(ds, target_array, data_var='tmean', time_dim='forecast_time',
-                      method='nearest', downscale_args={}):
+                      method, downscale_args={}):
     assert isinstance(target_array, xr.DataArray), 'target array must be DataArray'
     ds_xmap = xmap.XMap(ds[data_var], debug=False)
     ds_xmap.set_coords(x='lon',y='lat',t=time_dim)
@@ -212,7 +212,9 @@ def process_forecast(forecast_filename, date, target_downscale_array=None,
 
     return forecast_obj
 
-def process_reanalysis(filename, date, target_downscale_array=None):
+def process_reanalysis(filename, date, 
+                       downscale_method='nearest',
+                       target_downscale_array=None):
     obj = open_cfs_grib(filename)
     obj.load()
     
@@ -237,6 +239,8 @@ def process_reanalysis(filename, date, target_downscale_array=None):
     if target_downscale_array is not None:
         assert isinstance(target_downscale_array, xr.DataArray), 'target array must be DataArray'
         obj = spatial_downscale(ds = obj, 
+                                method=downscale_method,
+                                downscale_args={'k':2},
                                 target_array = target_downscale_array,
                                 time_dim='time')
     
