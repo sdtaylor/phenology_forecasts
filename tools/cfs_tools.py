@@ -168,11 +168,13 @@ def cfs_to_daily_mean(cfs, cfs_initial_time):
 # in minute differences. It also doesn't explicitely account for CFS being
 # worldwide and prism being N. america. But the internals of xmap (a kdtree lookup)
 # seem to deal with this fine.
-def spatial_downscale(ds, target_array, data_var='tmean', time_dim='forecast_time'):
+def spatial_downscale(ds, target_array, data_var='tmean', time_dim='forecast_time',
+                      method='nearest', downscale_args={}):
     assert isinstance(target_array, xr.DataArray), 'target array must be DataArray'
     ds_xmap = xmap.XMap(ds[data_var], debug=False)
     ds_xmap.set_coords(x='lon',y='lat',t=time_dim)
-    downscaled = ds_xmap.remap_like(target_array, xcoord='lon', ycoord='lat')
+    downscaled = ds_xmap.remap_like(target_array, xcoord='lon', ycoord='lat',
+                                    how=method, **downscale_args)
     return downscaled.to_dataset(name=data_var)
 
 def open_cfs_grib(filename):
