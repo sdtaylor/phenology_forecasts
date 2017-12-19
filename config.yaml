@@ -26,6 +26,8 @@ historic_reanalysis_folder: historic_reanalysis/
 
 current_season_observations_file: current_season_observations.nc
 
+current_forecast_folder: current_forecasts/
+
 historic_forecasts_file: historic_forecasts.nc
 
 downscaling_model_coefficients_file: model_coefficients.nc
