@@ -91,6 +91,7 @@ def prism_to_xarray(bil_filename, varname, date, status, mask_value=-9999):
     lon, lat = bil.x.values, bil.y.values
     data=bil.values
     data[data==mask_value]=np.nan
+    date = np.datetime64(date)
     
     xr_dataset = xr.Dataset(data_vars = {varname: (('time','lat','lon'), data),
                                          'status':(('time'), [status])},
