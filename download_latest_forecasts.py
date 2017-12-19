@@ -29,6 +29,9 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
         model_broadcasted = xr.merge([model_broadcasted, day_broadcast]).copy()
         if verbose and count % 10 == 0:
             print('Broadcasting downscale model progress: {x} of {y}'.format(x=count,y=len(date_range)))
+    
+    #TODO: This take up a lot of memory. Need to write it to disk in the tmp
+    # folder and open it with xarray chunks.
     return model_broadcasted
 
 
@@ -83,11 +86,13 @@ if __name__=='__main__':
         forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
         
         # Apply downscaling model
-        forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept        
-        forecast_obj = forecast_info.to_dataset(name='tmean')
+        print(forecast_obj)
+        print(downscale_model)
+        forecast_obj = forecast_obj.rename({'forecast_time':'time'})
+        forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
+        forecast_obj = forecast_obj.to_dataset(name='tmean')
         
         # Add in observed observations
-        forecast_obj = forecast_obj.rename({'forecast_time':'time'})
         forecast_obj = xr.merge([forecast_obj, current_season_observed])
         
         # TODO: add provenance metadata
