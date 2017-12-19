@@ -4,14 +4,12 @@ import ftplib
 import datetime
 import numpy as np
 import xmap
-import yaml
 import os
 import urllib
 import time
 from tools import tools
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 class cfs_ftp_info:
     def __init__(self):

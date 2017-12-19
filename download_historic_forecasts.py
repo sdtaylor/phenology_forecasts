@@ -1,14 +1,12 @@
 
 import xarray as xr
 import pandas as pd
-import yaml
 from tools import cfs_tools, tools
 from mpi4py import MPI
 import os
 import time
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 work_tag=0
 stop_tag=1

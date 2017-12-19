@@ -2,7 +2,6 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from scipy.stats import linregress as lm
-import yaml
 from tools import prism_tools, cfs_tools, tools
 import os
 import glob
@@ -18,10 +17,9 @@ def collect_monthly_data(obj, ilat, ilon):
     
 #############################################################
 #############################################################
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
-land_mask = xr.open_dataset(config['data_folder']+config['mask_file'])
+land_mask = xr.open_dataset(config['mask_file'])
 
 reanalysis_filenames = glob.glob(config['historic_reanalysis_folder']+'cfsv2_reanalysis*')
 reanalysis_obj = xr.open_mfdataset(reanalysis_filenames, chunks={'lat':10, 'lon':10})

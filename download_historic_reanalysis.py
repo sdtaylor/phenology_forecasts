@@ -1,6 +1,5 @@
 import xarray as xr
 import pandas as pd
-import yaml
 from tools import cfs_tools, tools
 import os
 
@@ -13,9 +12,9 @@ class reanalysis_worker:
         pass
     
     def setup(self):
-        with open('config.yaml', 'r') as f:
-            self.config = yaml.load(f)
-        self.land_mask = xr.open_dataset(self.config['data_folder']+self.config['mask_file'])
+        self.config = tools.load_config()
+
+        self.land_mask = xr.open_dataset(self.config['mask_file'])
 
     def run_job(self, reanalysis_details):
         download_url = reanalysis_details['download_url']
@@ -49,8 +48,7 @@ class reanalysis_boss:
     
     def setup(self):
 
-        with open('config.yaml', 'r') as f:
-            self.config = yaml.load(f)
+        self.config = tools.load_config()
 
         # Collect information on available CFS forecasts
         # TODO: extend this for the full years
