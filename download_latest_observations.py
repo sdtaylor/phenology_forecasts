@@ -3,7 +3,6 @@ import datetime
 import xarray as xr
 import numpy as np
 import pandas as pd
-import yaml
 import os
 from tools import prism_tools, tools
 
@@ -66,7 +65,7 @@ if __name__=='__main__':
             
             print('file_to_update')
 
-    observed_weather.to_netcfs(config['current_season_observations_file'])
+    observed_weather.to_netcdf(config['current_season_observations_file'])
     
     prism.close()
     tools.cleanup_tmp_folder(config['tmp_folder'])
