@@ -24,9 +24,21 @@ class cfs_ftp_info:
                             'ftp':{'operational':'modeldata/cfsv2_analysis_timeseries/',
                                    'pre_2011':'CFSR/HP_time_series/'}
                             }
-        #self.forecast_dir='modeldata/cfsv2_forecast_ts_9mon/'
-        #self.reforecast_dir='CFSRR/cfsr-rfl-ts9/tmp2m/'
-        self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
+
+        connect_attempts=3
+        retry_wait_time=300
+        for attempt in range(1,connect_attempts+1):
+            try:
+                self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
+            except:
+                if attempt == connect_attempts:
+                    raise IOError('Cannot connect to CFS ftp')
+                else:
+                    print('Cannot connect retrying in '+str(retry_wait_time)+' sec')
+                    time.sleep(retry_wait_time)
+                    continue
+            break
+        
         self._folder_file_lists={}
     
     def close(self):
@@ -179,7 +191,9 @@ def open_cfs_grib(filename):
     return xr.open_dataset(filename, engine='pynio')
 
 def convert_cfs_grib_forecast(local_filename, date, target_downscale_array=None,
-                              downscale_method='nearest', temp_folder=config['tmp_folder']):
+                              add_initial_time_dim=True,
+                              downscale_method='nearest',
+                              temp_folder=config['tmp_folder']):
    
     forecast_obj = open_cfs_grib(local_filename)
     
@@ -193,15 +207,16 @@ def convert_cfs_grib_forecast(local_filename, date, target_downscale_array=None,
     # 6 hourly timesteps to daily timesteps
     forecast_obj = cfs_to_daily_mean(cfs=forecast_obj, cfs_initial_time = date)
 
-    date64 = np.datetime64(date)
-    # Make a new coordinate for the forecasts initial time so it can be 
-    # differentiated from other forecasts
-    forecast_obj = forecast_obj['tmean'].assign_coords(initial_time=date64).expand_dims(dim='initial_time').to_dataset()
-    
-    # New coordinate for the forecast lead time
-    #lead_times = pd.TimedeltaIndex(forecast_obj.forecast_time - day64, freq='D')
-    #forecast_obj = forecast_obj['tmean'].assign_coords(=date64).expand_dims(dim='initial_time').to_dataset()
-    #initial_time_months = pd.DatetimeIndex(all_cfs.initial_time.values, freq='6H').to_period('M')
+    if add_initial_time_dim:
+        date64 = np.datetime64(date)
+        # Make a new coordinate for the forecasts initial time so it can be 
+        # differentiated from other forecasts
+        forecast_obj = forecast_obj['tmean'].assign_coords(initial_time=date64).expand_dims(dim='initial_time').to_dataset()
+        
+        # New coordinate for the forecast lead time
+        #lead_times = pd.TimedeltaIndex(forecast_obj.forecast_time - day64, freq='D')
+        #forecast_obj = forecast_obj['tmean'].assign_coords(=date64).expand_dims(dim='initial_time').to_dataset()
+        #initial_time_months = pd.DatetimeIndex(all_cfs.initial_time.values, freq='6H').to_period('M')
 
     return forecast_obj
 
