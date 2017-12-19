@@ -23,10 +23,19 @@ if __name__=='__main__':
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
 
 
-        forecast_obj = cfs_tools.process_forecast(local_filename,
-                                                  date = initial_time,
-                                                  target_downscale_array=land_mask.to_array()[0])
+        forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
+                                                           date = initial_time)
         
+            # ~1.0 deg cfs grid to 4km prism grid.
+        forecast_obj = cfs_tools.spatial_downscale(ds = forecast_obj, 
+                                                   method='distance_weighted',
+                                                   downscale_args={'k':2},
+                                                   data_var='tmean',
+                                                   target_array = land_mask.to_array()[0])
+        
+        # Limit to 6 month lead time. 
+
+       
         processed_filename = config['data_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
  

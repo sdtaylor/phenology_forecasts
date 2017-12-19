@@ -2,6 +2,7 @@ import datetime
 import os
 import urllib
 import time
+import yaml
 
 def string_to_date(s, h=False):
     assert isinstance(s, str) ,'date not a string'
@@ -42,3 +43,13 @@ def file_available(path):
 def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
         os.remove(folder+f)
+
+def load_config():
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f)
+
+    for key, value in config.items():
+        if ('file' in key or 'folder' in key) and key != 'data_folder':
+            config[key] = config['data_folder'] + value
+    
+    return config

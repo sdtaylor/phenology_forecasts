@@ -1,14 +1,12 @@
 
 import xarray as xr
 import pandas as pd
-import yaml
 from tools import cfs_tools, tools
 from mpi4py import MPI
 import os
 import time
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 work_tag=0
 stop_tag=1
@@ -38,7 +36,7 @@ def worker():
             print('Download error for date: '+str(forecast_date))
             return_data={'status':1,'forecast_date':forecast_date}
         else:
-            forecast_obj = cfs_tools.process_forecast(forecast_filename=forecast_filename,
+            forecast_obj = cfs_tools.convert_cfs_grib_forecast(forecast_filename=forecast_filename,
                                                       date=forecast_date,
                                                       temp_folder=worker_tmp_folder,
                                                       target_downscale_array=land_mask.to_array()[0])

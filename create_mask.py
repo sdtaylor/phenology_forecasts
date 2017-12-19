@@ -1,13 +1,11 @@
 # Create the north american land mask from a prism file
-import yaml
 import numpy as np
 from tools import prism_tools
 from tools import tools
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
     
-mask_filename = config['data_folder'] + config['mask_file']
+mask_filename = config['mask_file']
 
 prism = prism_tools.prism_ftp_info()
 

@@ -2,14 +2,12 @@ from ftplib import FTP
 import datetime
 import xarray as xr
 import numpy as np
-import yaml
 import os
 import zipfile
 import urllib
 from tools import tools
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 # Ways to query the PRISM ftp server in meaningful and efficient ways
 class prism_ftp_info:
@@ -132,4 +130,4 @@ def newer_file_available(current_status, available_status):
 def update_day(ds, new_day_ds):
     to_keep = ds.time.values!=new_day_ds.time.values
     ds = ds.isel(time=to_keep).copy()
-    return ds.combine_first(new_day_ds)
+    return ds.merge(new_day_ds)

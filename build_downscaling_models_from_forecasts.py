@@ -9,7 +9,6 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from scipy.stats import linregress as lm
-import yaml
 from tools import prism_tools, cfs_tools, tools
 import os
 import glob
@@ -72,8 +71,7 @@ def reconcile_forecasts_and_obs(f_data, o_data):
 
 #############################################################
 #############################################################
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 land_mask = xr.open_dataset(config['data_folder']+config['mask_file'])
 

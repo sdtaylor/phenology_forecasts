@@ -4,14 +4,12 @@ import ftplib
 import datetime
 import numpy as np
 import xmap
-import yaml
 import os
 import urllib
 import time
 from tools import tools
 
-with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+config = tools.load_config()
 
 class cfs_ftp_info:
     def __init__(self):
@@ -180,10 +178,10 @@ def spatial_downscale(ds, target_array, method, data_var='tmean',
 def open_cfs_grib(filename):
     return xr.open_dataset(filename, engine='pynio')
 
-def process_forecast(forecast_filename, date, target_downscale_array=None,
-                     downscale_method='nearest', temp_folder=config['tmp_folder']):
+def convert_cfs_grib_forecast(local_filename, date, target_downscale_array=None,
+                              downscale_method='nearest', temp_folder=config['tmp_folder']):
    
-    forecast_obj = open_cfs_grib(forecast_filename)
+    forecast_obj = open_cfs_grib(local_filename)
     
     # More reasonable variable names
     forecast_obj.rename({'lat_0':'lat', 'lon_0':'lon', 
@@ -194,13 +192,6 @@ def process_forecast(forecast_filename, date, target_downscale_array=None,
     
     # 6 hourly timesteps to daily timesteps
     forecast_obj = cfs_to_daily_mean(cfs=forecast_obj, cfs_initial_time = date)
-    
-    # ~1.0 deg cfs grid to 4km prism grid.
-    if target_downscale_array is not None:
-        forecast_obj = spatial_downscale(ds = forecast_obj, 
-                                         downscale_args={'k':2},
-                                         method=downscale_method,
-                                         target_array = target_downscale_array)
 
     date64 = np.datetime64(date)
     # Make a new coordinate for the forecasts initial time so it can be 

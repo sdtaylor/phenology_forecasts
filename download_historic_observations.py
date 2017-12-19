@@ -2,7 +2,6 @@
 # for making the downscaling models. By large I mean like 20 years
 
 import pandas as pd
-import yaml
 from tools import prism_tools, tools
 import xarray as xr
 
@@ -16,9 +15,8 @@ class prism_download_worker:
         pass
 
     def setup(self):
-        with open('config.yaml', 'r') as f:
-            self.config = yaml.load(f)
-
+        self.config = tools.load_config()
+        
         self.output_folder = self.config['historic_observations_folder']
 
     def run_job(self, job_details):
@@ -50,8 +48,7 @@ class prism_download_boss:
         pass
 
     def setup(self):
-        with open('config.yaml', 'r') as f:
-            self.config = yaml.load(f)
+        self.config = tools.load_config()
 
         self.output_folder = self.config['data_folder'] + 'historic_observations/'
         

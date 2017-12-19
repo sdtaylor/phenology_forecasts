@@ -10,7 +10,7 @@ variables_to_use:
         
 data_folder: /home/shawn/data/phenology_forecasting/
 
-tmp_folder: /home/shawn/data/phenology_forecasting/tmp/
+tmp_folder: tmp/
 
 mask_file: land_mask.nc
 
@@ -20,10 +20,12 @@ season_day_begin: '01'
 historic_years_begin: 1995
 historic_years_end: 2015
 
-historic_observations_file: /home/shawn/data/phenology_forecasting/historic_observations.nc
-historic_observations_folder: /home/shawn/data/phenology_forecasting/historic_observations/
-historic_reanalysis_folder: /home/shawn/data/phenology_forecasting/historic_reanalysis/
+historic_observations_file: historic_observations.nc
+historic_observations_folder: historic_observations/
+historic_reanalysis_folder: historic_reanalysis/
 
-historic_forecasts_file: /home/shawn/data/phenology_forecasting/historic_forecasts.nc
+current_season_observations_file: current_season_observations.nc
 
-downscaling_model_coefficients_file: /home/shawn/data/phenology_forecasting/model_coefficients.nc
+historic_forecasts_file: historic_forecasts.nc
+
+downscaling_model_coefficients_file: model_coefficients.nc
