@@ -44,12 +44,15 @@ def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
         os.remove(folder+f)
 
-def load_config():
+def load_config(data_folder=None):
     with open('config.yaml', 'r') as f:
         config = yaml.load(f)
 
+    if data_folder is None:
+        data_folder = config['data_folder']
+
     for key, value in config.items():
         if ('file' in key or 'folder' in key) and key != 'data_folder':
-            config[key] = config['data_folder'] + value
+            config[key] = data_folder + value
     
     return config
