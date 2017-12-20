@@ -35,7 +35,7 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
     return model_broadcasted
 
 
-if __name__=='__main__':
+def main():
     config = tools.load_config()
     
     land_mask = xr.open_dataset(config['mask_file'])
@@ -103,3 +103,7 @@ if __name__=='__main__':
         
         processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
+
+
+if __name__=='__main__':
+    main()
