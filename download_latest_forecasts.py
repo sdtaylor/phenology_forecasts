@@ -35,13 +35,13 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
     return model_broadcasted
 
 
-if __name__=='__main__':
+def main():
     config = tools.load_config()
     
     land_mask = xr.open_dataset(config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
     
-    max_lead_time_weeks = 32
+    max_lead_time_weeks = 2
     
     today = pd.Timestamp.today().date()
     end_date = today + pd.offsets.Week(max_lead_time_weeks)
@@ -51,11 +51,13 @@ if __name__=='__main__':
                                                 start_date=today,
                                                 end_date=end_date)
     
+    downscale_model = downscale_model.chunk({'lat':20,'lon':20})
+    
     # The weather up until today
     current_season_observed = xr.open_dataset(config['current_season_observations_file'])
     
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=5)
+    most_recent_forecasts = cfs.last_n_forecasts(n=1)
     cfs.close()
     
     for forecast_info in most_recent_forecasts:
@@ -89,6 +91,8 @@ if __name__=='__main__':
         print(forecast_obj)
         print(downscale_model)
         forecast_obj = forecast_obj.rename({'forecast_time':'time'})
+        forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
+        
         forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
         forecast_obj = forecast_obj.to_dataset(name='tmean')
         
@@ -99,3 +103,7 @@ if __name__=='__main__':
         
         processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
+
+
+if __name__=='__main__':
+    main()
