@@ -34,7 +34,6 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
     # folder and open it with xarray chunks.
     return model_broadcasted
 
-
 def main():
     config = tools.load_config()
     
@@ -65,10 +64,10 @@ def main():
         print(local_filename)
         print(forecast_info['download_url'])
         tools.download_file(forecast_info['download_url'], local_filename)
-
+    
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
-
-
+    
+    
         forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
                                                            add_initial_time_dim=False,
                                                            date = initial_time)
@@ -76,8 +75,8 @@ def main():
         # ~1.0 deg cfs grid to 4km prism grid.
         #TODO: use distance_weighted method with k:2
         forecast_obj = cfs_tools.spatial_downscale(ds = forecast_obj, 
-                                                   method='nearest',
-                                                   downscale_args={'k':1},
+                                                   method='distance_weighted',
+                                                   downscale_args={'k':2},
                                                    data_var='tmean',
                                                    target_array = land_mask.to_array()[0])
         
@@ -97,13 +96,16 @@ def main():
         forecast_obj = forecast_obj.to_dataset(name='tmean')
         
         # Add in observed observations
+        # rounding errors can make it so lat/lon don't line up exactly
+        # copying lat and lon fixes this.
+        forecast_obj['lat'] = current_season_observed['lat']
+        forecast_obj['lon'] = current_season_observed['lon']
         forecast_obj = xr.merge([forecast_obj, current_season_observed])
         
         # TODO: add provenance metadata
         
         processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
-
 
 if __name__=='__main__':
     main()
