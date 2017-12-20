@@ -29,6 +29,9 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
         model_broadcasted = xr.merge([model_broadcasted, day_broadcast]).copy()
         if verbose and count % 10 == 0:
             print('Broadcasting downscale model progress: {x} of {y}'.format(x=count,y=len(date_range)))
+    
+    #TODO: This take up a lot of memory. Need to write it to disk in the tmp
+    # folder and open it with xarray chunks.
     return model_broadcasted
 
 
@@ -38,7 +41,7 @@ if __name__=='__main__':
     land_mask = xr.open_dataset(config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
     
-    max_lead_time_weeks = 32
+    max_lead_time_weeks = 2
     
     today = pd.Timestamp.today().date()
     end_date = today + pd.offsets.Week(max_lead_time_weeks)
@@ -48,11 +51,13 @@ if __name__=='__main__':
                                                 start_date=today,
                                                 end_date=end_date)
     
+    downscale_model = downscale_model.chunk({'lat':20,'lon':20})
+    
     # The weather up until today
     current_season_observed = xr.open_dataset(config['current_season_observations_file'])
     
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=5)
+    most_recent_forecasts = cfs.last_n_forecasts(n=1)
     cfs.close()
     
     for forecast_info in most_recent_forecasts:
@@ -83,11 +88,15 @@ if __name__=='__main__':
         forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
         
         # Apply downscaling model
-        forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept        
-        forecast_obj = forecast_info.to_dataset(name='tmean')
+        print(forecast_obj)
+        print(downscale_model)
+        forecast_obj = forecast_obj.rename({'forecast_time':'time'})
+        forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
+        
+        forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
+        forecast_obj = forecast_obj.to_dataset(name='tmean')
         
         # Add in observed observations
-        forecast_obj = forecast_obj.rename({'forecast_time':'time'})
         forecast_obj = xr.merge([forecast_obj, current_season_observed])
         
         # TODO: add provenance metadata
