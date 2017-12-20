@@ -40,23 +40,30 @@ def main():
     land_mask = xr.open_dataset(config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
     
+    # The weather up until today. This accounts for PRISM potentially not being
+    # updated to the most recent day (ie. yesterday). 
+    current_season_observed = xr.open_dataset(config['current_season_observations_file'])
+    most_recent_observed_day = pd.Timestamp(current_season_observed.time.values[-1]).to_pydatetime()
+    first_forecast_day = most_recent_observed_day + datetime.timedelta(days=1)
+    
     max_lead_time_weeks = 2
+    forecast_ensemble_n = 3
     
     today = pd.Timestamp.today().date()
-    end_date = today + pd.offsets.Week(max_lead_time_weeks)
-        
+    last_forecast_day = today + pd.offsets.Week(max_lead_time_weeks)
+    
+    # Arrange the downscale model to easily do array math with the 
+    # forecast arrays. And chunk it so it doesn't consume a large
+    # memory footprint (but takes a few minutes longer)
     downscale_model = xr.open_dataset(config['downscaling_model_coefficients_file'])
     downscale_model = broadcast_downscale_model(downscale_model,
-                                                start_date=today,
-                                                end_date=end_date)
+                                                start_date=first_forecast_day,
+                                                end_date=last_forecast_day)
     
     downscale_model = downscale_model.chunk({'lat':20,'lon':20})
     
-    # The weather up until today
-    current_season_observed = xr.open_dataset(config['current_season_observations_file'])
-    
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=1)
+    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n)
     cfs.close()
     
     for forecast_info in most_recent_forecasts:
@@ -66,6 +73,14 @@ def main():
         tools.download_file(forecast_info['download_url'], local_filename)
     
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
+        
+        #TODO: make this a warning and skip to the next forecast. 
+        #but add a buffer so there will always be the corrent ensemble number
+        if initial_time.date() > first_forecast_day.date(): 
+            raise AssertionError('''Gap between forecast and observed dates\n 
+                                 forecast initial time: {f_time} \n
+                                 latest observed time: {o_time} \n
+                                 '''.format(f_time=initial_time, o_time=first_forecast_day))
     
     
         forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
@@ -81,9 +96,9 @@ def main():
                                                    target_array = land_mask.to_array()[0])
         
         # Limit to the lead time. 
-        dates_after_today = forecast_obj.forecast_time.values >= np.datetime64(today)
-        dates_before_end =  forecast_obj.forecast_time.values <= np.datetime64(end_date)
-        times_to_keep = np.logical_and(dates_after_today, dates_before_end)
+        dates_GE_first_day = forecast_obj.forecast_time.values >= np.datetime64(first_forecast_day)
+        dates_LE_last_day =  forecast_obj.forecast_time.values <= np.datetime64(last_forecast_day)
+        times_to_keep = np.logical_and(dates_GE_first_day, dates_LE_last_day)
         forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
         
         # Apply downscaling model
