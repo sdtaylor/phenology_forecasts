@@ -34,7 +34,7 @@ class cfs_ftp_info:
                 if attempt == connect_attempts:
                     raise IOError('Cannot connect to CFS ftp')
                 else:
-                    print('Cannot connect retrying in '+str(retry_wait_time)+' sec')
+                    print('Cannot connect retrying in {t} sec'.format(t=retry_wait_time))
                     time.sleep(retry_wait_time)
                     continue
             break
