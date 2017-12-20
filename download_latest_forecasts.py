@@ -47,10 +47,17 @@ def main():
     first_forecast_day = most_recent_observed_day + datetime.timedelta(days=1)
     
     max_lead_time_weeks = 2
-    forecast_ensemble_n = 3
+    forecast_ensemble_n = 5
     
     today = pd.Timestamp.today().date()
     last_forecast_day = today + pd.offsets.Week(max_lead_time_weeks)
+    
+    # Get info for more forecasts than needed in case some fail
+    # during processing. 4 forecasts are issued every day, so 56
+    # extra is about 2 weeks worth. 
+    cfs = cfs_tools.cfs_ftp_info()
+    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n + 56)
+    cfs.close()
     
     # Arrange the downscale model to easily do array math with the 
     # forecast arrays. And chunk it so it doesn't consume a large
@@ -59,30 +66,32 @@ def main():
     downscale_model = broadcast_downscale_model(downscale_model,
                                                 start_date=first_forecast_day,
                                                 end_date=last_forecast_day)
-    
     downscale_model = downscale_model.chunk({'lat':20,'lon':20})
     
-    cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n)
-    cfs.close()
-    
+    num_forecasts_added = 0
+    print(len(most_recent_forecasts))
     for forecast_info in most_recent_forecasts:
+        if num_forecasts_added == forecast_ensemble_n:
+            break
+        
         local_filename = config['tmp_folder']+ os.path.basename(forecast_info['download_url'])
-        print(local_filename)
-        print(forecast_info['download_url'])
-        tools.download_file(forecast_info['download_url'], local_filename)
-    
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
         
-        #TODO: make this a warning and skip to the next forecast. 
-        #but add a buffer so there will always be the corrent ensemble number
+        print('\n\n\n')
+        print('Processing forecast from initial time: '+str(initial_time))
+        print('download URL: ' + str(forecast_info['download_url']))
+
+        # If the observed data is late in updating and the forecast
+        # is very recent there will be gaps.
         if initial_time.date() > first_forecast_day.date(): 
-            raise AssertionError('''Gap between forecast and observed dates\n 
-                                 forecast initial time: {f_time} \n
-                                 latest observed time: {o_time} \n
-                                 '''.format(f_time=initial_time, o_time=first_forecast_day))
+            print('''Forecast skipped
+                     Gap between forecast and observed dates
+                     forecast initial time: {f_time}
+                     latest observed time: {o_time}
+                  '''.format(f_time=initial_time, o_time=first_forecast_day))
+            continue
     
-    
+        tools.download_file(forecast_info['download_url'], local_filename)
         forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
                                                            add_initial_time_dim=False,
                                                            date = initial_time)
@@ -102,8 +111,6 @@ def main():
         forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
         
         # Apply downscaling model
-        print(forecast_obj)
-        print(downscale_model)
         forecast_obj = forecast_obj.rename({'forecast_time':'time'})
         forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
         
@@ -118,9 +125,11 @@ def main():
         forecast_obj = xr.merge([forecast_obj, current_season_observed])
         
         # TODO: add provenance metadata
-        
         processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
         forecast_obj.to_netcdf(processed_filename)
+        
+        print('Successfuly proccessed forecast from initial time: '+str(initial_time))
+        num_forecasts_added+=1
 
 if __name__=='__main__':
     main()
