@@ -30,8 +30,6 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
         if verbose and count % 10 == 0:
             print('Broadcasting downscale model progress: {x} of {y}'.format(x=count,y=len(date_range)))
     
-    #TODO: This take up a lot of memory. Need to write it to disk in the tmp
-    # folder and open it with xarray chunks.
     return model_broadcasted
 
 def main():
@@ -46,7 +44,7 @@ def main():
     most_recent_observed_day = pd.Timestamp(current_season_observed.time.values[-1]).to_pydatetime()
     first_forecast_day = most_recent_observed_day + datetime.timedelta(days=1)
     
-    max_lead_time_weeks = 2
+    max_lead_time_weeks = 32
     forecast_ensemble_n = 5
     
     today = pd.Timestamp.today().date()
@@ -63,6 +61,7 @@ def main():
     # forecast arrays. And chunk it so it doesn't consume a large
     # memory footprint (but takes a few minutes longer)
     downscale_model = xr.open_dataset(config['downscaling_model_coefficients_file'])
+    downscale_model.load()
     downscale_model = broadcast_downscale_model(downscale_model,
                                                 start_date=first_forecast_day,
                                                 end_date=last_forecast_day)
@@ -91,45 +90,68 @@ def main():
                   '''.format(f_time=initial_time, o_time=first_forecast_day))
             continue
     
-        tools.download_file(forecast_info['download_url'], local_filename)
-        forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
-                                                           add_initial_time_dim=False,
-                                                           date = initial_time)
+        try:
+            tools.download_file(forecast_info['download_url'], local_filename)
+            forecast_obj = cfs_tools.convert_cfs_grib_forecast(local_filename,
+                                                               add_initial_time_dim=False,
+                                                               date = initial_time)
+        except:
+            print('processing error in download/converting')
+            continue
         
         # ~1.0 deg cfs grid to 4km prism grid.
         #TODO: use distance_weighted method with k:2
-        forecast_obj = cfs_tools.spatial_downscale(ds = forecast_obj, 
-                                                   method='distance_weighted',
-                                                   downscale_args={'k':2},
-                                                   data_var='tmean',
-                                                   target_array = land_mask.to_array()[0])
+        try:
+            forecast_obj = cfs_tools.spatial_downscale(ds = forecast_obj, 
+                                                       method='distance_weighted',
+                                                       downscale_args={'k':2},
+                                                       data_var='tmean',
+                                                       target_array = land_mask.to_array()[0])
+        except:
+            print('processing error in spatial downscale')
+            continue
         
         # Limit to the lead time. 
-        dates_GE_first_day = forecast_obj.forecast_time.values >= np.datetime64(first_forecast_day)
-        dates_LE_last_day =  forecast_obj.forecast_time.values <= np.datetime64(last_forecast_day)
-        times_to_keep = np.logical_and(dates_GE_first_day, dates_LE_last_day)
-        forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
-        
-        # Apply downscaling model
-        forecast_obj = forecast_obj.rename({'forecast_time':'time'})
-        forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
-        
-        forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
-        forecast_obj = forecast_obj.to_dataset(name='tmean')
+        try:
+            dates_GE_first_day = forecast_obj.forecast_time.values >= np.datetime64(first_forecast_day)
+            dates_LE_last_day =  forecast_obj.forecast_time.values <= np.datetime64(last_forecast_day)
+            times_to_keep = np.logical_and(dates_GE_first_day, dates_LE_last_day)
+            forecast_obj = forecast_obj.isel(forecast_time = times_to_keep)
+            
+            # Apply downscaling model
+            forecast_obj = forecast_obj.rename({'forecast_time':'time'})
+            forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
+            
+            forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
+            forecast_obj = forecast_obj.to_dataset(name='tmean')
+        except:
+            print('processing error in downscaling')
+            continue
         
         # Add in observed observations
         # rounding errors can make it so lat/lon don't line up exactly
         # copying lat and lon fixes this.
-        forecast_obj['lat'] = current_season_observed['lat']
-        forecast_obj['lon'] = current_season_observed['lon']
-        forecast_obj = xr.merge([forecast_obj, current_season_observed])
+        try:
+            forecast_obj['lat'] = current_season_observed['lat']
+            forecast_obj['lon'] = current_season_observed['lon']
+            forecast_obj = xr.merge([forecast_obj, current_season_observed])
+        except:
+            print('processing error in merging with observed data')
+            continue
         
         # TODO: add provenance metadata
-        processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
-        forecast_obj.to_netcdf(processed_filename)
+        try:
+            processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
+            forecast_obj.to_netcdf(processed_filename)
+        except:
+            print('processing error in saving file')
+            continue
         
         print('Successfuly proccessed forecast from initial time: '+str(initial_time))
         num_forecasts_added+=1
 
+    assert num_forecasts_added==forecast_ensemble_n, 'not enough forecasts added. {added} of {needed}'.format(added=num_forecasts_added, 
+                                                                                                              needed=forecast_ensemble_n)
+    
 if __name__=='__main__':
     main()
