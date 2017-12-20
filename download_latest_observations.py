@@ -26,8 +26,9 @@ if __name__=='__main__':
         first_day = str(int(current_season)-1) + config['season_month_begin'] + config['season_day_begin']
         first_day = tools.string_to_date(first_day, h=False).date()
         assert first_day < today, 'Beginning of season hasnt happened yet'
-        first_day_url = prism.get_download_url(first_day)
         first_day_status = prism.get_date_status(first_day)
+        assert first_day_status is not None, 'Data from first day of season not available: ' + str(first_day)
+        first_day_url = prism.get_download_url(first_day)
         observed_weather = prism_tools.download_and_process_day(download_url=first_day_url,
                                                                 date=first_day,
                                                                 varname='tmean',
@@ -72,15 +73,3 @@ if __name__=='__main__':
     
     prism.close()
     tools.cleanup_tmp_folder(config['tmp_folder'])
-
-
-
-
-
-
-
-
-
-
-
-
