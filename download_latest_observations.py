@@ -41,8 +41,8 @@ if __name__=='__main__':
     for day in prism_days_to_add:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
-        day_url = prism.get_download_url(day)
         if day_status is not None:
+            day_url = prism.get_download_url(day)
             day_xr= prism_tools.download_and_process_day(download_url=day_url,
                                                          date=day,
                                                          varname='tmean',
@@ -65,6 +65,9 @@ if __name__=='__main__':
             
             print('file_to_update')
 
+    observed_weather.load()
+    observed_weather.close()
+    os.remove(config['current_season_observations_file'])
     observed_weather.to_netcdf(config['current_season_observations_file'])
     
     prism.close()
