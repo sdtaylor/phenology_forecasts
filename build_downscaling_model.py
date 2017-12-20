@@ -7,6 +7,11 @@ import os
 import glob
 import warnings
 
+#TODO: 
+# Optimize this so it doesn't use a bunch of for loops
+#   probably using xr.apply_ufunc()
+# Compress the final file to get it as small as possible.
+#   and saved on github or shared with others
 
 def collect_monthly_data(obj, ilat, ilon):
     obj_months = pd.DatetimeIndex(obj.time.values).month
