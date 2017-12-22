@@ -32,6 +32,8 @@ historic_forecasts_file: historic_forecasts.nc
 
 downscaling_model_coefficients_file: model_coefficients.nc
 
+species_range_file: species_ranges.nc
+
 forecast_provenance_note: >
     CFSv2 forecast from {download_url} obtained on {today}. Downscaled to 4km
     resolution using asynchronous regression with PRISM as the observed
