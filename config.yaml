@@ -34,7 +34,11 @@ downscaling_model_coefficients_file: model_coefficients.nc
 
 species_range_file: species_ranges.nc
 
-forecast_provenance_note: >
+phenology_model_folder: phenology_models/
+
+phenology_forecast_folder: phenology_forecasts/
+
+cfs_forecast_provenance_note: >
     CFSv2 forecast from {download_url} obtained on {today}. Downscaled to 4km
     resolution using asynchronous regression with PRISM as the observed
     temperature. Dates {season_start} to {yesterday} are observed values
