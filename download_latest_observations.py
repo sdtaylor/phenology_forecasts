@@ -15,6 +15,9 @@ if __name__=='__main__':
     today = datetime.datetime.today().date()
     yesterday = today - datetime.timedelta(days=1)
     
+    print('Downloading latest PRISM observations for season ' + str(current_season))
+    print('Todays date: ' + str(today))
+    
     prism = prism_tools.prism_ftp_info()
 
     
@@ -35,6 +38,7 @@ if __name__=='__main__':
                                                                 status=first_day_status)
     
     latest_observed_day = observed_weather.time.values[-1]
+    print('most recent observed date on file: ' + str(latest_observed_day))
     prism_days_to_add = pd.date_range(latest_observed_day, np.datetime64(yesterday), closed='right')
     
     
@@ -43,6 +47,7 @@ if __name__=='__main__':
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
         if day_status is not None:
+            print('adding prism day ' + str(day))
             day_url = prism.get_download_url(day)
             day_xr= prism_tools.download_and_process_day(download_url=day_url,
                                                          date=day,
@@ -52,19 +57,26 @@ if __name__=='__main__':
         else:
             pass
             # make a blank array for this day with status None
-        
+    
+    if len(prism_days_to_add)==0:
+        print('No days to add')
+    
     # Iterate thru the weather xarray again and attempt to update
     # anything that has changed status
+    days_updated=0
     for day in observed_weather.time.values:
         current_status = observed_weather.sel(time=day).status.values.tolist()
         ftp_status = prism.get_date_status(pd.Timestamp(day).to_pydatetime())
         if prism_tools.newer_file_available(current_status, ftp_status):
             day = pd.Timestamp(day).to_pydatetime()
+            print('updating day {d} from {s1} to {s2}'.format(d=day, s1=current_status, s2=ftp_status))
             updated_day_xr = prism_tools.download_and_process_day(prism_info=prism, date=day,
                                                                   varname='tmean', status=ftp_status)
             observed_weather = prism_tools.update_day(observed_weather, updated_day_xr)
-            
-            print('file_to_update')
+            days_updated+=1
+    
+    if days_updated==0:
+        print('No days updated')
 
     observed_weather.load()
     observed_weather.close()

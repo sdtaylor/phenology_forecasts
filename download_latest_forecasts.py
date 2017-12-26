@@ -77,7 +77,9 @@ def main():
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
         
         print('\n\n\n')
-        print('Processing forecast from initial time: '+str(initial_time))
+        print('Attempting to process forecast {i} of {n} with initial time {t}'.format(i=num_forecasts_added,
+                                                                                       n=forecast_ensemble_n,
+                                                                                       t = initial_time))
         print('download URL: ' + str(forecast_info['download_url']))
 
         # If the observed data is late in updating and the forecast
