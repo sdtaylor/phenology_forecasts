@@ -8,7 +8,7 @@ from tools import prism_tools, tools
 
 config = tools.load_config()
 
-if __name__=='__main__':
+def main():
     current_season=prism_tools.current_growing_season()
     observed_weather_file = config['current_season_observations_file']
     
@@ -85,3 +85,7 @@ if __name__=='__main__':
     
     prism.close()
     tools.cleanup_tmp_folder(config['tmp_folder'])
+
+
+if __name__=='__main__':
+    main()
