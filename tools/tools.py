@@ -44,6 +44,10 @@ def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
         os.remove(folder+f)
 
+def make_folder(f):
+    if not os.path.exists(f):
+        os.makedirs(f)
+
 def load_config(data_folder=None):
     with open('config.yaml', 'r') as f:
         config = yaml.load(f)
@@ -51,8 +55,20 @@ def load_config(data_folder=None):
     if data_folder is None:
         data_folder = config['data_folder']
 
+    make_folder(data_folder)
+
     for key, value in config.items():
         if ('file' in key or 'folder' in key) and key != 'data_folder':
             config[key] = data_folder + value
+            make_folder(config[key])
     
     return config
+
+def current_growing_season(config):
+    today = datetime.datetime.today()
+    year = today.strftime('%Y')
+    season_begin = year+config['season_month_begin']+config['season_day_begin']
+    cutoff = datetime.datetime.strptime(season_begin, '%Y%m%d')
+    if today >  cutoff:
+        year = str(int(year) + 1)
+    return year
