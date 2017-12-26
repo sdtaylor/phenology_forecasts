@@ -46,7 +46,7 @@ for i, f in enumerate(geojson_files):
                                                  all_touched=True,
                                                  invert=True)
     
-    this_species = os.path.basename(f).split('.')[0]
+    this_species = os.path.basename(f).split('.')[0].replace('_',' ')
     species_names.append(this_species)
     
 species_range_dataset = xr.Dataset(data_vars = {'range': (('species','lat','lon'), species_masks)},
