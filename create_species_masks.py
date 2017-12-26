@@ -48,7 +48,9 @@ for i, f in enumerate(geojson_files):
     
     this_species = os.path.basename(f).split('.')[0].replace('_',' ')
     species_names.append(this_species)
-    
+
+species_masks = species_masks.astype(bool)
+
 species_range_dataset = xr.Dataset(data_vars = {'range': (('species','lat','lon'), species_masks)},
                         coords =    {'species':species_names,'lat':prism_xarray.lat, 'lon':prism_xarray.lon},
                         attrs =     {'crs':prism_xarray.crs})
