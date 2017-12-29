@@ -1,6 +1,7 @@
 library(rnpn)
 library(docopt)
 library(tidyverse)
+library(prism)
 source('phenology_observation_functions.R')
 
 config=load_config()
