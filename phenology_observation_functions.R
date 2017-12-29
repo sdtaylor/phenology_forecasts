@@ -41,7 +41,7 @@ load_config = function(){
 
 
 #################################################################
-#Takes a data.frame in the format colnames(species, Site_ID, year, status, doy)
+#Takes a data.frame in the format colnames(species, site_id, year, status, doy)
 #where status is 1 or 0, and observations include *all* the observations from the dataset.
 #
 #Subsets this observations that were preceeded by at least one observation of status==0,
@@ -99,7 +99,41 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
   df_subset = df_subset %>%
     filter(!is.na(doy_difference)) %>%
     mutate(doy = round(doy_difference/2 + doy_prior)) %>%
-    select(species, Site_ID,year,doy, Phenophase_ID)
+    select(species, site_id,year,doy, Phenophase_ID)
   
   return(df_subset)
+}
+
+
+###############################################################
+
+##############################################################
+process_extracted_prism_data = function(extracted){
+  extracted = extracted %>%
+    tidyr::gather(filename, temp, -site_id) %>%
+    dplyr::mutate(date=stringr::word(filename, 5, 5, sep='_')) %>%
+    dplyr::select(-filename)
+  
+  #Convert to format used in models
+  
+  temperature_data = extracted %>%
+    mutate(date = as.Date(as.character(date), '%Y%m%d')) %>%
+    mutate(year = lubridate::year(date), doy = lubridate::yday(date))
+  
+  #Limit temp data to fall and mid summer
+  #temperature_data = temperature_data %>%
+  #  filter(doy <=180 | doy >= 240)
+  
+  #Assign fall (begining in Oct.) temp to the next years growing season.
+  #Also set Jan 1 as doy 0, anything before that as negative doy's
+  temperature_data = temperature_data %>%
+    mutate(year = ifelse(doy>=300, year+1, year)) %>%
+    mutate(base_date = lubridate::as_date(paste0(year,'-01-01'))) %>%
+    mutate(doy = date - base_date) %>%
+    select(-date, -base_date)
+  
+  #Cuttoff to 2 decimals to save space in the csv files
+  temperature_data$temp = round(temperature_data$temp, 2)
+  
+  return(temperature_data)
 }

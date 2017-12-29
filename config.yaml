@@ -22,6 +22,10 @@ species_list_file: species_list.csv
 
 phenology_observations_folder: phenology_observations/
 
+phenology_observations_temperature_file: phenology_observations/observation_temperatures.csv
+
+# prism data for building phenology models
+daily_prism_folder: prism_daily_data/
 ######################################################
 # Climate  models attributes
 variables_to_use:
