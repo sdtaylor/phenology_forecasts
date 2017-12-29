@@ -41,7 +41,7 @@ args$local_site_file= '/home/shawn/data/phenology/npn_core/ancillary_site_data.c
 if(args$data_source=='local_file'){
   #The raw npn data.
   all_observations = read_csv(args$local_obs_file) %>%
-    select(Site_ID, individual_id = Individual_ID, Phenophase_ID, Observation_Date, status = Phenophase_Status,
+    select(site_id = Site_ID, individual_id = Individual_ID, Phenophase_ID, Observation_Date, status = Phenophase_Status,
            intensity_id = Intensity_Category_ID, intensity = Intensity_Value, Genus, Species) %>%
     mutate(species= tolower(paste(Genus,Species,sep=' ')), 
            year   = lubridate::year(Observation_Date),
