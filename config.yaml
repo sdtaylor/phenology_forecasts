@@ -1,4 +1,29 @@
 
+######################################################
+# Global attributes
+
+data_folder: /home/shawn/data/phenology_forecasting/
+
+tmp_folder: tmp/
+
+mask_file: land_mask.nc
+
+#######################################################
+# Phenology models attributes
+species_range_file: species_ranges.nc
+
+phenology_model_folder: phenology_models/
+
+phenology_forecast_folder: phenology_forecasts/
+
+phenology_model_metadata_file: phenology_model_metadata.csv
+
+species_list_file: species_list.csv
+
+phenology_observations_folder: phenology_observations/
+
+######################################################
+# Climate  models attributes
 variables_to_use:
     tmean:
         cfs_nc_name: TMP_P0_L103_GGA0
@@ -8,11 +33,6 @@ variables_to_use:
 #        cfs_name: prpwtr
 #        prism_name: prp
         
-data_folder: /home/shawn/data/phenology_forecasting/
-
-tmp_folder: tmp/
-
-mask_file: land_mask.nc
 
 season_month_begin: '11'
 season_day_begin: '01'
@@ -32,14 +52,10 @@ historic_forecasts_file: historic_forecasts.nc
 
 downscaling_model_coefficients_file: model_coefficients.nc
 
-species_range_file: species_ranges.nc
-
-phenology_model_folder: phenology_models/
-
-phenology_forecast_folder: phenology_forecasts/
-
 cfs_forecast_provenance_note: >
     CFSv2 forecast from {download_url} obtained on {today}. Downscaled to 4km
     resolution using asynchronous regression with PRISM as the observed
     temperature. Dates {season_start} to {yesterday} are observed values
     from the PRISM dataset at www.prism.oregonstate.edu. 
+
+
