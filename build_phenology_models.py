@@ -45,7 +45,7 @@ for i in range(len(species_info)):
                                     'maxiter':50000})
         model_aic = tools.aic(obs = testing_obs.doy.values, 
                               pred = model.predict(testing_obs, temperature_obs),
-                              n_param = len(model.get_params()))
+                              n_param = len(model._parameters_to_estimate))
         if model_aic < best_aic:
             best_base_model = model
             best_base_model_name = model_name
