@@ -78,8 +78,7 @@ for i in range(len(species_info)):
     species_info['current_forecast_version'][i]=current_version
     #######################################################
     # add entry for this specifc model in model metadata file
-    model_note = """Selected the best model via aic from ThermalTime,Alternating and Uniforc.
-    """
+    model_note = """Selected the best model via aic from ThermalTime,Alternating and Uniforc."""
     
     model_metadata.append({'species':species_info.species[i],
                              'Phenophase_ID':species_info.Phenophase_ID[i],
