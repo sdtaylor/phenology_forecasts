@@ -110,7 +110,7 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
 ##############################################################
 process_extracted_prism_data = function(extracted){
   extracted = extracted %>%
-    tidyr::gather(filename, temp, -site_id) %>%
+    tidyr::gather(filename, temperature, -site_id) %>%
     dplyr::mutate(date=stringr::word(filename, 5, 5, sep='_')) %>%
     dplyr::select(-filename)
   
@@ -133,7 +133,7 @@ process_extracted_prism_data = function(extracted){
     select(-date, -base_date)
   
   #Cuttoff to 2 decimals to save space in the csv files
-  temperature_data$temp = round(temperature_data$temp, 2)
+  temperature_data$temperature = round(temperature_data$temperature, 2)
   
   return(temperature_data)
 }
