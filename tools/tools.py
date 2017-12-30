@@ -3,6 +3,7 @@ import os
 import urllib
 import time
 import yaml
+import numpy as np
 
 def string_to_date(s, h=False):
     assert isinstance(s, str) ,'date not a string'
@@ -58,8 +59,11 @@ def load_config(data_folder=None):
     make_folder(data_folder)
 
     for key, value in config.items():
-        if ('file' in key or 'folder' in key) and key != 'data_folder':
+        is_file = 'file' in key
+        is_folder = 'folder' in key
+        if (is_file or is_folder) and key != 'data_folder':
             config[key] = data_folder + value
+        if (is_folder):
             make_folder(config[key])
     
     return config
@@ -75,8 +79,18 @@ def current_growing_season(config):
 
 # This appends csv's while keeping the header intact
 # or creates a new file if it doesn't already exist.
-def update_csv(df, filename):
+def append_csv(df, filename):
     with open(filename, 'a') as f:
         df.to_csv(f, index=False, header=f.tell()==0)
 
+# Re-write a csv with updated info
+def update_csv(df, filename):
+    os.remove(filename)
+    df.to_csv(filename, index=False)
+
+def aic(obs, pred, n_param):
+    assert isinstance(obs, np.ndarray) and isinstance(pred, np.ndarray), 'obs and pred should be np arrays'
+    assert obs.shape==pred.shape, 'obs and pred should have the same shape'
+    
+    return len(obs) * np.log(np.mean((obs - pred)**2)) + 2*(n_param + 1)
 
