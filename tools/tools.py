@@ -72,3 +72,11 @@ def current_growing_season(config):
     if today >  cutoff:
         year = str(int(year) + 1)
     return year
+
+# This appends csv's while keeping the header intact
+# or creates a new file if it doesn't already exist.
+def update_csv(df, filename):
+    with open(filename, 'a') as f:
+        df.to_csv(f, index=False, header=f.tell()==0)
+
+
