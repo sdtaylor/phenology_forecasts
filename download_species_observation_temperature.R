@@ -2,6 +2,7 @@ library(rnpn)
 library(docopt)
 library(tidyverse)
 library(prism)
+library(sp)
 source('phenology_observation_functions.R')
 
 config=load_config()
@@ -24,7 +25,7 @@ options(prism.path = config$daily_prism_folder)
 
 if(args$update_prism_files){
   today = as.character(Sys.Date())
-  get_prism_dailys(type = 'tmean', minDate = '2006-01-01', maxDate = today, keepZip = FALSE)
+  get_prism_dailys(type = 'tmean', minDate = '2006-02-01', maxDate = today, keepZip = FALSE)
 }
 
 # Get the sites and years represented in the data
@@ -54,6 +55,11 @@ site_info = read_csv(args$local_site_file) %>%
   dplyr::distinct() %>%
   dplyr::filter(site_id %in% sites_used)
 
+# filter to continental US
+site_info = site_info %>%
+  filter(Longitude <= -65, Longitude >=-126,
+         Latitude <= 50, Latitude >=24)
+
 sites_spatial = site_info %>%
   SpatialPointsDataFrame(cbind(.$Longitude, .$Latitude), data=., 
                          proj4string = CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=GRS80 +towgs84=0,0,0'))
@@ -68,10 +74,16 @@ if(any(!years_used %in% prism_years)){
   stop('Some years in phenology data not in prism daily data. Maybe prism data with --update_prism_files ? ')
 }
 
-prism_stacked = raster::stack(prism_file_info$abs_path, quick=TRUE)
+# For finding corrupt prism files
+# for(i in 1:nrow(prism_file_info)){
+#   print(prism_file_info$abs_path[i])
+#   raster::raster(prism_file_info$abs_path[i])
+# }
+
+prism_stacked = raster::stack(prism_file_info$abs_path, quick=FALSE)
 
 temp_data = as.data.frame(raster::extract(prism_stacked, sites_spatial)) %>%
-  bind_cols(sites_spatial)%>%
+  bind_cols(site_info) %>%
   process_extracted_prism_data() 
 
 write_csv(temp_data, config$phenology_observations_temperature_file)
