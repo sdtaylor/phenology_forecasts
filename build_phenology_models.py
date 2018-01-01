@@ -123,7 +123,7 @@ class model_finder_boss:
         self.model_metadata.append(result['metadata'])
 
     def process_all_results(self, all_results):
-        tools.update_csv(pd.DataFrame(self.finished_jobs), config['species_list_file'])
+        tools.update_csv(pd.DataFrame(self.updated_species_info), config['species_list_file'])
         tools.append_csv(pd.DataFrame(self.model_metadata), config['phenology_model_metadata_file'])
         
 if __name__ == "__main__":
