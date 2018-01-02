@@ -23,8 +23,8 @@ class model_finder_worker:
         self.today = datetime.datetime.today().date()
         print('seting things up')
     
-    def get_failed_job_result():
-        return None
+    def get_failed_job_result(self, species_info):
+        return species_info
     
     def run_job(self, species_info):
         
@@ -127,8 +127,9 @@ class model_finder_boss:
         self.updated_species_info.append(result['info'])
         self.model_metadata.append(result['metadata'])
     
-    def process_failed_job(self, result):
-        pass
+    def process_failed_job(self, species_info):
+        print('Job failed for {s} {p}'.format(s=species_info['species'],
+                                              p=species_info['phenophase']))
 
     def process_all_results(self, all_results):
         tools.update_csv(pd.DataFrame(self.updated_species_info), config['species_list_file'])
