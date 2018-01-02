@@ -23,6 +23,9 @@ class model_finder_worker:
         self.today = datetime.datetime.today().date()
         print('seting things up')
     
+    def get_failed_job_result():
+        return None
+    
     def run_job(self, species_info):
         
         species_name=species_info['species']
@@ -106,10 +109,13 @@ class model_finder_boss:
         self.species_info = pd.read_csv(config['species_list_file'])
         
         self.job_list=self.species_info.to_dict('records')
-        self.total_jobs=len(self.job_list)
-
+        self.updated_species_info = []
+        self.model_metadata = []
 
         self.today = datetime.datetime.today().date()
+    
+    def set_total_jobs(self):
+        self.total_jobs=len(self.job_list)
     
     def jobs_available(self):
         return len(self.job_list)>0
@@ -118,17 +124,15 @@ class model_finder_boss:
         return self.job_list.pop()
     
     def process_job_result(self, result):
+        self.updated_species_info.append(result['info'])
+        self.model_metadata.append(result['metadata'])
+    
+    def process_failed_job(self, result):
         pass
 
     def process_all_results(self, all_results):
-        updated_species_info=[]
-        model_metadata=[]
-        for result in all_results:
-            updated_species_info.append(result['info'])
-            model_metadata.append(result['metadata'])
-        
-        tools.update_csv(pd.DataFrame(updated_species_info), config['species_list_file'])
-        tools.append_csv(pd.DataFrame(model_metadata), config['phenology_model_metadata_file'])
+        tools.update_csv(pd.DataFrame(self.updated_species_info), config['species_list_file'])
+        tools.append_csv(pd.DataFrame(self.model_metadata), config['phenology_model_metadata_file'])
         
 if __name__ == "__main__":
     run_MPI(model_finder_boss(), model_finder_worker())
