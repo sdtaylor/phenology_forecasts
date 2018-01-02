@@ -131,7 +131,7 @@ class model_finder_boss:
         print('Job failed for {s} {p}'.format(s=species_info['species'],
                                               p=species_info['Phenophase_ID']))
 
-    def process_all_results(self, all_results):
+    def process_all_results(self):
         tools.update_csv(pd.DataFrame(self.updated_species_info), config['species_list_file'])
         tools.append_csv(pd.DataFrame(self.model_metadata), config['phenology_model_metadata_file'])
         
