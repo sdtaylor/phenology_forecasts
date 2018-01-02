@@ -24,6 +24,7 @@ class model_finder_worker:
         print('seting things up')
     
     def get_failed_job_result(self, species_info):
+        print('failed: '+species_info['species']+' '+species_info['Phenophase_ID'])
         return species_info
     
     def run_job(self, species_info):
