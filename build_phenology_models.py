@@ -129,7 +129,7 @@ class model_finder_boss:
     
     def process_failed_job(self, species_info):
         print('Job failed for {s} {p}'.format(s=species_info['species'],
-                                              p=species_info['phenophase']))
+                                              p=species_info['Phenophase_ID']))
 
     def process_all_results(self, all_results):
         tools.update_csv(pd.DataFrame(self.updated_species_info), config['species_list_file'])
