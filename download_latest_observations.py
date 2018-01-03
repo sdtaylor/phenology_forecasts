@@ -70,8 +70,11 @@ def main():
         if prism_tools.newer_file_available(current_status, ftp_status):
             day = pd.Timestamp(day).to_pydatetime()
             print('updating day {d} from {s1} to {s2}'.format(d=day, s1=current_status, s2=ftp_status))
-            updated_day_xr = prism_tools.download_and_process_day(prism_info=prism, date=day,
-                                                                  varname='tmean', status=ftp_status)
+            day_url = prism.get_download_url(day)
+            updated_day_xr = prism_tools.download_and_process_day(download_url=day_url,
+                                                                  date=day,
+                                                                  varname='tmean',
+                                                                  status=ftp_status)
             observed_weather = prism_tools.update_day(observed_weather, updated_day_xr)
             days_updated+=1
     
