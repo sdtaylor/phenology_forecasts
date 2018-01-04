@@ -32,7 +32,7 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
     
     return model_broadcasted
 
-def main():
+def run():
     config = tools.load_config()
     
     land_mask = xr.open_dataset(config['mask_file'])
@@ -156,4 +156,4 @@ def main():
                                                                                                               needed=forecast_ensemble_n)
     
 if __name__=='__main__':
-    main()
+    run()()
