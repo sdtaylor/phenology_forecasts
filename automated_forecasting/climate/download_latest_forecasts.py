@@ -77,7 +77,7 @@ def run():
         initial_time= tools.string_to_date(forecast_info['initial_time'], h=True)
         
         print('\n\n\n')
-        print('Attempting to process forecast {i} of {n} with initial time {t}'.format(i=num_forecasts_added,
+        print('Attempting to process climate forecast {i} of {n} with initial time {t}'.format(i=num_forecasts_added,
                                                                                        n=forecast_ensemble_n,
                                                                                        t = initial_time))
         print('download URL: ' + str(forecast_info['download_url']))

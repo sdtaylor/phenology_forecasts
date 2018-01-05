@@ -79,7 +79,7 @@ def run():
             days_updated+=1
     
     if days_updated==0:
-        print('No days updated')
+        print('No days updated to newer version')
 
     observed_weather.load()
     observed_weather.close()
