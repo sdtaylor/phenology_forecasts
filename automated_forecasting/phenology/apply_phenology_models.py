@@ -7,9 +7,12 @@ import datetime
 import time
 import glob
 from pyPhenology import utils
-divider='#'*90
+
+
 
 def run():
+    divider='#'*90
+    
     config = tools.load_config()
     
     today = datetime.datetime.today().date()
@@ -40,7 +43,7 @@ def run():
     
     current_climate_forecasts = [xr.open_dataset(f) for f in current_climate_forecast_files]
     
-    all_species_forecasts=[]
+    num_species_processed=0
     for i, forecast_info in enumerate(forecast_metadata.to_dict('records')):
         species = forecast_info['species']
         phenophase = forecast_info['Phenophase_ID']
@@ -55,7 +58,7 @@ def run():
             continue
         else:
             print('Apply model for {s} {p}'.format(s=species, p=phenophase))
-            print('forecast {i} of {n}'.format(i=i, n=len(forecast_metadata)))
+            print('forecast attempt {i} of {n} potential species. {n2} processed succesfully so far.'.format(i=i, n=len(forecast_metadata), n2=num_species_processed))
             species_range = range_masks.sel(species=species)
     
     
@@ -91,8 +94,20 @@ def run():
     
         if i==0:
             all_species_forecasts = species_forecast
+            num_species_processed+=1
         else:
+            merge_start_time=time.time()
             all_species_forecasts = xr.merge([all_species_forecasts,species_forecast])
+            print('merge time {s} sec'.format(s=round(time.time() - merge_start_time,0)))
+            num_species_processed+=1
+    
+        # Merging this files over and over slows things down more and more
+        # Saving it every few iterations seems to speed things up. 
+        if num_species_processed % 5 == 0:
+            all_species_forecasts.to_netcdf(config['tmp_folder']+'forecast_tmp.nc')
+            all_species_forecasts = xr.open_dataset(config['tmp_folder']+'forecast_tmp.nc')
+            all_species_forecasts.load()
+            all_species_forecasts.close()
     
     print(divider)
     print('phenology forecast final processing')
