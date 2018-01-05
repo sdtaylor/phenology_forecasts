@@ -127,8 +127,16 @@ def run():
     forecast_filename = config['phenology_forecast_folder']+'phenology_forecast_'+str(today)+'.nc'
     
     all_species_forecasts = all_species_forecasts.chunk({'lat':50,'lon':50})
-    all_species_forecasts.to_netcdf(forecast_filename, encoding={'doy_prediction':{'zlib':True},
-                                                                 'doy_sd':{'zlib':True}})
+    all_species_forecasts.to_netcdf(forecast_filename, encoding={'doy_prediction':{'zlib':True,
+                                                                                   'complevel':4, 
+                                                                                   'dtype':'int32', 
+                                                                                   'scale_factor':0.001,  
+                                                                                   '_FillValue': -9999},
+                                                                         'doy_sd':{'zlib':True,
+                                                                                   'complevel':4, 
+                                                                                   'dtype':'int32', 
+                                                                                   'scale_factor':0.001,  
+                                                                                   '_FillValue': -9999}})
 
 if __name__=='__main__':
     run()
