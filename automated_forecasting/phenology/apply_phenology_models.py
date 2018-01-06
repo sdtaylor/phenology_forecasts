@@ -123,6 +123,10 @@ def run():
     """.format(s=current_season, t=today)
     
     all_species_forecasts['note']=provenance_note
+    # TODO: add some  more metadata
+    # common names?
+    #all_species_forecasts['forecast_date']=str(today)
+    #all_species_forecasts['forecast_date']=str(today)
     
     forecast_filename = config['phenology_forecast_folder']+'phenology_forecast_'+str(today)+'.nc'
     
