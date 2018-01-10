@@ -51,10 +51,10 @@ def run():
     last_forecast_day = today + pd.offsets.Week(max_lead_time_weeks)
     
     # Get info for more forecasts than needed in case some fail
-    # during processing. 4 forecasts are issued every day, so 56
-    # extra is about 2 weeks worth. 
+    # during processing. 4 forecasts are issued every day, so 10
+    # extra is about 2 days worth. 
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n + 56)
+    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n + 10)
     cfs.close()
     
     # Arrange the downscale model to easily do array math with the 
