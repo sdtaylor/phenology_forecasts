@@ -26,16 +26,38 @@ raster_from_netcdf = function(nc_object, phenophase, species, variable, downscal
   return(raster_obj)
 }
 
+#######################################################################
+# Get the current growing season. ie. 2018 for all dates 2017-11-1 to 2018-10-30
+current_growing_season = function(){
+  config=load_config()
+  today = Sys.Date()
+  year = lubridate::year(today)
+  season_begin = as.Date(paste(year,config$season_month_begin,config$season_day_begin,sep='-'))
+  if(today > season_begin){
+    year = year+1
+  }
+  return(year)
+}
+
+#########################################################################
+# Take doy of the current season and return Mar. 1, Jan. 30, etc.
+doy_to_date = function(x){
+  current_season = current_growing_season()
+  dates = as_date(paste(current_season, x,sep='-'), '%Y-%j')
+  abbr  = strftime(dates, '%b %d')
+  return(abbr)
+}
+
 #########################################################################
 # A data.frame for a specific species/phenophase with columns for
 # doy_prediction and doy_sd
-get_forecast_df = function(nc_object, phenophase, species, variable, downscale_factor){
-  doy_prediction = raster_from_netcdf(n, phenophase = phenophase, species = species, 
+get_forecast_df = function(nc_object, phenophase, species, downscale_factor=NA){
+  doy_prediction = raster_from_netcdf(nc_object, phenophase = phenophase, species = species, 
                                       variable = 'doy_prediction', downscale_factor = downscale_factor) %>%
     rasterToPoints() %>%
     data.frame()
   colnames(doy_prediction) = c('lat','lon','doy_prediction')
-  doy_sd = raster_from_netcdf(n, phenophase = phenophase, species = species, variable = 'doy_sd') %>%
+  doy_sd = raster_from_netcdf(nc_object, phenophase = phenophase, species = species, variable = 'doy_sd') %>%
     rasterToPoints() %>%
     data.frame()
   colnames(doy_sd) = c('lat','lon','doy_sd')
@@ -45,42 +67,27 @@ get_forecast_df = function(nc_object, phenophase, species, variable, downscale_f
   
 }
 
-
-static_map = function(){
+###################################################################
+# Prepend the root data folder to all files and folders
+# specified. 
+load_config = function(){
+  config = yaml::yaml.load_file('config.yaml')
   
-  ggplot() + 
-    #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
-    geom_raster(data = species_data, aes(x=lat, y=lon, fill=doy_prediction)) +
-    scale_fill_viridis(labels = doy_to_date) + 
-    geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.5) + 
-    coord_fixed(1.3) +
-    theme_bw() + 
-    guides(fill = guide_colorbar(title = 'Date of Flowering',
-                                 title.position = 'top',,
-                                 title.hjust = 0.5)) + 
-    theme(legend.position = 'bottom',
-          legend.key.width = unit(5, 'cm'),
-          legend.title = element_text(size=20),
-          legend.text = element_text(size=12),
-          plot.title = element_text(size=22),
-          plot.subtitle = element_text(size=15),
-          plot.background = element_rect(fill='grey97'),
-          panel.background =  element_rect(fill='grey97'),
-          legend.background =  element_rect(fill='grey97'))+
-    theme(axis.title = element_blank(),
-          axis.text = element_blank(),
-          panel.grid = element_blank(),
-          axis.ticks = element_blank(),
-          panel.border = element_blank())+
-    labs(title = "Phenology Forecasts - Eastern redbud (Cercis canadensis) Flowers", 
-         subtitle = "Predicted date of flowering for 2018 - Issued Jan 5, 2018")
+  data_folder = config$data_folder
   
+  config_attributes = names(config)
+  # Don't prepend the root data_folder
+  config_attributes = config_attributes[-which('data_folder' %in% config_attributes)]
   
-  
+  for(a in config_attributes){
+    is_dir = grepl('folder',a)
+    is_file= grepl('file',a)
+    if(is_dir | is_file){
+      config[[a]] = paste0(data_folder,config[[a]])
+    }
+    if(is_dir){
+      if(!dir.exists(config[[a]])) dir.create(config[[a]])
+    }
+  }
+  return(config)
 }
-
-
-
-
-
-
