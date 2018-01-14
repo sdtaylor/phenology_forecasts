@@ -3,7 +3,7 @@ library(raster)
 library(viridis)
 library(ncdf4)
 library(lubridate)
-library(leaflet)
+#library(leaflet)
 source('map_utils.R')
 
 config = load_config()
@@ -20,6 +20,7 @@ species_info = read_csv(config$species_list_file)
 ####################################################
 
 today = as.character(Sys.Date())
+# Like Jan. 3, 2018
 today_abr = strftime(Sys.Date(), '%b %d, %Y')
 current_season=current_growing_season()
 
@@ -28,8 +29,13 @@ args=commandArgs(trailingOnly = TRUE)
 phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-05.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
+todays_forecast_folder = paste0(config$phenology_forecast_figure_folder,today,'/')
+dir.create(todays_forecast_folder)
+
 available_species = phenology_forecast$dim$species$vals
 available_phenophases = phenology_forecast$dim$phenophase$vals
+
+image_metadata=data.frame()
 
 basemap = map_data('state')
 
@@ -86,8 +92,16 @@ for(spp in available_species){
       labs(title = figure_title, 
            subtitle = figure_subtitle)
     
-    ggsave(p,filename=paste0('/home/shawn/data/phenology_forecasting/phenology_static_images/',figure_filename),
+    ggsave(p,filename=paste0(todays_forecast_folder,figure_filename),
            height = 25, width = 34, units = 'cm')
-    
+   
+    image_metadata = image_metadata %>%
+      bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
+                           forecast_issue_data=today,img_filename=figure_filename))
+     
   }
 }
+
+append_csv(image_metadata, config$phenology_forecast_figure_metadata_file)
+
+

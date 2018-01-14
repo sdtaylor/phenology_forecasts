@@ -24,7 +24,9 @@ phenology_observations_folder: phenology_observations/
 
 phenology_observations_temperature_file: phenology_observations/observation_temperatures.csv
 
-phenology_forecast_figure_folder: phenology_static_images
+phenology_forecast_figure_folder: phenology_static_images/
+
+phenology_forecast_figure_metadata_file: phenology_static_image_metadata.csv
 
 # prism data for building phenology models
 daily_prism_folder: prism_daily_data/

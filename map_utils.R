@@ -91,3 +91,9 @@ load_config = function(){
   }
   return(config)
 }
+
+###################################################################
+#Appending a csv without re-writing the header.
+append_csv=function(df, filename){
+  write.table(df, filename, sep = ',', row.names = FALSE, col.names = !file.exists(filename), append = file.exists(filename))
+}
