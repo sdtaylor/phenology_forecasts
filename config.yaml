@@ -16,8 +16,6 @@ phenology_model_folder: phenology_models/
 
 phenology_forecast_folder: phenology_forecasts/
 
-phenology_model_metadata_file: phenology_model_metadata.csv
-
 species_list_file: species_list.csv
 
 phenology_model_metadata_file: phenology_model_metadata.csv
@@ -26,8 +24,17 @@ phenology_observations_folder: phenology_observations/
 
 phenology_observations_temperature_file: phenology_observations/observation_temperatures.csv
 
+phenology_forecast_figure_folder: phenology_static_images/
+
+phenology_forecast_figure_metadata_file: phenology_static_image_metadata.csv
+
 # prism data for building phenology models
 daily_prism_folder: prism_daily_data/
+
+# range map stuff
+
+biolcim_folder: bioclim/
+
 ######################################################
 # Climate  models attributes
 variables_to_use:
