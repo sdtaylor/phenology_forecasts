@@ -44,7 +44,7 @@ def run():
     most_recent_observed_day = pd.Timestamp(current_season_observed.time.values[-1]).to_pydatetime()
     first_forecast_day = most_recent_observed_day + datetime.timedelta(days=1)
     
-    max_lead_time_weeks = 32
+    max_lead_time_weeks = 36
     forecast_ensemble_n = 5
     
     today = pd.Timestamp.today().date()
