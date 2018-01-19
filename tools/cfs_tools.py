@@ -25,32 +25,48 @@ class cfs_ftp_info:
                                    'pre_2011':'CFSR/HP_time_series/'}
                             }
 
+        self.connect()
+        self._folder_file_lists={}
+    
+    def connect(self, attempt=1):
         connect_attempts=3
         retry_wait_time=300
-        for attempt in range(1,connect_attempts+1):
-            try:
-                self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
-            except:
-                if attempt == connect_attempts:
-                    raise IOError('Cannot connect to CFS ftp')
-                else:
-                    print('Cannot connect retrying in {t} sec'.format(t=retry_wait_time))
-                    time.sleep(retry_wait_time)
-                    continue
-            break
-        
-        self._folder_file_lists={}
+        try:
+            self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
+        except:
+            if attempt + 1 == connect_attempts:
+                raise IOError('Cannot connect to CFS ftp after {n} attempts'.format(n=connect_attempts))
+            else:
+                print('Cannot connect to CFS ftp, retrying in {t} sec'.format(t=retry_wait_time))
+                time.sleep(retry_wait_time)
+                self.connect(attempt = attempt + 1)
     
     def close(self):
         self.con.close()
-        
+    
+    def _query_ftp_folder(self, folder, attempt=1):
+        connect_attempts=3
+        retry_wait_time=5
+        try:
+            dir_listing = self.con.nlst(folder)
+            return dir_listing
+        except:
+            if attempt + 1 == connect_attempts:
+                raise IOError('Cannot query CFS ftp after {n} attempts'.format(n=connect_attempts))
+            else:
+                print('Cannot query CFS folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_time))
+                time.sleep(retry_wait_time)
+                self.close()
+                self.connect()
+                return self._query_ftp_folder(folder, attempt=attempt+1)
+    
     #Ensure that each folder is only queried once
     def _get_folder_listing(self, folder):
         if folder in self._folder_file_lists:
             return self._folder_file_lists[folder]
         else:
             try:
-                dir_listing = self.con.nlst(folder)
+                dir_listing = self._query_ftp_folder(folder)
             except ftplib.error_temp:
                 # Folder not found, aka it's empty
                 dir_listing = []
@@ -67,7 +83,7 @@ class cfs_ftp_info:
         # last element
         dir_to_list = self.forecast_dirs['ftp']['operational']
         for dirs_in_tree in range(dirs_in_tree):
-            dir_listing = self.con.nlst(dir_to_list)
+            dir_listing = self._query_ftp_folder(dir_to_list)
             last_entry = self._last_element(dir_listing)
             dir_to_list+='/'+last_entry
         return last_entry
