@@ -4,6 +4,7 @@ import xarray as xr
 import numpy as np
 import os
 import zipfile
+import time
 import urllib
 from tools import tools
 
@@ -15,18 +16,42 @@ class prism_ftp_info:
                  base_dir='daily/tmean', 
                  user='anonymous',passwd='abc123'):
         self.host=host
+        self.user=user
+        self.passwd=passwd
+        
         self.base_dir=base_dir
-        self.con = FTP(host=self.host, user=user, passwd=passwd)
         self._folder_file_lists={}
         
+        self.connect()
+    
+    def _query_ftp_folder(self, folder, attempt=1):
+        connect_attempts=3
+        retry_wait_time=300
+        try:
+            dir_listing = self.con.nlst(folder)
+            return dir_listing
+        except:
+            if attempt + 1 == connect_attempts:
+                raise IOError('Cannot query PRISM ftp')
+            else:
+                print('Cannot query PRISM folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_time))
+                time.sleep(retry_wait_time)
+                self.close()
+                self.connect()
+                return self._query_ftp_folder(folder, attempt=attempt+1)
+    
+    def connect(self):
+        self.con = FTP(host=self.host, user=self.user, passwd=self.passwd)
+
     def close(self):
         self.con.close()
+        
     #Ensure that each folder is only queried once
     def _get_folder_listing(self, folder):
         if folder in self._folder_file_lists:
             return self._folder_file_lists[folder]
         else:
-            dir_listing = self.con.nlst(folder)
+            dir_listing = self._query_ftp_folder(folder)
             self._folder_file_lists[folder]=dir_listing
             return dir_listing
 
