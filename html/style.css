@@ -1,0 +1,16 @@
+#leaflet_map {
+    width: 90%;
+    height: 512px;
+    border: 1px solid #ccc;
+}
+
+#static_map {
+    width: 90%;
+    height: 512px;
+    border: 1px solid #ccc;
+}
+
+
+.leaflet-container {
+    background: #fff;
+}

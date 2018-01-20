@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <title>Large metro rail systems in South America</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" type="text/css" crossorigin="">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js" crossorigin=""></script>
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	  <script src="metro.js"></script>
+      <link rel="stylesheet" href="style.css" type="text/css">
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/js/bootstrap.min.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/css/bootstrap.min.css">
+	   
+      <style>
+        body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+        }
+      </style>
+
+	    <script type="text/javascript">
+            var map;
+            var map_image_layer;
+
+            // diplay='block' mean display normally, display='none' means hide it
+            function toggle_maps() {
+                var L_map = document.getElementById("leaflet_map");
+                var S_map = document.getElementById("static_map");
+                
+                if (L_map.style.display === "none") {
+                    L_map.style.display = "block";
+                } else {
+                    L_map.style.display = "none";
+                }
+                
+                if (S_map.style.display === "none") {
+                    S_map.style.display = "block";
+                } else {
+                    S_map.style.display = "none";
+                }
+                
+                document.getElementById("test_output").innerHTML += '<br>type changed';
+            } 
+
+            function current_map_type() {
+                var L_map = document.getElementById("leaflet_map");
+                if (L_map.style.display === "none"){
+                    var map_type='static';
+                } else {
+                    var map_type='interactive';
+                }
+                return map_type;
+            }
+
+            var map;
+
+            function init() {
+                // create map and set center and zoom level
+                map = new L.map('leaflet_map');
+                map.setView([-28,-62],3);
+
+                var selection;
+                var selectedLayer;
+                var selectedFeature;
+                // create and add osm tile layer
+                var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  maxZoom: 19,
+                  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                });
+                osm.addTo(map);
+                
+                draw_map()
+            }
+            
+            // get current status of a specified dropdown
+            function get_selection(select_id) {
+                var s = document.getElementById(select_id);
+                return s.options[s.selectedIndex].value;
+            }
+            
+
+            
+            function log_text(message) {
+                document.getElementById("test_output").innerHTML += '<br>' + message;
+            }
+            
+            function draw_map() {
+                //get info to display
+                var map_type = get_selection("map_type_select");
+                var issue_date = get_selection("issue_date_select");
+                var species = get_selection("species_select");
+                var phenophase = get_selection("phenophase_select");
+                
+
+                //var current_type = current_map_type()
+                if (current_map_type() == map_type) {
+                    log_text("map types equal");
+                } else {
+                    log_text("map types dont equal");
+                    toggle_maps();
+                }
+                
+                if (map_type=='interactive') {
+                    var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
+                } else {
+                    //construct image url
+                    var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
+                    log_text('setting image: ' + image_url)
+                    //set image
+                    $('#static_map').attr('src',image_url)
+                }
+                
+                /*
+                if current_map_type != map_type
+                    toggle_maps()
+                    
+                if map_type is interactive:
+                    redraw leaflet map somehow
+                
+                if map_type is static:
+                    change_img_src
+                
+                if current_map type is static and selected_type is static:
+                    redirect to new image
+                elseif current_map
+                */
+            
+            }
+
+	    </script>
+	  </head>
+
+  <body onload="init()">
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container-fluid">
+                <a class="brand" href="/">Large metro rail systems in South America</a>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span8">
+                <div id="leaflet_map">
+                </div>
+                <div id="static_map_container">
+                    <img id='static_map' src='images/2018-01-17/populus_deltoides_371_2018-01-17.png' style="display:none">
+                </div>
+            </div>
+            <div class="span4">      
+                <div>
+                  <table>
+                     <tr>
+                        <td>Map Type
+                            <select id="map_type_select" onchange="draw_map()">
+                            <option value='interactive' selected>Interactive</option>
+                            <option value='static'>Static</option>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Issue Date
+                            <select id="issue_date_select" onchange="draw_map()">
+                            <option value='2018-01-17' selected>Jan. 17, 2018</option>
+                            <option value='2018-01-19'>Jan. 19, 2018</option>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Species
+                            <select id="species_select" onchange="draw_map()">
+                            <option value='populus_deltoides' selected>Eastern cottonwood (P. deltoides)</option>
+                            <option value='populus_tremuloides'>Aspen (P. tremuloides)</option>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Phenophase
+                            <select id="phenophase_select" onchange="draw_map()">
+                            <option value='371' selected>Leaves</option>
+                            <option value='501'>Flowers</option>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <div id="test_output">select output </div>
+                        </td>
+                    </tr>
+                  </table>
+                <div id="metroImage"></div>
+              </div>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>
