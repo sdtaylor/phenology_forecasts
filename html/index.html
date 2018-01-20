@@ -2,11 +2,10 @@
   <html>
     <head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <title>Large metro rail systems in South America</title>
+      <title>Phenology Forecasts</title>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" type="text/css" crossorigin="">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js" crossorigin=""></script>
       <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	  <script src="metro.js"></script>
       <link rel="stylesheet" href="style.css" type="text/css">
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/js/bootstrap.min.js"></script>
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/css/bootstrap.min.css">
@@ -21,6 +20,7 @@
 	    <script type="text/javascript">
             var map;
             var map_image_layer;
+            var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]]
 
             // diplay='block' mean display normally, display='none' means hide it
             function toggle_maps() {
@@ -52,12 +52,10 @@
                 return map_type;
             }
 
-            var map;
-
             function init() {
                 // create map and set center and zoom level
                 map = new L.map('leaflet_map');
-                map.setView([-28,-62],3);
+                map.setView([39,-95],4);
 
                 var selection;
                 var selectedLayer;
@@ -102,6 +100,9 @@
                 
                 if (map_type=='interactive') {
                     var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
+                    map_image_layer = L.imageOverlay(image_url, map_image_bounds, {opacity: 0.7})
+                    map.removeLayer(map_image_layer)
+                    map_image_layer.addTo(map)
                 } else {
                     //construct image url
                     var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
@@ -134,7 +135,7 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="navbar-inner">
             <div class="container-fluid">
-                <a class="brand" href="/">Large metro rail systems in South America</a>
+                <a class="brand" href="/">Phenology Forecasts - Beta</a>
             </div>
         </div>
     </div>
@@ -180,7 +181,7 @@
                     </tr>
                     <tr>
                         <td>
-                        <div id="test_output">select output </div>
+                        <div id="test_output">javascript log</div>
                         </td>
                     </tr>
                   </table>
