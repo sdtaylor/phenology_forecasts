@@ -4,9 +4,11 @@ library(viridis)
 library(ncdf4)
 library(lubridate)
 #library(leaflet)
-source('map_utils.R')
+source('automated_forecasting/presentation/map_utils.R')
 
 config = load_config()
+
+current_season=current_growing_season()
 
 ##################################################
 # TODO: put this in a file if a bunch of this gets added
@@ -17,20 +19,30 @@ all_phenophase_info = data_frame(Phenophase_ID = c(371,501),
 
 species_info = read_csv(config$species_list_file)
 
+#########################################################################
+# Take doy of the current season and return Mar. 1, Jan. 30, etc.
+doy_to_date = function(x){
+  dates = as.Date(paste(current_season, x,sep='-'), '%Y-%j')
+  abbr  = strftime(dates, '%b %d')
+  return(abbr)
+}
 ####################################################
 
-today = as.character(Sys.Date())
-# Like Jan. 3, 2018
-today_abr = strftime(Sys.Date(), '%b %d, %Y')
-current_season=current_growing_season()
+
 
 args=commandArgs(trailingOnly = TRUE)
 #phenology_forecast_filename = args[1]
-phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-05.nc'
+phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-20.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
-todays_forecast_folder = paste0(config$phenology_forecast_figure_folder,today,'/')
-dir.create(todays_forecast_folder)
+issue_date = ncdf4::ncatt_get(phenology_forecast, varid = 0, attname='issue_date')$value
+# create string like Jan. 3, 2018
+issue_date_abbr = strftime(as.Date(issue_date), '%b %d, %Y')
+
+
+
+issue_date_forecast_folder = paste0(config$phenology_forecast_figure_folder,issue_date,'/')
+dir.create(issue_date_forecast_folder)
 
 available_species = phenology_forecast$dim$species$vals
 available_phenophases = phenology_forecast$dim$phenophase$vals
@@ -59,9 +71,9 @@ for(spp in available_species){
       filter(Phenophase_ID==pheno)
     
     figure_title = paste0('Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
-    figure_subtitle = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',today_abr)
+    figure_subtitle = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
     legend_title = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
-    figure_filename = paste(stringr::str_replace(spp,' ','_'),pheno,today,sep='_')
+    figure_filename = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
     figure_filename = paste0(figure_filename,'.png')
     
     
@@ -92,12 +104,12 @@ for(spp in available_species){
       labs(title = figure_title, 
            subtitle = figure_subtitle)
     
-    ggsave(p,filename=paste0(todays_forecast_folder,figure_filename),
+    ggsave(p,filename=paste0(issue_date_forecast_folder,figure_filename),
            height = 25, width = 34, units = 'cm')
    
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
-                           forecast_issue_data=today,img_filename=figure_filename))
+                           forecast_issue_data=issue_date,img_filename=figure_filename))
      
   }
 }
