@@ -35,14 +35,14 @@ args=commandArgs(trailingOnly = TRUE)
 phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-20.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
+crs_used = ncdf4::ncatt_get(phenology_forecast, varid=0, attname='crs')$value
+
 issue_date = ncdf4::ncatt_get(phenology_forecast, varid = 0, attname='issue_date')$value
 # create string like Jan. 3, 2018
 issue_date_abbr = strftime(as.Date(issue_date), '%b %d, %Y')
 
-
-
 issue_date_forecast_folder = paste0(config$phenology_forecast_figure_folder,issue_date,'/')
-dir.create(issue_date_forecast_folder)
+dir.create(issue_date_forecast_folder, showWarnings = FALSE)
 
 available_species = phenology_forecast$dim$species$vals
 available_phenophases = phenology_forecast$dim$phenophase$vals
@@ -73,11 +73,12 @@ for(spp in available_species){
     figure_title = paste0('Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
     figure_subtitle = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
     legend_title = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
-    figure_filename = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
-    figure_filename = paste0(figure_filename,'.png')
+    filename_base = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
+    static_filename = paste0(filename_base,'.png')
+    map_filename = paste0(filename_base,'_map.png')
     
-    
-    p=ggplot() + 
+    # stand alone image
+    static_image=ggplot() + 
       #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
       scale_fill_gradientn(colors=color_scheme, labels = doy_to_date, limits=c(1,365)) + 
@@ -104,12 +105,21 @@ for(spp in available_species){
       labs(title = figure_title, 
            subtitle = figure_subtitle)
     
-    ggsave(p,filename=paste0(issue_date_forecast_folder,figure_filename),
+    # Display only the data for interactive map
+    # TODO: need to change CRS
+    r = raster_from_netcdf(phenology_forecast, phenophase = pheno, species =  spp, variable = 'doy_prediction')
+    raster::crs(r) = crs_used
+    map_image = raster_to_leaflet_image(r, colors=color_scheme, color_domain = c(0,365))
+
+    ggsave(static_image,filename=paste0(issue_date_forecast_folder,static_filename),
            height = 25, width = 34, units = 'cm')
-   
+    
+    png::writePNG(map_image, target=paste0(issue_date_forecast_folder,map_filename))
+    
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
-                           forecast_issue_data=issue_date,img_filename=figure_filename))
+                           forecast_issue_data=issue_date,img_filename=static_filename))
+    
      
   }
 }
