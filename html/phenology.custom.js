@@ -1,6 +1,6 @@
 var map;
 var map_image_layer;
-var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]]
+var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
 
 // diplay='block' mean display normally, display='none' means hide it
 function toggle_maps() {
@@ -32,6 +32,7 @@ function current_map_type() {
     return map_type;
 }
 
+var osm;
 function init() {
     // create map and set center and zoom level
     map = new L.map('leaflet_map');
@@ -41,12 +42,10 @@ function init() {
     var selectedLayer;
     var selectedFeature;
     // create and add osm tile layer
-    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
-    osm.addTo(map);
-    
     draw_map()
 }
 
@@ -57,9 +56,15 @@ function get_selection(select_id) {
 }
 
 
-
 function log_text(message) {
     document.getElementById("test_output").innerHTML += '<br>' + message;
+}
+
+function clear_map() {
+    map.eachLayer(function (layer) {
+        map.removeLayer(layer);
+    });
+    osm.addTo(map)
 }
 
 function draw_map() {
@@ -77,33 +82,18 @@ function draw_map() {
         log_text("map types dont equal");
         toggle_maps();
     }
-    
+    var prior_image_layer;
+    var current_image_layer;
     if (map_type=='interactive') {
+        clear_map();
         var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
-        map_image_layer = L.imageOverlay(image_url, map_image_bounds, {opacity: 0.7})
-        map.removeLayer(map_image_layer)
-        map_image_layer.addTo(map)
+        map_image_layer = L.imageOverlay(image_url, map_image_bounds, {opacity: 0.7});
+        map_image_layer.addTo(map);
     } else {
         //construct image url
         var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
-        log_text('setting image: ' + image_url)
+        log_text('setting image: ' + image_url);
         //set image
-        $('#static_map').attr('src',image_url)
+        $('#static_map').attr('src',image_url);
     }
-    
-    /*
-    if current_map_type != map_type
-        toggle_maps()
-        
-    if map_type is interactive:
-        redraw leaflet map somehow
-    
-    if map_type is static:
-        change_img_src
-    
-    if current_map type is static and selected_type is static:
-        redirect to new image
-    elseif current_map
-    */
-
 }
