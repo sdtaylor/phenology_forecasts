@@ -39,18 +39,29 @@ current_growing_season = function(){
   return(year)
 }
 
-
+#########################################################################
+# Set the CRS of a raster and transform to another
+raster_set_change_crs = function(r, current, to){
+  raster::crs(r) = current
+  return(raster::projectRaster(r, crs=sp::CRS(to)))
+}
 
 #########################################################################
 # A data.frame for a specific species/phenophase with columns for
 # doy_prediction and doy_sd
 get_forecast_df = function(nc_object, phenophase, species, downscale_factor=NA){
+  # nc_crs = ncdf4::ncatt_get(nc_object, varid=0, attname='crs')$value
+  # new_crs = '+init=epsg:3857'
+  
   doy_prediction = raster_from_netcdf(nc_object, phenophase = phenophase, species = species, 
                                       variable = 'doy_prediction', downscale_factor = downscale_factor) %>%
+    #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
     rasterToPoints() %>%
     data.frame()
   colnames(doy_prediction) = c('lat','lon','doy_prediction')
+  
   doy_sd = raster_from_netcdf(nc_object, phenophase = phenophase, species = species, variable = 'doy_sd') %>%
+    #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
     rasterToPoints() %>%
     data.frame()
   colnames(doy_sd) = c('lat','lon','doy_sd')
@@ -84,6 +95,46 @@ load_config = function(){
   }
   return(config)
 }
+
+#################################################################
+# Modified addRasterImage function from https://github.com/rstudio/leaflet
+# Transform a raster to a png suitable for displaying on leaflet maps
+raster_to_leaflet_image <- function(
+  x,
+  colors = "Spectral",
+  color_domain=NULL,
+  opacity = 1,
+  attribution = NULL,
+  layerId = NULL,
+  group = NULL,
+  project = TRUE,
+  maxBytes = 4*1024*1024
+) {
+  stopifnot(inherits(x, "RasterLayer"))
+  
+  if (project) {
+    projected <- leaflet::projectRasterForLeaflet(x)
+  } else {
+    projected <- x
+  }
+  bounds <- raster::extent(raster::projectExtent(raster::projectExtent(x, crs = sp::CRS('+init=epsg:3857')), crs = sp::CRS('+init=epsg:4326')))
+  
+  if (!is.function(colors)) {
+    colors <- leaflet::colorNumeric(colors, domain = color_domain, na.color = "#00000000", alpha = TRUE)
+  }
+  
+  tileData <- raster::values(projected) %>% colors() %>% col2rgb(alpha = TRUE) %>% as.raw()
+  dim(tileData) <- c(4, ncol(projected), nrow(projected))
+  #pngData <- png::writePNG(tileData)
+
+  return(tileData)
+  # latlng <- list(
+  #   list(raster::ymax(bounds), raster::xmin(bounds)),
+  #   list(raster::ymin(bounds), raster::xmax(bounds))
+  # )
+}
+
+
 
 ###################################################################
 #Appending a csv without re-writing the header.
