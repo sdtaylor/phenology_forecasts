@@ -86,7 +86,7 @@ function draw_map() {
     var current_image_layer;
     if (map_type=='interactive') {
         clear_map();
-        var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
+        var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'_map.png';
         map_image_layer = L.imageOverlay(image_url, map_image_bounds, {opacity: 0.7});
         map_image_layer.addTo(map);
     } else {
