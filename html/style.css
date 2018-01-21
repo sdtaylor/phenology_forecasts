@@ -5,8 +5,8 @@
 }
 
 #static_map {
-    width: 90%;
-    height: 512px;
+    width: 110%;
+    height: auto;
     border: 1px solid #ccc;
 }
 
