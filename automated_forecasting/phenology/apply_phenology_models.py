@@ -123,6 +123,8 @@ def run():
     """.format(s=current_season, t=today)
     
     all_species_forecasts['note']=provenance_note
+    all_species_forecasts['issue_date']=str(today)
+    all_species_forecasts['crs']='+init=epsg:4269'
     # TODO: add some  more metadata
     # common names?
     #all_species_forecasts['forecast_date']=str(today)
