@@ -39,14 +39,7 @@ current_growing_season = function(){
   return(year)
 }
 
-#########################################################################
-# Take doy of the current season and return Mar. 1, Jan. 30, etc.
-doy_to_date = function(x){
-  current_season = current_growing_season()
-  dates = as_date(paste(current_season, x,sep='-'), '%Y-%j')
-  abbr  = strftime(dates, '%b %d')
-  return(abbr)
-}
+
 
 #########################################################################
 # A data.frame for a specific species/phenophase with columns for
