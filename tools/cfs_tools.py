@@ -163,7 +163,7 @@ class cfs_ftp_info:
         latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
+                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
         
         six_hours = datetime.timedelta(hours=6)
         while len(all_forecasts) < n:
@@ -174,7 +174,7 @@ class cfs_ftp_info:
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
+                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
         return all_forecasts
     
     
