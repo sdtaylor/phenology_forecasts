@@ -24,21 +24,22 @@ class prism_ftp_info:
         
         self.connect()
     
-    def _query_ftp_folder(self, folder, attempt=1):
-        connect_attempts=3
+    def _query_ftp_folder(self, folder, attempts_made=0):
+        connect_attempts=5
         retry_wait_time=300
         try:
             dir_listing = self.con.nlst(folder)
             return dir_listing
         except:
-            if attempt + 1 == connect_attempts:
+            if attempts_made + 1 == connect_attempts:
                 raise IOError('Cannot query PRISM ftp')
             else:
                 print('Cannot query PRISM folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_time))
                 time.sleep(retry_wait_time)
                 self.close()
+                time.sleep(1)
                 self.connect()
-                return self._query_ftp_folder(folder, attempt=attempt+1)
+                return self._query_ftp_folder(folder, attempts_made = attempts_made + 1)
     
     def connect(self):
         self.con = FTP(host=self.host, user=self.user, passwd=self.passwd)
