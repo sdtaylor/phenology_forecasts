@@ -1,7 +1,13 @@
+
 var map;
 var map_image_layer;
 var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
 
+//information which populates the dropdowns
+var image_metadata;
+$.getJSON('https://raw.githubusercontent.com/sdtaylor/phenology_forecasts_data/master/image_metadata.json', 
+        function(json) {image_metadata=json} );
+          
 // diplay='block' mean display normally, display='none' means hide it
 function toggle_maps() {
     var L_map = document.getElementById("leaflet_map");
@@ -34,6 +40,9 @@ function current_map_type() {
 
 var osm;
 function init() {
+    $.getJSON('https://raw.githubusercontent.com/sdtaylor/phenology_forecasts_data/master/image_metadata.json', 
+          function(json) {load_menus(json)} );
+          
     // create map and set center and zoom level
     map = new L.map('leaflet_map');
     map.setView([39,-95],4);
@@ -47,6 +56,9 @@ function init() {
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
     draw_map()
+    
+    //populate dropdown menus
+    
 }
 
 // get current status of a specified dropdown
@@ -97,3 +109,28 @@ function draw_map() {
         $('#static_map').attr('src',image_url);
     }
 }
+
+function load_menus(image_metadata){
+    populate_drop_down('issue_date_select', image_metadata.available_issue_dates);   
+    populate_drop_down('species_select', image_metadata.available_species);   
+    populate_drop_down('phenophase_select', image_metadata.available_phenophase);   
+}
+
+function populate_drop_down(dropdown_name, items) {
+    var dropdown_menu = document.getElementById(dropdown_name);
+    
+    for (var i=0; i<items.length; i++) {
+        var item_i = items[i];
+
+        var dropdown_item = document.createElement("option");
+        dropdown_item.textContent = item_i.display_text;
+        dropdown_item.value = item_i.value;
+        
+        dropdown_menu.appendChild(dropdown_item);
+        if (item_i.default==1) {
+            dropdown_menu.selectedIndex=i;
+        }
+    }
+}
+
+
