@@ -28,37 +28,38 @@ class cfs_ftp_info:
         self.connect()
         self._folder_file_lists={}
     
-    def connect(self, attempt=1):
-        connect_attempts=3
+    def connect(self, attempts_made=0):
+        connect_attempts=5
         retry_wait_time=300
         try:
             self.con = FTP(host=self.host, user='anonymous', passwd='abc123')
         except:
-            if attempt + 1 == connect_attempts:
+            if attempts_made + 1 == connect_attempts:
                 raise IOError('Cannot connect to CFS ftp after {n} attempts'.format(n=connect_attempts))
             else:
                 print('Cannot connect to CFS ftp, retrying in {t} sec'.format(t=retry_wait_time))
                 time.sleep(retry_wait_time)
-                self.connect(attempt = attempt + 1)
+                self.connect(attempts_made = attempts_made + 1)
     
     def close(self):
         self.con.close()
     
-    def _query_ftp_folder(self, folder, attempt=1):
+    def _query_ftp_folder(self, folder, attempts_made=0):
         connect_attempts=3
         retry_wait_time=5
         try:
             dir_listing = self.con.nlst(folder)
             return dir_listing
         except:
-            if attempt + 1 == connect_attempts:
+            if attempts_made + 1 == connect_attempts:
                 raise IOError('Cannot query CFS ftp after {n} attempts'.format(n=connect_attempts))
             else:
                 print('Cannot query CFS folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_time))
                 time.sleep(retry_wait_time)
                 self.close()
+                time.sleep(1)
                 self.connect()
-                return self._query_ftp_folder(folder, attempt=attempt+1)
+                return self._query_ftp_folder(folder, attempts_made = attempts_made + 1)
     
     #Ensure that each folder is only queried once
     def _get_folder_listing(self, folder):
@@ -162,7 +163,7 @@ class cfs_ftp_info:
         latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
         
         all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
+                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
         
         six_hours = datetime.timedelta(hours=6)
         while len(all_forecasts) < n:
@@ -173,7 +174,7 @@ class cfs_ftp_info:
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
+                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
         return all_forecasts
     
     
