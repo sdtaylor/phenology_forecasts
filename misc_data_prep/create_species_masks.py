@@ -10,7 +10,8 @@ from tools import prism_tools
 from tools import tools
 
 # The weird projection used in these USGS shapefiles
-little_proj='+proj=aea +lat_1=38 +lat_2=42 +lat_0=40 +lon_0=-82 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs'
+#little_proj='+proj=aea +lat_1=38 +lat_2=42 +lat_0=40 +lon_0=-82 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs'
+little_proj = '+init=epsg:4267'
 
 # Run the r script to download, unzip, and write to geojson
 
@@ -55,5 +56,5 @@ species_range_dataset = xr.Dataset(data_vars = {'range': (('species','lat','lon'
                         coords =    {'species':species_names,'lat':prism_xarray.lat, 'lon':prism_xarray.lon},
                         attrs =     {'crs':prism_xarray.crs})
 
-species_range_dataset.to_netcdf(config['species_range_file'])
+species_range_dataset.to_netcdf(config['species_range_file'], encoding={'range':{'zlib':True,'complevel':6, 'dtype':'bool'}})
 
