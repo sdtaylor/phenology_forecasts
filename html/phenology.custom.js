@@ -5,7 +5,7 @@ var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
 
 //information which populates the dropdowns
 var image_metadata;
-$.getJSON('https://raw.githubusercontent.com/sdtaylor/phenology_forecasts_data/master/image_metadata.json', 
+$.getJSON('image_metadata.json', 
         function(json) {image_metadata=json} );
           
 // diplay='block' mean display normally, display='none' means hide it
@@ -40,7 +40,7 @@ function current_map_type() {
 
 var osm;
 function init() {
-    $.getJSON('https://raw.githubusercontent.com/sdtaylor/phenology_forecasts_data/master/image_metadata.json', 
+    $.getJSON('image_metadata.json', 
           function(json) {load_menus(json)} );
           
     // create map and set center and zoom level
@@ -72,6 +72,11 @@ function log_text(message) {
     document.getElementById("test_output").innerHTML += '<br>' + message;
 }
 
+//This updates the text info below all the menus
+function update_forecast_info(message) {
+    document.getElementById("forecast_info").innerHTML = '<b>' + message + '</b>';
+}
+
 function clear_map() {
     map.eachLayer(function (layer) {
         map.removeLayer(layer);
@@ -98,13 +103,31 @@ function draw_map() {
     var current_image_layer;
     if (map_type=='interactive') {
         clear_map();
-        var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'_map.png';
+        var image_filename = species+'_'+phenophase+'_'+issue_date+'_map.png';
+        var image_url = 'images/'+issue_date+'/'+image_filename;
+        
+        if (image_metadata.available_images.indexOf(image_filename) == -1){
+            update_forecast_info("Forecast not available");
+            log_text("map not available: "+image_filename);
+        } else {
+            update_forecast_info("");
+            log_text('setting image: ' + image_filename);
+        }
+        
         map_image_layer = L.imageOverlay(image_url, map_image_bounds, {opacity: 0.7});
         map_image_layer.addTo(map);
     } else {
         //construct image url
-        var image_url = 'images/'+issue_date+'/'+species+'_'+phenophase+'_'+issue_date+'.png';
-        log_text('setting image: ' + image_url);
+        var image_filename = species+'_'+phenophase+'_'+issue_date+'.png';
+        var image_url = 'images/'+issue_date+'/'+image_filename;
+        
+        if (image_metadata.available_images.indexOf(image_filename) == -1){
+            update_forecast_info("Forecast not available");
+            log_text("image not available: "+image_filename);
+        } else {
+            update_forecast_info("");
+            log_text('setting image: ' + image_url);
+        }
         //set image
         $('#static_map').attr('src',image_url);
     }
