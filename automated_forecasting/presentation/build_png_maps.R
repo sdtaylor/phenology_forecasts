@@ -32,7 +32,7 @@ doy_to_date = function(x){
 
 args=commandArgs(trailingOnly = TRUE)
 #phenology_forecast_filename = args[1]
-phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-20.nc'
+phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-23.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
 crs_used = ncdf4::ncatt_get(phenology_forecast, varid=0, attname='crs')$value
@@ -52,7 +52,9 @@ image_metadata=data.frame()
 basemap = map_data('state')
 
 #color_scheme = c('blue','green1','green4','red','yellow','cyan')
-# This one is hopefully somewhat colorblind friendly
+# This one is hopefully somewhat colorblind friendly. RGB-Hex is the same as the names
+# from: https://web.njit.edu/~kevin/rgb.txt.html
+#color_scheme = c('87CEEB','9AFF9A','548B54','FF6347','FFFF00','0000FF')
 color_scheme = c('skyblue','palegreen1','palegreen4','tomato','yellow','blue')
 
 for(spp in available_species){
@@ -82,18 +84,19 @@ for(spp in available_species){
       #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
       scale_fill_gradientn(colors=color_scheme, labels = doy_to_date, limits=c(1,365)) + 
-      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.5) + 
+      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
       coord_fixed(1.3) +
       theme_bw() + 
       guides(fill = guide_colorbar(title = legend_title,
                                    title.position = 'top',
                                    title.hjust = 0.5)) + 
       theme(legend.position = 'bottom',
-            legend.key.width = unit(5, 'cm'),
-            legend.title = element_text(size=20),
-            legend.text = element_text(size=12),
-            plot.title = element_text(size=22),
-            plot.subtitle = element_text(size=15),
+            legend.key.width = unit(2.5, 'cm'),
+            legend.key.height = unit(0.4, 'cm'),
+            legend.title = element_text(size=10),
+            legend.text = element_text(size=6),
+            plot.title = element_text(size=13),
+            plot.subtitle = element_text(size=9),
             plot.background = element_rect(fill='grey97'),
             panel.background =  element_rect(fill='grey97'),
             legend.background =  element_rect(fill='grey97'))+
@@ -105,15 +108,15 @@ for(spp in available_species){
       labs(title = figure_title, 
            subtitle = figure_subtitle)
     
+    ggsave(static_image,filename=paste0(issue_date_forecast_folder,static_filename),
+           height = 12.5, width = 17, units = 'cm')
+    
     # Display only the data for interactive map
     # TODO: need to change CRS
     r = raster_from_netcdf(phenology_forecast, phenophase = pheno, species =  spp, variable = 'doy_prediction')
     raster::crs(r) = crs_used
     map_image = raster_to_leaflet_image(r, colors=color_scheme, color_domain = c(0,365))
 
-    ggsave(static_image,filename=paste0(issue_date_forecast_folder,static_filename),
-           height = 25, width = 34, units = 'cm')
-    
     png::writePNG(map_image, target=paste0(issue_date_forecast_folder,map_filename))
     
     image_metadata = image_metadata %>%
