@@ -48,7 +48,7 @@
                   <table>
                      <tr>
                         <td>Map Type
-                            <select id="map_type_select" class="selectpicker" onchange="draw_map()">
+                            <select id="map_type_select" onchange="draw_map()">
                             <option value='interactive' selected>Interactive</option>
                             <option value='static'>Static</option>
                             </select>
@@ -70,6 +70,11 @@
                         <td>Phenophase
                             <select id="phenophase_select" onchange="draw_map()">
                              </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <div id="forecast_info"></div>
                         </td>
                     </tr>
                     <tr>
