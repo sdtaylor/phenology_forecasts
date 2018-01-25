@@ -57,6 +57,14 @@ basemap = map_data('state')
 #color_scheme = c('87CEEB','9AFF9A','548B54','FF6347','FFFF00','0000FF')
 color_scheme = c('skyblue','palegreen1','palegreen4','tomato','yellow','blue')
 
+# Put the color bar labels on the 15th of every month
+is_leap_year = ((current_season - 2000) %% 4 == 0)
+if(is_leap_year){
+  legend_label_breaks =c(15,46,75,106,136,167,197,228,259,289,320,350)
+} else {
+  legend_label_breaks =c(15,46,74,105,135,166,196,227,258,288,319,349)
+}
+
 for(spp in available_species){
   for(pheno in available_phenophases){
     common_name = species_info %>%
@@ -83,7 +91,8 @@ for(spp in available_species){
     static_image=ggplot() + 
       #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
-      scale_fill_gradientn(colors=color_scheme, labels = doy_to_date, limits=c(1,365)) + 
+      scale_fill_gradientn(colors=color_scheme, labels = doy_to_date, limits=c(1,365), 
+                           breaks=legend_label_breaks) + 
       geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
       coord_fixed(1.3) +
       theme_bw() + 
