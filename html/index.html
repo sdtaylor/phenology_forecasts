@@ -37,20 +37,20 @@
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span8">
-                <div id="leaflet_map">
+                <div id="leaflet_map" style="display:none">
                 </div>
                 <div id="static_map_container">
-                    <img id='static_map' src='images/2018-01-17/populus_deltoides_371_2018-01-17.png' style="display:none">
+                    <img id='static_map' src='images/2018-01-17/populus_deltoides_371_2018-01-17.png' style="display:block">
                 </div>
             </div>
             <div class="span4">      
                 <div>
                   <table>
-                     <tr>
+                     <tr style="display:none">
                         <td>Map Type
                             <select id="map_type_select" onchange="draw_map()">
-                            <option value='interactive' selected>Interactive</option>
-                            <option value='static'>Static</option>
+                            <option value='interactive'>Interactive</option>
+                            <option value='static' selected>Static</option>
                             </select>
                         </td>
                     </tr>
