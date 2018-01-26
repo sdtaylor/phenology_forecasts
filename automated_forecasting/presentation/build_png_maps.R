@@ -64,7 +64,15 @@ if(is_leap_year){
 } else {
   legend_label_breaks =c(15,46,74,105,135,166,196,227,258,288,319,349)
 }
-z
+
+attribution_text_main="phenology.naturecast.org"
+attribution_text_data="
+Made with data from:
+National Phenology Network (usanpn.org)
+NOAA (noaa.org)
+PRISM Climate Group (prism.oregonstate.edu)"
+
+
 for(spp in available_species){
   for(pheno in available_phenophases){
     common_name = species_info %>%
@@ -80,7 +88,7 @@ for(spp in available_species){
     phenophase_info = all_phenophase_info %>%
       filter(Phenophase_ID==pheno)
     
-    figure_title = paste0('Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
+    figure_title = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
     figure_subtitle = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
     legend_title = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
     filename_base = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
@@ -95,6 +103,8 @@ for(spp in available_species){
                            breaks=legend_label_breaks) + 
       geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
       coord_fixed(1.3) +
+      annotate('text',x=-125,y=28,label=attribution_text_main, size=2.5, hjust=0) +
+      annotate('text',x=-125,y=26,label=attribution_text_data, size=1.5, hjust=0) +
       theme_bw() + 
       guides(fill = guide_colorbar(title = legend_title,
                                    title.position = 'top',
