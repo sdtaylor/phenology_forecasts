@@ -4,12 +4,17 @@
     border: 1px solid #ccc;
 }
 
-#static_map {
-    width: 110%;
+#static_map_prediction {
+    width: 100%;
     height: auto;
     border: 1px solid #ccc;
 }
 
+#static_map_uncertainty {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+}
 
 .leaflet-container {
     background: #fff;

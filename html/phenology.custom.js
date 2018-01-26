@@ -125,8 +125,11 @@ function draw_map() {
         map_image_layer.addTo(map);
     } else {
         //construct image url
-        var image_filename = species+'_'+phenophase+'_'+issue_date+'.png';
-        var image_url = 'images/'+issue_date+'/'+image_filename;
+        var image_filename_prediction = species+'_'+phenophase+'_'+issue_date+'_prediction.png';
+        var image_url_prediction = 'images/'+issue_date+'/'+image_filename_prediction;
+        
+        var image_filename_uncertainty = species+'_'+phenophase+'_'+issue_date+'_uncertainty.png';
+        var image_url_uncertainty = 'images/'+issue_date+'/'+image_filename_uncertainty;
         
         if (image_metadata.available_images.indexOf(image_filename) == -1){
             update_forecast_info("Forecast not available");
@@ -136,7 +139,8 @@ function draw_map() {
             log_text('setting image: ' + image_url);
         }
         //set image
-        $('#static_map').attr('src',image_url);
+        $('#static_map_prediction').attr('src',image_url_prediction);
+        $('#static_map_uncertainty').attr('src',image_url_uncertainty);
     }
 }
 
