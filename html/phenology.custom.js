@@ -57,7 +57,7 @@ function init() {
     //  maxZoom: 19,
     //  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     //});
-    draw_map()
+    draw_map();
     
     
 }
@@ -92,6 +92,12 @@ function draw_map() {
     var species = get_selection("species_select");
     var phenophase = get_selection("phenophase_select");
     
+    log_text("#######################")
+    log_text("selected map_type: "+map_type);
+    log_text("selected issue_date: "+issue_date);
+    log_text("selected species: "+species);
+    log_text("selected phenophase: "+phenophase);
+
 
     //var current_type = current_map_type()
     if (current_map_type() == map_type) {
