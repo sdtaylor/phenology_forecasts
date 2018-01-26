@@ -75,7 +75,7 @@ def run():
                      'available_phenophase':available_phenophase,
                      'available_images':available_images}
     
-    with open('html/image_metadata.json','w') as f:
+    with open(config['phenology_forecast_figure_folder']+'image_metadata.json','w') as f:
         json.dump(json_metadata, f, indent=4)
         
     # A minified options incase this ever becomes a large file

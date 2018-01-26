@@ -144,5 +144,8 @@ def run():
                                                                                    'scale_factor':0.001,  
                                                                                    '_FillValue': -9999}})
 
+    # Return filename of final forecast file for use by primary script
+    return forecast_filename
+
 if __name__=='__main__':
     run()
