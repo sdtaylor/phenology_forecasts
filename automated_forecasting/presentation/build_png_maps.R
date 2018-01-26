@@ -175,7 +175,7 @@ for(spp in available_species){
     
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
-                           forecast_issue_data=issue_date,img_filename=c(static_filename_prediction, static_filename_uncertainty)))
+                           forecast_issue_date=issue_date,img_filename=c(static_filename_prediction, static_filename_uncertainty)))
     
      
   }

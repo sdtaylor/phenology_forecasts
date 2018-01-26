@@ -1,6 +1,7 @@
 from tools import tools
 import time
 import datetime
+import subprocess
 
 from automated_forecasting.climate import download_latest_observations, download_latest_forecasts
 from automated_forecasting.phenology import apply_phenology_models
@@ -49,14 +50,30 @@ except:
 # apply phenology models
 message('Applying phenology models ' + str(now()))
 try:
-    apply_phenology_models.run()
+    phenology_forecast_filename = apply_phenology_models.run()
     message(min_elapsed() + ' min in phenology models succeeded ' + str(now()))
 except:
     message(min_elapsed() + ' min in phenology models failed ' + str(now()))
     raise
 
 ###############################
-# rebuild website
-# TODO
+# Rebuild the website
+message('Updating phenology forecast website ' + str(now()))
+# Generate all the static forecast images
+try:
+    subprocess.call(['/usr/bin/Rscript',
+                     '--vanilla',
+                     'automated_forecasting/presentation/build_png_maps.R',
+                     phenology_forecast_filename])
+except:
+    message('building static images failed ' + str(now()))
+
+# Generate a new json metadata file
+from automated_forecasting.presentation import create_metadata_file
+create_metadata_file.run()
+
+# Sync the images folder and upload the new json file
+
+
 
 tools.cleanup_tmp_folder(config['tmp_folder'])
