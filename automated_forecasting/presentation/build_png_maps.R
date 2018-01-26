@@ -31,8 +31,8 @@ doy_to_date = function(x){
 
 
 args=commandArgs(trailingOnly = TRUE)
-#phenology_forecast_filename = args[1]
-phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-23.nc'
+phenology_forecast_filename = args[1]
+#phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-01-23.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
 crs_used = ncdf4::ncatt_get(phenology_forecast, varid=0, attname='crs')$value
