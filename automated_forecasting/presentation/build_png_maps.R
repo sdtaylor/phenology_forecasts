@@ -64,7 +64,7 @@ if(is_leap_year){
 } else {
   legend_label_breaks =c(15,46,74,105,135,166,196,227,258,288,319,349)
 }
-
+z
 for(spp in available_species){
   for(pheno in available_phenophases){
     common_name = species_info %>%
@@ -85,9 +85,9 @@ for(spp in available_species){
     legend_title = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
     filename_base = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
     static_filename = paste0(filename_base,'.png')
-    map_filename = paste0(filename_base,'_map.png')
+    #map_filename = paste0(filename_base,'_map.png')
     
-    # stand alone image
+    # stand alone static image
     static_image=ggplot() + 
       #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
@@ -119,14 +119,14 @@ for(spp in available_species){
     
     ggsave(static_image,filename=paste0(issue_date_forecast_folder,static_filename),
            height = 12.5, width = 17, units = 'cm')
-    
-    # Display only the data for interactive map
-    # TODO: need to change CRS
-    r = raster_from_netcdf(phenology_forecast, phenophase = pheno, species =  spp, variable = 'doy_prediction')
-    raster::crs(r) = crs_used
-    map_image = raster_to_leaflet_image(r, colors=color_scheme, color_domain = c(0,365))
-
-    png::writePNG(map_image, target=paste0(issue_date_forecast_folder,map_filename))
+    # 
+    # # Display only the data for interactive map
+    # # TODO: need to change CRS
+    # r = raster_from_netcdf(phenology_forecast, phenophase = pheno, species =  spp, variable = 'doy_prediction')
+    # raster::crs(r) = crs_used
+    # map_image = raster_to_leaflet_image(r, colors=color_scheme, color_domain = c(0,365))
+    # 
+    # png::writePNG(map_image, target=paste0(issue_date_forecast_folder,map_filename))
     
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
