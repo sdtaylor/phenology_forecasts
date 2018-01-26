@@ -50,13 +50,14 @@ available_phenophases = phenology_forecast$dim$phenophase$vals
 image_metadata=data.frame()
 
 basemap = map_data('state')
-
+########################################
 #color_scheme = c('blue','green1','green4','red','yellow','cyan')
 # This one is hopefully somewhat colorblind friendly. RGB-Hex is the same as the names
 # from: https://web.njit.edu/~kevin/rgb.txt.html
 #color_scheme = c('87CEEB','9AFF9A','548B54','FF6347','FFFF00','0000FF')
-color_scheme = c('skyblue','palegreen1','palegreen4','tomato','yellow','blue')
+prediction_color_scheme = c('skyblue','palegreen1','palegreen4','tomato','yellow','blue')
 
+########################################
 # Put the color bar labels on the 15th of every month
 is_leap_year = ((current_season - 2000) %% 4 == 0)
 if(is_leap_year){
@@ -64,7 +65,7 @@ if(is_leap_year){
 } else {
   legend_label_breaks =c(15,46,74,105,135,166,196,227,258,288,319,349)
 }
-
+########################################
 attribution_text_main="phenology.naturecast.org"
 attribution_text_data="
 Made with data from:
@@ -72,6 +73,34 @@ National Phenology Network (usanpn.org)
 NOAA (noaa.org)
 PRISM Climate Group (prism.oregonstate.edu)"
 
+#######################################
+static_image_base_plot = ggplot() + 
+  #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
+  #geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd)) +
+  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
+  #scale_fill_distiller(palette='YlGnBu', direction = 1) +
+  coord_fixed(1.3) +
+  annotate('text',x=-125,y=28,label=attribution_text_main, size=2.8, hjust=0) +
+  annotate('text',x=-125,y=26,label=attribution_text_data, size=1.8, hjust=0) +
+  theme_bw() + 
+  guides(fill = guide_colorbar(title.position = 'top',
+                               title.hjust = 0.5)) + 
+  theme(legend.position = 'bottom',
+        legend.key.height = unit(0.4, 'cm'),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=6),
+        plot.title = element_text(size=13),
+        plot.subtitle = element_text(size=9),
+        plot.background = element_rect(fill='grey97'),
+        panel.background =  element_rect(fill='grey97'),
+        legend.background =  element_rect(fill='grey97'))+
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_blank())
+
+######################################
 
 for(spp in available_species){
   for(pheno in available_phenophases){
@@ -88,47 +117,53 @@ for(spp in available_species){
     phenophase_info = all_phenophase_info %>%
       filter(Phenophase_ID==pheno)
     
-    figure_title = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
-    figure_subtitle = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
-    legend_title = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
     filename_base = paste(stringr::str_replace(spp,' ','_'),pheno,issue_date,sep='_')
-    static_filename = paste0(filename_base,'.png')
-    #map_filename = paste0(filename_base,'_map.png')
     
-    # stand alone static image
-    static_image=ggplot() + 
-      #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
+    #################
+    # Prediction titles and filename
+    figure_title_prediction = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
+    figure_subtitle_prediction = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
+    legend_title_prediction = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
+    static_filename_prediction = paste0(filename_base,'_prediction.png')
+
+    #################
+    # Uncertainty titles and filename
+    figure_title_uncertainty = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
+    figure_subtitle_uncertainty = paste0('Uncertainty for date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
+    legend_title_uncertainty = paste0('95% CI for ',tools::toTitleCase(phenophase_info$verb),' in days')
+    static_filename_uncertainty = paste0(filename_base,'_uncertainty.png')
+
+    ################
+    # stand alone static image prediction
+    static_image_prediction=static_image_base_plot + 
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
-      scale_fill_gradientn(colors=color_scheme, labels = doy_to_date, limits=c(1,365), 
+      scale_fill_gradientn(colors=prediction_color_scheme, labels = doy_to_date, limits=c(1,365), 
                            breaks=legend_label_breaks) + 
-      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
-      coord_fixed(1.3) +
-      annotate('text',x=-125,y=28,label=attribution_text_main, size=2.5, hjust=0) +
-      annotate('text',x=-125,y=26,label=attribution_text_data, size=1.5, hjust=0) +
-      theme_bw() + 
-      guides(fill = guide_colorbar(title = legend_title,
+      theme(legend.key.width = unit(2.5, 'cm')) +
+      labs(title = figure_title_prediction, 
+           subtitle = figure_subtitle_prediction,
+           fill = legend_title_prediction)
+    
+    ggsave(static_image_prediction,filename=paste0(issue_date_forecast_folder,static_filename_prediction),
+           height = 12.5, width = 17, units = 'cm')
+    
+    ##############
+    # static image for uncertainty
+    static_image_uncertainty=static_image_base_plot + 
+      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd*2)) +
+      scale_fill_distiller(palette='YlGnBu', direction = 1) +
+      guides(fill = guide_colorbar(title = legend_title_uncertainty,
                                    title.position = 'top',
                                    title.hjust = 0.5)) + 
-      theme(legend.position = 'bottom',
-            legend.key.width = unit(2.5, 'cm'),
-            legend.key.height = unit(0.4, 'cm'),
-            legend.title = element_text(size=10),
-            legend.text = element_text(size=6),
-            plot.title = element_text(size=13),
-            plot.subtitle = element_text(size=9),
-            plot.background = element_rect(fill='grey97'),
-            panel.background =  element_rect(fill='grey97'),
-            legend.background =  element_rect(fill='grey97'))+
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            panel.grid = element_blank(),
-            axis.ticks = element_blank(),
-            panel.border = element_blank())+
-      labs(title = figure_title, 
-           subtitle = figure_subtitle)
+      theme(legend.key.width = unit(1.0, 'cm')) +
+      labs(title = figure_title_uncertainty, 
+           subtitle = figure_subtitle_uncertainty,
+           fill = legend_title_uncertainty)
     
-    ggsave(static_image,filename=paste0(issue_date_forecast_folder,static_filename),
+    ggsave(static_image_uncertainty,filename=paste0(issue_date_forecast_folder,static_filename_uncertainty),
            height = 12.5, width = 17, units = 'cm')
+    
+    
     # 
     # # Display only the data for interactive map
     # # TODO: need to change CRS
@@ -140,12 +175,10 @@ for(spp in available_species){
     
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, 
-                           forecast_issue_data=issue_date,img_filename=static_filename))
+                           forecast_issue_data=issue_date,img_filename=c(static_filename_prediction, static_filename_uncertainty)))
     
      
   }
 }
 
 append_csv(image_metadata, config$phenology_forecast_figure_metadata_file)
-
-
