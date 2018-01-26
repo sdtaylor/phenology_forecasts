@@ -1,7 +1,8 @@
 
-var map;
-var map_image_layer;
-var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
+//leaflet map stuff
+//var map;
+//var map_image_layer;
+//var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
 
 //information which populates the dropdowns
 var image_metadata;
@@ -42,22 +43,22 @@ var osm;
 function init() {
     $.getJSON('image_metadata.json', 
           function(json) {load_menus(json)} );
-          
+    
+    //leaflet map stuff
     // create map and set center and zoom level
-    map = new L.map('leaflet_map');
-    map.setView([39,-95],4);
+    //map = new L.map('leaflet_map');
+    //map.setView([39,-95],4);
 
-    var selection;
-    var selectedLayer;
-    var selectedFeature;
-    // create and add osm tile layer
-    osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    });
+    //var selection;
+    //var selectedLayer;
+    //var selectedFeature;
+    //// create and add osm tile layer
+    //osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //  maxZoom: 19,
+    //  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    //});
     draw_map()
     
-    //populate dropdown menus
     
 }
 
