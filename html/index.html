@@ -26,7 +26,7 @@
 
 	  </head>
 
-  <body onload="init()">
+  <body onload="init();">
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="navbar-inner">
             <div class="container-fluid">
@@ -40,7 +40,7 @@
                 <div id="leaflet_map" style="display:none">
                 </div>
                 <div id="static_map_container">
-                    <img id='static_map' src='images/2018-01-17/populus_deltoides_371_2018-01-17.png' style="display:block">
+                    <img id='static_map' src='' style="display:block">
                 </div>
             </div>
             <div class="span4">      
@@ -87,6 +87,9 @@
             </div>
         </div>
     </div>
+    <script>
+		init();
+    </script>
   </body>
   <footer>
 	   <!-- bootstrap select for the sweet searchable dropdown-->
