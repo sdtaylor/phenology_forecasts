@@ -3,6 +3,7 @@
 //var map;
 //var map_image_layer;
 //var map_image_bounds = [[24.0625,-125.0208],[49.9375,-66.479]];
+var debug=false
 
 //information which populates the dropdowns
 var image_metadata;
@@ -70,7 +71,9 @@ function get_selection(select_id) {
 
 
 function log_text(message) {
-    document.getElementById("test_output").innerHTML += '<br>' + message;
+    if (debug){
+        document.getElementById("log_output").innerHTML += '<br>' + message;
+    }
 }
 
 //This updates the text info below all the menus
@@ -131,7 +134,7 @@ function draw_map() {
         var image_filename_uncertainty = species+'_'+phenophase+'_'+issue_date+'_uncertainty.png';
         var image_url_uncertainty = 'images/'+issue_date+'/'+image_filename_uncertainty;
         
-        if (image_metadata.available_images.indexOf(image_filename) == -1){
+        if (image_metadata.available_images.indexOf(image_filename_prediction) == -1){
             update_forecast_info("Forecast not available");
             log_text("image not available: "+image_filename);
         } else {
