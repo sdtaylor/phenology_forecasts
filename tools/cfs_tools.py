@@ -45,8 +45,9 @@ class cfs_ftp_info:
         self.con.close()
     
     def _query_ftp_folder(self, folder, attempts_made=0):
-        connect_attempts=3
-        retry_wait_time=5
+        connect_attempts=5
+        # wait longer and longer between retries before failing entirely.
+        retry_wait_times=[60,600,3600,3600*2,3600*4]
         try:
             dir_listing = self.con.nlst(folder)
             return dir_listing
@@ -54,8 +55,8 @@ class cfs_ftp_info:
             if attempts_made + 1 == connect_attempts:
                 raise IOError('Cannot query CFS ftp after {n} attempts'.format(n=connect_attempts))
             else:
-                print('Cannot query CFS folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_time))
-                time.sleep(retry_wait_time)
+                print('Cannot query CFS folder, reconnecting and retrying in {t} sec'.format(t=retry_wait_times[attempts_made]))
+                time.sleep(retry_wait_times[attempts_made])
                 self.close()
                 time.sleep(1)
                 self.connect()
