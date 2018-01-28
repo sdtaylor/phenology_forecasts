@@ -8,6 +8,8 @@ tmp_folder: tmp/
 
 mask_file: land_mask.nc
 
+google_auth: 
+
 #######################################################
 # Phenology models attributes
 species_range_file: species_ranges.nc
