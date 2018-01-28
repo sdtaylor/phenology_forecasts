@@ -41,10 +41,13 @@ function current_map_type() {
 }
 
 var osm;
-function init() {
+function init_page() {
+    log_text("initializing")
     $.getJSON('image_metadata.json', 
-          function(json) {load_menus(json)} );
-    
+          function(json) {
+              load_menus(json);
+              draw_map();} );
+
     //leaflet map stuff
     // create map and set center and zoom level
     //map = new L.map('leaflet_map');
@@ -58,9 +61,7 @@ function init() {
     //  maxZoom: 19,
     //  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     //});
-    draw_map();
-    
-    
+
 }
 
 // get current status of a specified dropdown
@@ -90,6 +91,7 @@ function clear_map() {
 
 function draw_map() {
     //get info to display
+    log_text("drawing map")
     var map_type = get_selection("map_type_select");
     var issue_date = get_selection("issue_date_select");
     var species = get_selection("species_select");
@@ -148,8 +150,11 @@ function draw_map() {
 }
 
 function load_menus(image_metadata){
+    log_text("populating issue dates")
     populate_drop_down('issue_date_select', image_metadata.available_issue_dates);   
+    log_text("populating species")
     populate_drop_down('species_select', image_metadata.available_species);   
+    log_text("populating phenophase")
     populate_drop_down('phenophase_select', image_metadata.available_phenophase);   
 }
 
@@ -169,5 +174,4 @@ function populate_drop_down(dropdown_name, items) {
         }
     }
 }
-
 

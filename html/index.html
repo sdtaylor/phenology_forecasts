@@ -4,18 +4,16 @@
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
       <title>Phenology Forecasts</title>
        <!-- leaflet -->
+       <!--
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" type="text/css" crossorigin="">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js" crossorigin=""></script>
+      -->
       <!-- jquery -->
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
       <!-- bootstrap -->
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/js/bootstrap.min.js"></script>
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/css/bootstrap.min.css">
 
-      <!-- custom stuff -->
-      <script type="text/javascript" src="phenology.custom.js"></script>
-      <link rel="stylesheet" href="style.css" type="text/css">
-	   
       <style>
         body {
             padding-top: 60px;
@@ -23,10 +21,10 @@
         }
       </style>
 
-
 	  </head>
 
-  <body onload="init();">
+  <body onload="init_page()">
+	  
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="navbar-inner">
             <div class="container-fluid">
@@ -59,19 +57,19 @@
                     </tr>
                      <tr>
                         <td>Issue Date
-                            <select id="issue_date_select" onchange="draw_map()">
+                            <select id="issue_date_select" class="selectpicker" onchange="draw_map()">
 							</select>
                         </td>
                     </tr>
                      <tr>
                         <td>Species
-                            <select id="species_select"  onchange="draw_map()">
+                            <select id="species_select" class="selectpicker" data-live-search="true" onchange="draw_map()">
                             </select>
                         </td>
                     </tr>
                      <tr>
                         <td>Phenophase
-                            <select id="phenophase_select" onchange="draw_map()">
+                            <select id="phenophase_select" class="selectpicker" onchange="draw_map()">
                              </select>
                         </td>
                     </tr>
@@ -90,14 +88,17 @@
             </div>
         </div>
     </div>
-    <script>
-		init();
-    </script>
-  </body>
-  <footer>
+	<footer>
 	   <!-- bootstrap select for the sweet searchable dropdown-->
+	   <!--
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
-	  
-  </footer>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js">
+      $('.selectpicker').selectpicker('render');
+      -->
+       <!-- custom stuff -->
+      <script type="text/javascript" src="phenology.custom.js"></script>
+      <link rel="stylesheet" href="style.css" type="text/css">
+	</footer>
+  </body>
+
 </html>
