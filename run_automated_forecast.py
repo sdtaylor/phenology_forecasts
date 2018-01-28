@@ -65,15 +65,31 @@ try:
                      '--vanilla',
                      'automated_forecasting/presentation/build_png_maps.R',
                      phenology_forecast_filename])
+    message('building static images succeeded ' + str(now()))
 except:
     message('building static images failed ' + str(now()))
+    raise
 
 # Generate a new json metadata file
 from automated_forecasting.presentation import create_metadata_file
-create_metadata_file.run()
+message('Creating json metadata file' + str(now()))
+try:
+    create_metadata_file.run()
+    message('creating json metadata file succeeded')
+except:
+    message('creating json metadata file failed')
+    raise
 
 # Sync the images folder and upload the new json file
+from automated_forecasting.presentation import sync_website
+message('Syncing website data' + str(now()))
+try:
+    sync_website.run()
+    message('Syncing website data succeeded')
+except:
+    message('Syncing website data failed')
+    raise
 
-
+message('Automated forecasting finished at ' + str(now()))
 
 tools.cleanup_tmp_folder(config['tmp_folder'])
