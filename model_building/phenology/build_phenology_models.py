@@ -21,6 +21,7 @@ class model_finder_worker:
     def setup(self):
         self.temperature_obs = pd.read_csv(config['phenology_observations_temperature_file'])
         self.today = datetime.datetime.today().date()
+        self.bootstrap_model = pyPhenology.models.BootstrapModel
         print('seting things up')
     
     def get_failed_job_result(self, species_info):
@@ -46,14 +47,16 @@ class model_finder_worker:
         best_base_model_name = None
             
         for model_name in potential_base_models:
-            Model = pyPhenology.utils.load_model(model_name)
-            model = Model()
+            core_model = pyPhenology.utils.load_model(model_name)
+            model = self.bootstrap_model(core_model=core_model, num_bootstraps=10)
             model.fit(observations=training_obs, temperature=temperature_obs,
                       optimizer_params={'popsize':100,
                                         'maxiter':50000})
             model_aic = tools.aic(obs = testing_obs.doy.values, 
-                                  pred = model.predict(testing_obs, temperature_obs),
-                                  n_param = len(model._parameters_to_estimate))
+                                  pred = model.predict(testing_obs, 
+                                                       temperature_obs,
+                                                       aggregation='mean'),
+                                  n_param = len(model.get_params()[0]) - 1)
             if model_aic < best_aic:
                 best_base_model = model
                 best_base_model_name = model_name
