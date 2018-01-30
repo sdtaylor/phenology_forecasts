@@ -13,12 +13,12 @@
       <!-- jquery -->
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
       <!-- bootstrap -->
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/js/bootstrap.min.js"></script>
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.2.1/css/bootstrap.min.css">
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
       <style>
         body {
-            padding-top: 60px;
+            padding-top: 0px;
             padding-bottom: 40px;
         }
       </style>
@@ -27,26 +27,32 @@
 
   <body onload="init_page()">
 	  
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="container-fluid">
-                <a class="brand" href="/">Phenology Forecasts - Beta</a>
-            </div>
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="./index.html">Phenology Forecasts - Beta</a>
         </div>
-    </div>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="./index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </div>
+    </nav>
+    
+    
     <div class="container-fluid">
         <div class="row-fluid">
-			<div class="span2">
+			<div class="col-md-2">
 			</div>
-            <div class="span6">
+            <div class="col-md-6">
                 <div id="leaflet_map" style="display:none">
                 </div>
                 <div id="static_map_container">
-                    <img id='static_map_prediction' src='' style="display:block"><br>
-                    <img id='static_map_uncertainty' src='' style="display:block">
+                    <img id='static_map_prediction' class="img-responsive" src='' style="display:block"><br>
+                    <img id='static_map_uncertainty' class="img-responsive" src='' style="display:block">
                 </div>
             </div>
-            <div class="span4">      
+            <div class="col-md-4">      
                 <div>
                   <table>
                      <tr style="display:none">
@@ -81,11 +87,41 @@
                         </td>
                     </tr>
                     <tr>
+
+                    </tr>
+                    <tr>
                         <td>
                         <div id="log_output"></div>
                         </td>
                     </tr>
                   </table>
+                  <br><br><br>
+                  <div class="panel panel-default">
+                        <div class="panel-body">
+                        <a href="https://en.wikipedia.org/wiki/Phenology">Phenology</a> is the timing of natural events. For example the timing of when flowers bloom in the spring, when certain birds appear, or when trees change color in the fall. These events are dependent on temperature, so they can potentially be predicted in advance using weather forecasts. Read more about how this is done <a href="./about.html">here</a>.
+                        </div>
+                  </div>
+                   <div class="panel panel-default">
+                        <div class="panel-body">
+							The <b>phenophase</b> is the specific event being forecast. Such as flowers, leaves, fruit, fall colors, etc. 
+                        </div>
+                  </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+							The <b>issue date</b> is the day a forecast was made. The farther away in time a forecast is made the less accurate it will be. For example predicting when flowers will bloom for dogwood is much harder in December than it is in March.  
+						</div>
+                  </div>
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+							There are tens of thousands of plant <b>species</b> in the U.S. but here we only have some of the most abudant. Listed in the dropdown and on the maps is the common name (ie. Aspen) and the scientific name (ie. Populus tremuloides).
+						</div>
+                  </div>
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+							The <b>Predicted date</b> maps show the expected date of when something will happen. The <b>Uncertainty</b> maps show the variation around the predicted date and can be read as "plus or minus this many days". Uncertainty will be relatively high for things that are far into the future.
+						</div>
+                  </div>
               </div>
             </div>
         </div>

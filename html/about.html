@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
+      <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <title>Phenology Forecasts</title>
+       <!-- leaflet -->
+       <!--
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" type="text/css" crossorigin="">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js" crossorigin=""></script>
+      -->
+      <!-- jquery -->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+      <!-- bootstrap -->
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+      <style>
+        body {
+            padding-top: 0px;
+            padding-bottom: 40px;
+        }
+      </style>
+
+	  </head>
+
+  <body onload="init_page()">
+	  
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="./index.html">Phenology Forecasts - Beta</a>
+        </div>
+        <ul class="nav navbar-nav">
+          <li><a href="./index.html">Home</a></li>
+          <li class="active"><a href="about.html">About</a></li>
+        </ul>
+      </div>
+    </nav>
+
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+			<div class="col-md-2">
+			</div>
+            <div class="col-md-6">
+                <div class="container">
+                    <h1>FAQ</h1>
+                    <div class="panel panel-default">
+                        <div class="panel-heading" class="h4">What is this?</div>
+                        <div class="panel-body">These maps are forecasts of when specific things like flowers or leaves will appear for a variety of plant species around the US. </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">How is they made?</div>
+                        <div class="panel-body">All of these maps are made with climate forecasts and different kinds of <a href="https://en.wikipedia.org/wiki/Growing_degree-day">growing degree day</a> phenology models.</div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">By who?</div>
+                        <div class="panel-body">This is an extension of the research by <a href="https://twitter.com/dataEcologist">Shawn Taylor</a>, an ecologist in the <a href="http://whitelab.weecology.org/">White Lab</a> at the University of Florida.</div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Why?</div>
+                        <div class="panel-body">Ecologists have a <a href="https://theconversation.com/can-scientists-learn-to-make-nature-forecasts-just-as-we-forecast-the-weather-90822">lot of opportunities</a> to help others by making forecasts about what we study. This is an experiment down that path. </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Neat!</div>
+                        <div class="panel-body"> You can help improve it! Learn about phenology and the plants you see every day by making observations using <a href="https://www.usanpn.org/natures_notebook">Nature’s Notebook</a>. These forecasts use that data. </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Miscellaneous</div>
+                        <div class="panel-body">
+                            This site is in the beta phase and will likely be changing and improving. If you find it informative or have any thoughts please tell Shawn on <a href="https://twitter.com/dataEcologist">twitter</a> or email shawntaylor [at] weecology (dot) org. <br><br>
+                            This website relies entirely on open source software and data, as well as numerous volunteers who contribute phenology observations to the National Phenology Network. <br><br>
+                            <h4>Data:</h4>
+                            - <a href="https://www.usanpn.org/">The National Phenology Network</a><br>
+                            - <a href="https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/climate-forecast-system-version2-cfsv2">NOAA CFSv2 Climate Forecast</a><br>
+                            - <a href="http://prism.oregonstate.edu">PRISM Gridded Climate Data</a><br>
+                            <h4>Primary Software Packages</h4>
+                            - <a href="https://www.python.org/"><b>Python</b></a><br>
+                            - <a href="https://www.anaconda.com/what-is-anaconda/">Anaconda</a><br>
+                            - <a href="http://www.numpy.org/">numpy</a><br>
+                            - <a href="xarray.pydata.org/">xarray</a><br>
+                            - <a href="https://pandas.pydata.org/">pandas</a><br>
+                            - <a href="https://mapbox.github.io/rasterio/">rasterio</a><br>
+                            - <a href="https://www.r-project.org/"><b>R</b></a><br>
+                            - <a href="https://www.tidyverse.org/">tidyverse</a><br>
+                            - <a href="https://cran.r-project.org/web/packages/raster/index.html">raster</a><br>
+                            - <a href="https://cran.r-project.org/web/packages/ncdf4/index.html">ncdf4</a><br>
+                        </div>
+                    </div>
+                
+                </div>
+            </div>
+            <div class="col-md-3">      
+
+            </div>
+        </div>
+    </div>
+	<footer>
+	   <!-- bootstrap select for the sweet searchable dropdown-->
+	   <!--
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js">
+      $('.selectpicker').selectpicker('render');
+      -->
+       <!-- custom stuff -->
+      <script type="text/javascript" src="phenology.custom.js"></script>
+      <link rel="stylesheet" href="style.css" type="text/css">
+	</footer>
+  </body>
+
+</html>
