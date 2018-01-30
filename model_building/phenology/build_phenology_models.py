@@ -48,7 +48,7 @@ class model_finder_worker:
             
         for model_name in potential_base_models:
             core_model = pyPhenology.utils.load_model(model_name)
-            model = self.bootstrap_model(core_model=core_model, num_bootstrap=10)
+            model = self.bootstrap_model(core_model=core_model, num_bootstraps=10)
             model.fit(observations=training_obs, temperature=temperature_obs,
                       optimizer_params={'popsize':100,
                                         'maxiter':50000})
