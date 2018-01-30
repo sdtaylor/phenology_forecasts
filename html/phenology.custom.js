@@ -79,7 +79,7 @@ function log_text(message) {
 
 //This updates the text info below all the menus
 function update_forecast_info(message) {
-    document.getElementById("forecast_info").innerHTML = '<b>' + message + '</b>';
+    document.getElementById("forecast_info").innerHTML = '<h4><b>' + message + '</b></h4>';
 }
 
 function clear_map() {
