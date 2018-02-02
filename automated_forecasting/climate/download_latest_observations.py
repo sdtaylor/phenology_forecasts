@@ -36,6 +36,7 @@ def run():
                                                                 date=first_day,
                                                                 varname='tmean',
                                                                 status=first_day_status)
+        observed_weather.to_netcdf(config['current_season_observations_file'])
     
     latest_observed_day = observed_weather.time.values[-1]
     print('most recent observed date on file: ' + str(latest_observed_day))
@@ -46,6 +47,7 @@ def run():
     for day in prism_days_to_add:
         day = day.to_pydatetime()
         day_status = prism.get_date_status(day)
+        print(day_status)
         if day_status is not None:
             print('adding prism day ' + str(day))
             day_url = prism.get_download_url(day)
