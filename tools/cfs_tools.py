@@ -51,6 +51,10 @@ class cfs_ftp_info:
         try:
             dir_listing = self.con.nlst(folder)
             return dir_listing
+        # This is a 450 error, aka folder not found, so return as empty
+        except ftplib.error_temp:
+            return []
+        # Other errors are likely connection issues
         except:
             if attempts_made + 1 == connect_attempts:
                 raise IOError('Cannot query CFS ftp after {n} attempts'.format(n=connect_attempts))
@@ -67,11 +71,7 @@ class cfs_ftp_info:
         if folder in self._folder_file_lists:
             return self._folder_file_lists[folder]
         else:
-            try:
-                dir_listing = self._query_ftp_folder(folder)
-            except ftplib.error_temp:
-                # Folder not found, aka it's empty
-                dir_listing = []
+            dir_listing = self._query_ftp_folder(folder)
             self._folder_file_lists[folder]=dir_listing
             return dir_listing
         
