@@ -16,7 +16,7 @@ def run():
     os.environ['GOOGLE_APPLICATION_CREDENTIALS']=config['google_auth']
     
     client = storage.Client()
-    phenology_bucket = client.bucket('phenologytest')
+    phenology_bucket = client.bucket('phenology.naturecast.org')
     
     # Iteration thru all the images and upload if they are not already there
     issue_date_folders = glob.glob(config['phenology_forecast_figure_folder']+'2*')
