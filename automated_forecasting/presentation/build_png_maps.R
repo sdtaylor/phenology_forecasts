@@ -26,6 +26,13 @@ doy_to_date = function(x){
   abbr  = strftime(dates, '%b %d')
   return(abbr)
 }
+
+###################################################
+# capitilize the first letter of a string. 
+capitilize = function(s){
+  l = toupper(substr(s, 1,1))
+  return(paste0(l,substr(s,2,nchar(s))))
+}
 ####################################################
 
 
@@ -121,14 +128,14 @@ for(spp in available_species){
     
     #################
     # Prediction titles and filename
-    figure_title_prediction = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
+    figure_title_prediction = paste0('Plant Phenology Forecasts - ',common_name,' (',capitilize(spp),') ',phenophase_info$noun_plural)
     figure_subtitle_prediction = paste0('Predicted date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
     legend_title_prediction = paste0('Date of ',tools::toTitleCase(phenophase_info$verb))
     static_filename_prediction = paste0(filename_base,'_prediction.png')
 
     #################
     # Uncertainty titles and filename
-    figure_title_uncertainty = paste0('Plant Phenology Forecasts - ',common_name,' (',spp,') ',phenophase_info$noun_plural)
+    figure_title_uncertainty = paste0('Plant Phenology Forecasts - ',common_name,' (',capitilize(spp),') ',phenophase_info$noun_plural)
     figure_subtitle_uncertainty = paste0('Uncertainty for date of ',phenophase_info$verb,' for ',current_season,' - Issued ',issue_date_abbr)
     legend_title_uncertainty = paste0('95% CI for ',tools::toTitleCase(phenophase_info$verb),' in days')
     static_filename_uncertainty = paste0(filename_base,'_uncertainty.png')
