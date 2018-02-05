@@ -39,9 +39,9 @@ def run():
     ####################
     available_species = []
     
-    # Create display as: 'red maple (acer rubrum)'
+    # Create display as: 'red maple (Acer rubrum)'
     image_metadata['display_text'] = image_metadata[['species','common_name']].apply(
-            lambda x: '{c} ({s})'.format(c=x[1],s=x[0]), axis=1)
+            lambda x: '{c} ({s})'.format(c=x[1],s=x[0].capitalize()), axis=1)
     
     # change the space in the species to an underscore.
     image_metadata['species'] = image_metadata['species'].apply(lambda x: x.replace(' ','_'))
