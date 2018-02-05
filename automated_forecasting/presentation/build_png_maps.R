@@ -72,6 +72,9 @@ if(is_leap_year){
 } else {
   legend_label_breaks =c(15,46,74,105,135,166,196,227,258,288,319,349)
 }
+
+uncertainty_legend_breaks = c(1,10,20,30)
+uncertainty_legend_labels = c(1,10,20,'30+')
 ########################################
 attribution_text_main="phenology.naturecast.org"
 attribution_text_data="
@@ -155,10 +158,15 @@ for(spp in available_species){
            height = 12.5, width = 17, units = 'cm')
     
     ##############
+    # Convert SD to 95% CI, and max out uncertainty to 30 days.
+    raster_df$doy_sd = raster_df$doy_sd*2
+    raster_df$doy_sd = with(raster_df , ifelse(doy_sd<30, doy_sd, 30))
+    
     # static image for uncertainty
     static_image_uncertainty=static_image_base_plot + 
-      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd*2)) +
-      scale_fill_distiller(palette='YlGnBu', direction = 1) +
+      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd)) +
+      scale_fill_distiller(palette='YlGnBu', direction = 1, limits=c(0,30), breaks=uncertainty_legend_breaks,
+                           labels = uncertainty_legend_labels) +
       guides(fill = guide_colorbar(title = legend_title_uncertainty,
                                    title.position = 'top',
                                    title.hjust = 0.5)) + 
