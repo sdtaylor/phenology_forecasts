@@ -79,6 +79,20 @@
                         <div class="panel-body"> You can help improve it! Learn about phenology and the plants you see every day by making observations using <a href="https://www.usanpn.org/natures_notebook">Nature’s Notebook</a>. These forecasts use that data. </div>
                     </div>
                     <div class="panel panel-default">
+                        <div class="panel-heading">Technical details</div>
+                        <div class="panel-body"> Phenology models were made using data from the National Phenology Dataset. Species with a minimum of 1000 initial observations were selected and processed similar to methods described in Crimmins et al. 2017. Using daily mean temperature from the PRISM dataset, three different phenology models were fit (the Alternatiing and Thermal Time models described in Basler 2016 and the Uniforc model from Chuine 2000). For each species and phenophase the best performing model was chosen via AIC.<br><br> 
+                        Every day 5 of the latest runs from the NOAA CFSv2 model 2-meter tempearture forecast are obtained and downscaled to a 4km grid using asynchronous regression described in Stoner et al. 2013. These are combined with recent mean temperature observations from the PRISM dataset. Each phenology model is fit to the 5 member forecast ensemble. A mean and standard deviation of the predicted day of year is produced as shown in the forecasts. <br><br>
+                        Species are limited to those with the minimum number of observations and with an available range map. Current species are limited to those available in the Atlast of United States Trees by Elbert L. Little but more will be available as more range maps are made. <br><br><br>
+                        
+                        <p style="font-size:80%;">
+                        Basler, D. (2016). Evaluating phenological models for the prediction of leaf-out dates in six temperate tree species across central Europe. Agricultural and Forest Meteorology, 217, 10–21. <a href="http://doi.org/10.1016/j.agrformet.2015.11.007">http://doi.org/10.1016/j.agrformet.2015.11.007</a><br>
+                        Chuine, I. (2000). A Unified Model for Budburst of Trees. Journal of Theoretical Biology, 207(3), 337–347. <a href="http://doi.org/10.1006/jtbi.2000.2178">http://doi.org/10.1006/jtbi.2000.2178</a><br>
+                        Crimmins, T. M., Crimmins, M. A., Gerst, K. L., Rosemartin, A. H., & Weltzin, J. F. (2017). USA National Phenology Network’s volunteer-contributed observations yield predictive models of phenological transitions. PLOS ONE, 12(8). <a href="http://doi.org/10.1371/journal.pone.0182919">http://doi.org/10.1371/journal.pone.0182919</a><br>
+                        Stoner, A. M. K., Hayhoe, K., Yang, X., & Wuebbles, D. J. (2013). An asynchronous regional regression model for statistical downscaling of daily climate variables. International Journal of Climatology, 33(11), 2473–2494. <a href="http://doi.org/10.1002/joc.3603">http://doi.org/10.1002/joc.3603</a><br>
+                        </p>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
                         <div class="panel-heading">Miscellaneous</div>
                         <div class="panel-body">
                             This site is in the beta phase and will likely be changing and improving. If you find it informative or have any thoughts please tell Shawn on <a href="https://twitter.com/dataEcologist">twitter</a> or email shawntaylor [at] weecology (dot) org. <br><br>
@@ -91,7 +105,7 @@
                             - <a href="https://www.python.org/"><b>Python</b></a><br>
                             - <a href="https://www.anaconda.com/what-is-anaconda/">Anaconda</a><br>
                             - <a href="http://www.numpy.org/">numpy</a><br>
-                            - <a href="xarray.pydata.org/">xarray</a><br>
+                            - <a href="xarray.pydata.org/">xarray</a> and <a href="https://dask.pydata.org/en/latest/">dask</a><br>
                             - <a href="https://pandas.pydata.org/">pandas</a><br>
                             - <a href="https://mapbox.github.io/rasterio/">rasterio</a><br>
                             - <a href="https://www.r-project.org/"><b>R</b></a><br>
