@@ -82,7 +82,9 @@
                         <div class="panel-heading">Technical details</div>
                         <div class="panel-body"> Phenology models were made using data from the National Phenology Network. Species with a minimum of 1000 initial observations were selected and processed similar to methods described in Crimmins et al. 2017. Using daily mean temperature from the PRISM dataset, three different phenology models were fit (the Alternatiing and Thermal Time models described in Basler 2016 and the Uniforc model from Chuine 2000). For each species and phenophase the best performing model was chosen via AIC.<br><br> 
                         Every day 5 of the latest runs from the NOAA CFSv2 model 2-meter tempearture forecast are obtained and downscaled to a 4km grid using asynchronous regression described in Stoner et al. 2013. These are combined with recent daily mean temperature observations from the PRISM dataset. Each phenology model is fit to the 5 member forecast ensemble, and a mean and standard deviation of the predicted day of year is produced as shown in the forecasts. <br><br>
-                        Species shown are those with the minimum number of observations and with an available range map. Current species are limited to those available in the Atlast of United States Trees by Elbert L. Little but more will be available as more range maps are obtained or made. <br><br><br>
+                        Species shown are those with the minimum number of observations and with an available range map. Current species are limited to those available in the Atlast of United States Trees by Elbert L. Little but more will be available as more range maps are obtained or made. <br><br>
+                        
+                        The resources required for the initial model building and selection is fairly significant, requiring several days time with ~100 cores on the <a href="https://www.rc.ufl.edu/services/hipergator/">HiperGator</a>, the University of Florida computer cluster. The daily forecast requires much less resources, running on a single core with 32GB of RAM in ~4 hours. <br><br>
                         
                         <p style="font-size:80%;">
                         Basler, D. (2016). Evaluating phenological models for the prediction of leaf-out dates in six temperate tree species across central Europe. Agricultural and Forest Meteorology, 217, 10–21. <a href="http://doi.org/10.1016/j.agrformet.2015.11.007">http://doi.org/10.1016/j.agrformet.2015.11.007</a><br>
@@ -95,7 +97,7 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">Miscellaneous</div>
                         <div class="panel-body">
-                            This site is in the beta phase and will likely be changing and improving. If you find it informative or have any thoughts please tell Shawn on <a href="https://twitter.com/dataEcologist">twitter</a> or email shawntaylor [at] weecology (dot) org. <br><br>
+                            This site is in the beta phase and will likely be changing and improving. If you find it informative or have any thoughts please tell Shawn on <a href="https://twitter.com/dataEcologist">twitter</a>, use this <a href="https://goo.gl/forms/x928MxGk9fNbxGDf2">form</a>, or email shawntaylor [at] weecology (dot) org. <br><br>
                             This website relies entirely on open source software and data, as well as numerous volunteers who contribute phenology observations to the National Phenology Network. <br><br>
                             <h4>Data:</h4>
                             - <a href="https://www.usanpn.org/">The National Phenology Network</a><br>
