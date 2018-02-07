@@ -6,7 +6,7 @@ from tools import tools
 
 # Sync static  images and image metadata to the website on google cloud storage
 
-def run():
+def run(update=False):
     config = tools.load_config()
     
     # Setup authentation to google cloud
@@ -31,7 +31,7 @@ def run():
                                                                    filename=image_filename)
             
             image_blob = phenology_bucket.blob(storage_path)
-            if image_blob.exists():
+            if image_blob.exists() and not update:
                 pass
                 #print('{i} exists, moving on'.format(i=image_filename))
             else:
