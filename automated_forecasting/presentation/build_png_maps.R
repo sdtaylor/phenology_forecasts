@@ -87,7 +87,7 @@ PRISM Climate Group (prism.oregonstate.edu)"
 static_image_base_plot = ggplot() + 
   #geom_hex(data = species_data, aes(x=lat, y=lon, color=doy_prediction), bins=10)+
   #geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd)) +
-  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
+  #geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
   #scale_fill_distiller(palette='YlGnBu', direction = 1) +
   coord_fixed(1.3) +
   annotate('text',x=-125,y=28,label=attribution_text_main, size=2.8, hjust=0) +
@@ -145,8 +145,9 @@ for(spp in available_species){
 
     ################
     # stand alone static image prediction
-    static_image_prediction=static_image_base_plot + 
-      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction)) +
+    static_image_prediction= static_image_base_plot +
+      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_prediction), alpha=1) +
+      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
       scale_fill_gradientn(colors=prediction_color_scheme, labels = doy_to_date, limits=c(1,365), 
                            breaks=legend_label_breaks) + 
       theme(legend.key.width = unit(2.5, 'cm')) +
@@ -165,6 +166,7 @@ for(spp in available_species){
     # static image for uncertainty
     static_image_uncertainty=static_image_base_plot + 
       geom_raster(data = raster_df, aes(x=lat, y=lon, fill=doy_sd)) +
+      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
       scale_fill_distiller(palette='YlGnBu', direction = 1, limits=c(0,30), breaks=uncertainty_legend_breaks,
                            labels = uncertainty_legend_labels) +
       guides(fill = guide_colorbar(title = legend_title_uncertainty,
