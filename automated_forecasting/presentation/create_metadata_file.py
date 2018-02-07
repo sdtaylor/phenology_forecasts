@@ -12,6 +12,10 @@ def run():
     
     image_metadata = pd.read_csv(config['phenology_forecast_figure_metadata_file'])
     
+    # Sort by issue date and then species so they are displayed correctly in the dropdown
+    image_metadata['issue_date_object']=pd.DatetimeIndex(image_metadata.forecast_issue_date)
+    image_metadata.sort_values(['issue_date_object','species'], inplace=True)
+    
     ###############################
     # TODO: Here is were I'll delete older stuff after some period of time, like
     # 2-3 months or something.
