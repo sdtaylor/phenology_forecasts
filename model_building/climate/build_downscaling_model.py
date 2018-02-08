@@ -128,4 +128,6 @@ for lat_chunk in list(chunker(land_mask.lat, lat_lon_chunk)):
         print('original slope num nan: '+str(np.sum(~np.isnan(model_coef.slope))))
         print('original intercpet num nan: '+str(np.sum(~np.isnan(model_coef.intercept))))
 
-model_coef.to_netcdf(config['downscaling_model_coefficients_file'], encoding={'slope':{'zlib':False}, 'intercept':{'zlib':False}})
+model_coef.to_netcdf(config['downscaling_model_coefficients_file'], 
+                     encoding={'slope':    {'zlib':True,'complevel':9, 'dtype':'int32', 'scale_factor':0.00001,  '_FillValue': -99999}, 
+                               'intercept':{'zlib':True,'complevel':9, 'dtype':'int32', 'scale_factor':0.00001,  '_FillValue': -99999}})
