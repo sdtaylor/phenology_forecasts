@@ -15,6 +15,11 @@ for(i in 1:nrow(species_list)){
   epithet = stringr::word(species,2,2)
   sp_code = paste0(substr(genus,1,4),substr(epithet,1,4))
   
+  # This one gets mistaken for acer saccharinum
+  if(species=='acer saccharum'){
+    sp_code = 'acersacr'
+  }
+  
   if(!file.exists(paste0(data_folder,'SHP/',sp_code,'/',sp_code,'.shp'))){
     print(paste('shapefile missing ',species,':',sp_code))
     next
