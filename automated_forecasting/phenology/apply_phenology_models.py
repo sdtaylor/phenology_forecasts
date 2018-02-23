@@ -72,7 +72,7 @@ def run():
         
         species_ensemble = np.array(species_ensemble).astype(np.float)
         # apply nan to non predictions
-        species_ensemble[species_ensemble==-999]=np.nan
+        species_ensemble[species_ensemble==999]=np.nan
         
         # Keep only values in the range
         species_ensemble[:,~species_range.range.values]=np.nan
