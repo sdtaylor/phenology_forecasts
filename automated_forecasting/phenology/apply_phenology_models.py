@@ -90,7 +90,6 @@ def run():
                                                    'doy_sd':(('species', 'phenophase', 'lat','lon'), prediction_sd)},
                                       coords = {'species':[species], 'phenophase':[phenophase],
                                               'lat':species_range.lat, 'lon':species_range.lon})
-        species_forecast = species_forecast.chunk({'lat':50,'lon':50})
     
         if i==0:
             all_species_forecasts = species_forecast
