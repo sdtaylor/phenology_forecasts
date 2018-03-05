@@ -30,9 +30,13 @@ for(i in 1:nrow(species_list)){
   if(class(shapefile)=='try-error'){
     print(paste('cant open',species,':',sp_code))
   }
+  
+  # Set CRS since it's not in the original shapefiles
+  proj4string(shapefile) = CRS('+init=epsg:4267')
+  
   new_name = tolower(stringr::str_replace(species,' ','_'))
   
-  writeOGR(shapefile, dsn = paste0('/home/shawn/data/phenology_forecasting/plant_ranges/',new_name), layer=new_name, driver = 'GeoJSON')
-  file.rename( paste0('/home/shawn/data/phenology_forecasting/plant_ranges/',new_name),
-               paste0('/home/shawn/data/phenology_forecasting/plant_ranges/',new_name,'.geojson'))
+  writeOGR(shapefile, dsn = paste0('/home/shawn/data/phenology_forecasting/little_plant_ranges/',new_name), layer=new_name, driver = 'GeoJSON')
+  file.rename( paste0('/home/shawn/data/phenology_forecasting/little_plant_ranges/',new_name),
+               paste0('/home/shawn/data/phenology_forecasting/little_plant_ranges/',new_name,'.geojson'))
 }
