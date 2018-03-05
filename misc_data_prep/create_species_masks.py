@@ -9,10 +9,6 @@ import numpy as np
 from tools import prism_tools
 from tools import tools
 
-# The weird projection used in these USGS shapefiles
-#little_proj='+proj=aea +lat_1=38 +lat_2=42 +lat_0=40 +lon_0=-82 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs'
-little_proj = '+init=epsg:4267'
-
 # Run the r script to download, unzip, and write to geojson
 
 config = tools.load_config()
@@ -31,13 +27,13 @@ local_prism_file = local_prism_file.split('.')[0]+'.bil'
 prism_raster = rasterio.open(local_prism_file)
 
 geojson_files = glob.glob(config['data_folder']+'plant_ranges/*geojson')
+geojson_files.extend(glob.glob(config['data_folder']+'little_plant_ranges/*geojson'))
 species_names = []
 # an array of (n_species x lat x lon)
 species_masks = np.empty((len(geojson_files), len(prism_xarray.lat), len(prism_xarray.lon)))
 
 for i, f in enumerate(geojson_files):
     obj = gpd.GeoDataFrame.from_file(f)
-    obj.crs = fiona.crs.from_string(little_proj)
     obj = obj.to_crs(prism_raster.crs)
     polys=[p['geometry'] for p in obj.iterfeatures()]
     
