@@ -47,16 +47,15 @@ class model_finder_worker:
         best_base_model_name = None
             
         for model_name in potential_base_models:
-            core_model = pyPhenology.utils.load_model(model_name)
-            model = self.bootstrap_model(core_model=core_model, num_bootstraps=10)
-            model.fit(observations=training_obs, temperature=temperature_obs,
-                      optimizer_params={'popsize':100,
-                                        'maxiter':50000})
+            Model = pyPhenology.utils.load_model(model_name)
+            model = Model()
+            model.fit(observations=training_obs, predictors=temperature_obs,
+                      optimizer_params={'popsize':50,
+                                        'maxiter':2000,
+                                        'mutation':(0.1,1)})
             model_aic = tools.aic(obs = testing_obs.doy.values, 
-                                  pred = model.predict(testing_obs, 
-                                                       temperature_obs,
-                                                       aggregation='mean'),
-                                  n_param = len(model.get_params()[0]) - 1)
+                                  pred = model.predict(testing_obs, temperature_obs),
+                                  n_param = len(model._parameters_to_estimate))
             if model_aic < best_aic:
                 best_base_model = model
                 best_base_model_name = model_name
@@ -67,6 +66,16 @@ class model_finder_worker:
         print('Chose {m} for {s} {p}'.format(m=best_base_model_name,
                                              s=species_name,
                                              p=phenophase))
+        
+        print('Fitting bootstrap model for: '+str(best_base_model_name))
+        Model = pyPhenology.utils.load_model(model_name)
+        bootstrap_model = pyPhenology.models.BootstrapModel(core_model=Model,
+                                                            num_bootstraps=50)
+        bootstrap_model.fit(observations=training_obs,
+                            predictors = temperature_obs,
+                            optimizer_params={'popsize':25,
+                                              'maxiter':500,
+                                              'mutation':(0.1,1)})
         #######################################################
         # Save the best model using a unique identifier
         time.sleep(1)
@@ -75,7 +84,7 @@ class model_finder_worker:
                                                   p=species_info['Phenophase_ID'],
                                                   h=model_hash)
     
-        best_base_model.save_params(config['phenology_model_folder']+model_filename)
+        bootstrap_model.save_params(config['phenology_model_folder']+model_filename)
         
         #######################################################
         # Iterate this species/phenophase forecast version
