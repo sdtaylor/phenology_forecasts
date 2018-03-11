@@ -67,8 +67,8 @@ def run():
         for climate in current_climate_forecasts:
             doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
             
-            species_ensemble.append(model.predict(to_predict = climate.tmean.values, 
-                                                  doy_series=doy_series))
+            species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
+                                                              'doy_series' : doy_series}))
         
         species_ensemble = np.array(species_ensemble).astype(np.float)
         # apply nan to non predictions
