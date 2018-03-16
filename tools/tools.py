@@ -36,10 +36,10 @@ def download_file(download_path, dest_path, num_attempts=2):
 def file_available(path):
     try:
         request = urllib.request.urlopen(path)
-    except urllib.error.HTTPError:
+        request.close()
+        return True
+    except:
         return False
-    
-    return request.code==200
 
 def cleanup_tmp_folder(folder):
     for f in os.listdir(folder):
