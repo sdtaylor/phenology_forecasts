@@ -80,7 +80,7 @@ class model_finder_worker:
         # Save the best model using a unique identifier
         time.sleep(1)
         model_hash = str(uuid.uuid1())
-        model_filename = '{s}_{p}_{h}.csv'.format(s=species_info['species'].replace(' ','_'),
+        model_filename = '{s}_{p}_{h}.json'.format(s=species_info['species'].replace(' ','_'),
                                                   p=species_info['Phenophase_ID'],
                                                   h=model_hash)
     
