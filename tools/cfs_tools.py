@@ -75,21 +75,6 @@ class cfs_ftp_info:
             self._folder_file_lists[folder]=dir_listing
             return dir_listing
         
-    def _last_element(self, list_of_entries):
-        end_of_all_strings = [entry.split('/')[-1] for entry in list_of_entries]
-        end_of_all_strings = sorted(end_of_all_strings)
-        return(end_of_all_strings[-1])
-        
-    def latest_forecast_time_str(self, dirs_in_tree=4):
-        # Parse thru the tree structure for the very
-        # last element
-        dir_to_list = self.forecast_dirs['ftp']['operational']
-        for dirs_in_tree in range(dirs_in_tree):
-            dir_listing = self._query_ftp_folder(dir_to_list)
-            last_entry = self._last_element(dir_listing)
-            dir_to_list+='/'+last_entry
-        return last_entry
-    
     def forecast_available(self, forecast_time):
         if isinstance(forecast_time, str):
             forecast_time = tools.string_to_date(forecast_time, h=True)
@@ -101,11 +86,9 @@ class cfs_ftp_info:
         if forecast_time >= cutoff_begin and forecast_time <= cutoff_end:
             return True
         
-        forecast_filename = self.forecast_url_from_timestamp(forecast_time, path_type='filename')
-        folder = self.forecast_url_from_timestamp(forecast_time, path_type='folder')
-        folder_contents = self._get_folder_listing(folder)
-        matching = [entry for entry in folder_contents if forecast_filename in entry]
-        return len(matching)!=0
+        forecast_filename = self.forecast_url_from_timestamp(forecast_time, path_type='full_path',
+                                                             protocal='http')
+        return tools.file_available(forecast_filename)
     
     # TODO: variable filename to download precip as well
     # forecast download paths look like: 
@@ -158,24 +141,30 @@ class cfs_ftp_info:
         to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
         return to_return[path_type]
     
-    def last_n_forecasts(self, n = 10):
-        all_forecasts = []
-        latest_forecast_str = self.latest_forecast_time_str()
-        latest_forecast_timestamp = tools.string_to_date(latest_forecast_str, h=True)
+    def last_n_forecasts(self, from_date=None, n = 10):
+        # By default start checking from the current date at the 18:00 iteration
+        if not from_date:
+            from_date = tools.date_to_string(datetime.datetime.today()) + '18'
+        else:
+            from_date = tools.date_to_string(from_date) + '18'
         
-        all_forecasts.append({'initial_time':latest_forecast_str,
-                              'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
+        latest_forecast_timestamp = tools.string_to_date(from_date, h=True)
         
         six_hours = datetime.timedelta(hours=6)
+        latest_forecast_timestamp+=six_hours
+        
+        all_forecasts = []
+        
         while len(all_forecasts) < n:
             latest_forecast_timestamp-=six_hours
-            
+
             if not self.forecast_available(latest_forecast_timestamp):
                 continue
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
                                   'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
+
         return all_forecasts
     
     
