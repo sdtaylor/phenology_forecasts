@@ -49,8 +49,7 @@ def run():
         phenophase = forecast_info['Phenophase_ID']
         model_file = config['phenology_model_folder']+forecast_info['model_file']
         base_model_name = forecast_info['base_model']
-        Model = utils.load_model(base_model_name)
-        model = Model(parameters=model_file)
+        model = utils.load_saved_model(model_file)
         
         print(divider)
         if species not in range_masks.species.values:
