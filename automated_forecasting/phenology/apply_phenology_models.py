@@ -66,9 +66,12 @@ def run():
         for climate in current_climate_forecasts:
             doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
             
+            model_predict_start=time.time()
             species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values.astype(np.float32),
                                                               'doy_series' : doy_series}))
-        
+            print('model prediction: {s} sec'.format(s=round(time.time() - model_predict_start,0)))
+    
+    
         species_ensemble = np.array(species_ensemble).astype(np.float)
         # apply nan to non predictions
         species_ensemble[species_ensemble==999]=np.nan
@@ -94,9 +97,7 @@ def run():
             all_species_forecasts = species_forecast
             num_species_processed+=1
         else:
-            merge_start_time=time.time()
             all_species_forecasts = xr.merge([all_species_forecasts,species_forecast])
-            print('merge time {s} sec'.format(s=round(time.time() - merge_start_time,0)))
             num_species_processed+=1
     
         # Merging this files over and over slows things down more and more
