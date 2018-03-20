@@ -51,17 +51,17 @@ years_used = base::unique(years_used)
 
 #NPN Site coordinates
 site_info = read_csv(args$local_site_file) %>%
-  dplyr::select(site_id=Site_ID, Latitude, Longitude) %>%
+  dplyr::select(site_id=Site_ID, latitude=Latitude, longitude=Longitude) %>%
   dplyr::distinct() %>%
   dplyr::filter(site_id %in% sites_used)
 
 # filter to continental US
 site_info = site_info %>%
-  filter(Longitude <= -65, Longitude >=-126,
-         Latitude <= 50, Latitude >=24)
+  filter(longitude <= -65, longitude >=-126,
+         latitude <= 50, latitude >=24)
 
 sites_spatial = site_info %>%
-  SpatialPointsDataFrame(cbind(.$Longitude, .$Latitude), data=., 
+  SpatialPointsDataFrame(cbind(.$longitude, .$latitude), data=., 
                          proj4string = CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=GRS80 +towgs84=0,0,0'))
 
 #Only load prism data from years which are needed for this dataset
@@ -85,6 +85,10 @@ prism_stacked = raster::stack(prism_file_info$abs_path, quick=FALSE)
 temp_data = as.data.frame(raster::extract(prism_stacked, sites_spatial)) %>%
   bind_cols(site_info) %>%
   process_extracted_prism_data() 
+
+# Put lat/lon in it as well
+temp_data = temp_data %>%
+  left_join(site_info, by='site_id')
 
 write_csv(temp_data, config$phenology_observations_temperature_file)
 
