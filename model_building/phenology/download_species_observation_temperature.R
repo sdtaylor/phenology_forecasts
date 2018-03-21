@@ -3,7 +3,7 @@ library(docopt)
 library(tidyverse)
 library(prism)
 library(sp)
-source('phenology_observation_functions.R')
+source('model_building/phenology/phenology_observation_functions.R')
 
 config=load_config()
 
@@ -47,7 +47,7 @@ for(s in all_species_files){
 }
 sites_used = base::unique(sites_used)
 years_used = base::unique(years_used)
-
+years_used = years_used[!is.na(years_used)]
 
 #NPN Site coordinates
 site_info = read_csv(args$local_site_file) %>%
