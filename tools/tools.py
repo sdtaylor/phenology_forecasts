@@ -4,6 +4,7 @@ import urllib
 import time
 import yaml
 import numpy as np
+import pandas as pd
 
 def string_to_date(s, h=False):
     assert isinstance(s, str) ,'date not a string'
@@ -80,8 +81,14 @@ def current_growing_season(config):
 # This appends csv's while keeping the header intact
 # or creates a new file if it doesn't already exist.
 def append_csv(df, filename):
-    with open(filename, 'a') as f:
-        df.to_csv(f, index=False, header=f.tell()==0)
+    old_data = pd.read_csv(filename)
+    all_old_columns_in_new = old_data.columns.isin(df.columns).all()
+    all_new_columns_in_old = df.columns.isin(old_data.columns).all()
+    if not all_old_columns_in_new or not all_new_columns_in_old:
+        raise RuntimeError('New dataframe columns do not match old dataframe')
+    
+    appended = old_data.append(df)
+    appended.to_csv(filename, index=False)
 
 # Re-write a csv with updated info
 def update_csv(df, filename):
