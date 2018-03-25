@@ -67,7 +67,8 @@ def predict_phenology_from_climate(model, climate_forecasts, post_process,
         prediction_sd = np.expand_dims(prediction_sd, axis=0)
         prediction_sd = np.expand_dims(prediction_sd, axis=0)
     
-        return prediction, prediction_sd
+        return prediction_doy, prediction_sd
         
     elif post_process == 'hindcast':
         return species_ensemble
+
