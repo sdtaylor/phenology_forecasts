@@ -2,6 +2,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from tools import tools
+from tools.phenology_tools import predict_phenology_from_climate
 import os
 import datetime
 import time
@@ -10,7 +11,10 @@ from pyPhenology import utils
 
 
 
-def run():
+def run(climate_forecast_folder = None, phenology_forecast_folder = None):
+    """Build phenology models
+    
+    """
     divider='#'*90
     
     config = tools.load_config()
@@ -24,7 +28,11 @@ def run():
     
     doy_0 = np.datetime64('2018-01-01')
     
-    current_climate_forecast_files = glob.glob(config['current_forecast_folder']+'*.nc')
+    # Default location of climate forecasts
+    if not climate_forecast_folder:
+        climate_forecast_folder = config['current_forecast_folder']
+        
+    current_climate_forecast_files = glob.glob(climate_forecast_folder+'*.nc')
     
     print(str(len(current_climate_forecast_files)) + ' current climate forecast files: \n' + str(current_climate_forecast_files))
     
@@ -62,29 +70,11 @@ def run():
             species_range = range_masks.sel(species=species)
     
     
-    
-        species_ensemble = []
-        for climate in current_climate_forecasts:
-            doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
-            
-            species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
-                                                              'doy_series' : doy_series}))
-        
-        species_ensemble = np.array(species_ensemble).astype(np.float)
-        # apply nan to non predictions
-        species_ensemble[species_ensemble==999]=np.nan
-        
-        # Keep only values in the range
-        species_ensemble[:,~species_range.range.values]=np.nan
-        
-        prediction = np.mean(species_ensemble, axis=0)
-        prediction_sd = np.std(species_ensemble, axis=0)
-        
-        # extend the axis by 2 to match the xarray creation
-        prediction = np.expand_dims(prediction, axis=0)
-        prediction = np.expand_dims(prediction, axis=0)
-        prediction_sd = np.expand_dims(prediction_sd, axis=0)
-        prediction_sd = np.expand_dims(prediction_sd, axis=0)
+        prediction, prediction_sd = predict_phenology_from_climate(model,
+                                                                   current_climate_forecasts,
+                                                                    post_process='automated',
+                                                                    doy_0=doy_0,
+                                                                    species_range=species_range)
         
         species_forecast = xr.Dataset(data_vars = {'doy_prediction':(('species','phenophase', 'lat','lon'), prediction),
                                                    'doy_sd':(('species', 'phenophase', 'lat','lon'), prediction_sd)},

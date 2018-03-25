@@ -66,7 +66,7 @@ def run():
         model = Model(parameters=model_parameters)
         
         print('attempting phenocam model ' + model_nickname)
-            
+        #TODO: use tools.phenology_tools stuff here
         ensemble = []
         for climate in current_climate_forecasts:
             doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
