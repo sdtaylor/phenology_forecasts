@@ -65,7 +65,8 @@ def get_forecasts_from_date(forecast_date, destination_folder,
     # during processing. 4 forecasts are issued every day, so 10
     # extra is about 2 days worth. 
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_size + 10)
+    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_size + 20,
+                                                 from_date=forecast_date)
     cfs.close()
     
     # Arrange the downscale model to easily do array math with the 
