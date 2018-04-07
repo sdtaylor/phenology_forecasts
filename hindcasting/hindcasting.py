@@ -3,12 +3,10 @@ import pandas as pd
 import numpy as np
 from tools import tools
 from tools.phenology_tools import predict_phenology_from_climate
-import os
-import datetime
-import time
-import glob
 from automated_forecasting.climate import cfs_forecasts
+from automated_forecasting.phenology import apply_phenology_models
 from pyPhenology import utils
+from pySimpleMPI.framework_pythonMP import run_pythonMP
 
 config = tools.load_config()
 
@@ -22,9 +20,11 @@ class hindcast_worker:
 
     def setup(self):
         print('seting things up')
+        self.species_list = pd.read_csv(config['data_folder']+'selected_study_species_list.csv')[1:3]
         pass
     
     def run_job(self, job_details):
+        print('running job')
         climate_forecast_folder = job_details['tmp_folder']+'climate_forecasts/'
         tools.make_folder(climate_forecast_folder)
         
@@ -41,8 +41,10 @@ class hindcast_worker:
                                               current_season_observed=current_season_observed)
         
         # Run the phenology models
+        apply_phenology_models.run(climate_forecast_folder = climate_forecast_folder,
+                                   phenology_forecast_folder= '/home/shawn/data/phenology_forecasting/phenology_hindcasts/)',
+                                   species_list=self.species_list)
         
-        print('running job')
         return job_details
         
 class hindcast_boss:
@@ -81,4 +83,4 @@ class hindcast_boss:
         pass
         
 if __name__ == "__main__":
-    run_MPI(hindcast_boss, hindcast_worker)
+    run_pythonMP(hindcast_boss, hindcast_worker)
