@@ -1,6 +1,7 @@
 import xarray as xr
 import pandas as pd
 import numpy as np
+import glob
 from tools import tools
 from tools.phenology_tools import predict_phenology_from_climate
 from automated_forecasting.climate import cfs_forecasts
@@ -9,6 +10,22 @@ from pyPhenology import utils
 from pySimpleMPI.framework_pythonMP import run_pythonMP
 
 config = tools.load_config()
+
+divider='#'*90
+
+doy_0 = np.datetime64('2018-01-01')
+
+num_climate_ensemble = 5
+
+hindcast_begin_date = tools.string_to_date('20180101', h=False)
+hindcast_end_date   = tools.string_to_date('20180105', h=False)
+
+hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.csv')[1:3]
+
+current_season_observed_file = config['tmp_folder']+'climate_observations_2018.nc'
+
+
+#######################################################
 
 class hindcast_worker:
     def __init__(self):
@@ -20,11 +37,17 @@ class hindcast_worker:
 
     def setup(self):
         print('seting things up')
-        self.species_list = pd.read_csv(config['data_folder']+'selected_study_species_list.csv')[1:3]
-        pass
+        species_list = hindcast_species
+        phenology_model_metadata = pd.read_csv(config['phenology_model_metadata_file'])
+    
+        self.forecast_metadata = species_list.merge(phenology_model_metadata, 
+                                                    left_on =['species','Phenophase_ID','current_forecast_version'],
+                                                    right_on=['species','Phenophase_ID','forecast_version'], 
+                                                    how='left')
+        self.range_masks = xr.open_dataset(config['species_range_file'])
     
     def run_job(self, job_details):
-        print('running job')
+        print('running job: '+str(job_details['date']))
         climate_forecast_folder = job_details['tmp_folder']+'climate_forecasts/'
         tools.make_folder(climate_forecast_folder)
         
@@ -37,14 +60,48 @@ class hindcast_worker:
         cfs_forecasts.get_forecasts_from_date(forecast_date=job_details['date'],
                                               destination_folder=climate_forecast_folder,
                                               lead_time = 36,
-                                              forecast_ensemble_size=5,
+                                              forecast_ensemble_size=num_climate_ensemble,
                                               current_season_observed=current_season_observed)
         
-        # Run the phenology models
-        apply_phenology_models.run(climate_forecast_folder = climate_forecast_folder,
-                                   phenology_forecast_folder= '/home/shawn/data/phenology_forecasting/phenology_hindcasts/)',
-                                   species_list=self.species_list)
+        current_climate_forecast_files = glob.glob(climate_forecast_folder+'*.nc')
+
         
+        # Run the phenology models
+        num_species_processed=0
+        for i, forecast_info in enumerate(self.forecast_metadata.to_dict('records')):
+            species = forecast_info['species']
+            phenophase = forecast_info['Phenophase_ID']
+            model_file = config['phenology_model_folder']+forecast_info['model_file']
+            base_model_name = forecast_info['base_model']
+            model = utils.load_saved_model(model_file)
+
+            print('Apply model for {s} {p}'.format(s=species, p=phenophase))
+            print('forecast attempt {i} of {n} potential species. {n2} processed succesfully so far.'.format(i=i, n=len(self.forecast_metadata), n2=num_species_processed))
+
+            prediction = predict_phenology_from_climate(model,
+                                                        current_climate_forecast_files,
+                                                        post_process='hindcast',
+                                                        doy_0=doy_0,
+                                                        species_range=None)
+            
+            # extend the array by 2 for species and phenophase axis
+            prediction = np.expand_dims(prediction, axis=0)
+            prediction = np.expand_dims(prediction, axis=0)
+
+            num_bootstraps = len(model.get_params())
+            
+            species_forecast = xr.Dataset(data_vars = {'prediction':(('species','phenophase','climate_ensemble','bootstrap', 'lat','lon'), prediction)},
+                                          coords = {'species':[species], 'phenophase':[phenophase],
+                                                    'climate_ensemble':range(num_climate_ensemble), 'bootstrap':range(num_bootstraps),
+                                                  'lat':self.range_masks.lat, 'lon':self.range_masks.lon})
+        
+            if i==0:
+                all_species_forecasts = species_forecast
+                num_species_processed+=1
+            else:
+                all_species_forecasts = xr.merge([all_species_forecasts,species_forecast])
+                num_species_processed+=1
+
         return job_details
         
 class hindcast_boss:
@@ -52,8 +109,8 @@ class hindcast_boss:
         pass
     
     def setup(self):
-        begin_date = tools.string_to_date('20180101', h=False)
-        end_date = tools.string_to_date('20180112', h=False)
+        begin_date = hindcast_begin_date
+        end_date   = hindcast_end_date
 
         #  Run a hindcast every 4 days
         date_range=pd.date_range(begin_date, end_date, freq='4D').to_pydatetime()
@@ -61,8 +118,8 @@ class hindcast_boss:
         self.job_list=[]
         for i, d in enumerate(date_range):
             self.job_list.append({'date':d,
-                                  'current_season_observed_file':'/tmp/climate_observations_2018.nc',
-                                  'tmp_folder':'/tmp/shawn/'+str(i)+'/'})
+                                  'current_season_observed_file':current_season_observed_file,
+                                  'tmp_folder':config['tmp_folder']+'hindcasts/'+str(i)+'/'})
     
     def set_total_jobs(self):
         self.total_jobs = len(self.job_list)
@@ -83,4 +140,4 @@ class hindcast_boss:
         pass
         
 if __name__ == "__main__":
-    run_pythonMP(hindcast_boss, hindcast_worker)
+    run_pythonMP(hindcast_boss, hindcast_worker, n_procs=1)
