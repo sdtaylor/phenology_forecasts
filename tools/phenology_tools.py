@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+import xarray as xr
 from pyPhenology import utils
 
 
-def predict_phenology_from_climate(model, climate_forecasts, post_process, 
+def predict_phenology_from_climate(model, climate_forecast_files, post_process, 
                           doy_0, species_range=None):
     """Predict a phenology model over climate ensemble
     
@@ -42,11 +43,20 @@ def predict_phenology_from_climate(model, climate_forecasts, post_process,
     
     
     species_ensemble = []
-    for climate in climate_forecasts:
+    for climate_file in climate_forecast_files:
+        print(climate_file)
+        climate = xr.open_dataset(climate_file)
         doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
         
-        species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
-                                                          'doy_series' : doy_series}))
+        # When using a bootstrap model in hindcasting we want *all*
+        # the predictions. Otherwise just the mean will do
+        if type(model).__name__ == 'BootstrapModel' and post_process=='hindcast':
+            species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
+                                                              'doy_series' : doy_series},
+                                                  aggregation='none'))
+        else:
+            species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
+                                                              'doy_series' : doy_series}))
     
     species_ensemble = np.array(species_ensemble).astype(np.float)
     # apply nan to non predictions
