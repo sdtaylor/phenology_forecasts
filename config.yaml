@@ -18,6 +18,8 @@ phenology_model_folder: phenology_models/
 
 phenology_forecast_folder: phenology_forecasts/
 
+phenology_hindcast_folder: phenology_hindcasts/
+
 species_list_file: species_list.csv
 
 phenology_model_metadata_file: phenology_model_metadata.csv
