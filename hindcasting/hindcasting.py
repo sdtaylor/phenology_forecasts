@@ -19,7 +19,7 @@ doy_0 = np.datetime64('2018-01-01')
 num_climate_ensemble = 5
 
 hindcast_begin_date = tools.string_to_date('20180101', h=False)
-hindcast_end_date   = tools.string_to_date('20180105', h=False)
+hindcast_end_date   = tools.string_to_date('20180115', h=False)
 
 hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.csv')[1:3]
 
@@ -121,7 +121,14 @@ class hindcast_worker:
         all_species_forecasts.attrs['model_run_date']=str(today)
         all_species_forecasts.attrs['crs']='+init=epsg:4269'
 
-
+        hindcast_filename = config['phenology_hindcast_folder']+'phenology_hindcast_'+str(job_details['date'])+'.nc'
+    
+        all_species_forecasts = all_species_forecasts.chunk({'lat':50,'lon':50})
+        all_species_forecasts.to_netcdf(hindcast_filename, encoding={'prediction':{'zlib':True,
+                                                                                   'complevel':4, 
+                                                                                   'dtype':'int32', 
+                                                                                   'scale_factor':0.001,  
+                                                                                   '_FillValue': -9999}})
 
         return job_details
         
