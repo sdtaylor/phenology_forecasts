@@ -2,6 +2,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import glob
+import datetime
 from tools import tools
 from tools.phenology_tools import predict_phenology_from_climate
 from automated_forecasting.climate import cfs_forecasts
@@ -24,6 +25,9 @@ hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.cs
 
 current_season_observed_file = config['tmp_folder']+'climate_observations_2018.nc'
 
+current_season=2018
+
+today = datetime.datetime.today().date()
 
 #######################################################
 
@@ -101,6 +105,23 @@ class hindcast_worker:
             else:
                 all_species_forecasts = xr.merge([all_species_forecasts,species_forecast])
                 num_species_processed+=1
+
+        # Add forecast details and save
+        provenance_note = \
+        """This is a phenology hindcast run on {d1} with modelled issue date
+        of {d2}
+        
+        Forecasts for plant phenology of select species flowering and/or leaf out
+        times. Made on from NOAA CFSv2 forecasts downscaled using PRISM climate data.
+        Plant phenology models made using National Phenology Network data. 
+        """.format(d1=today, d2=job_details['date'])
+        
+        all_species_forecasts.attrs['note']=provenance_note
+        all_species_forecasts.attrs['issue_date']=str(job_details['date'])
+        all_species_forecasts.attrs['model_run_date']=str(today)
+        all_species_forecasts.attrs['crs']='+init=epsg:4269'
+
+
 
         return job_details
         
