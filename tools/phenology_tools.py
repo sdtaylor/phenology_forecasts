@@ -58,8 +58,8 @@ def predict_phenology_from_climate(model, climate_forecasts, post_process,
     
     if post_process == 'automated':
     
-        prediction_doy = np.mean(species_ensemble, axis=0)
-        prediction_sd = np.std(species_ensemble, axis=0)
+        prediction_doy = np.nanmean(species_ensemble, axis=0)
+        prediction_sd = np.nanstd(species_ensemble, axis=0)
         
         # extend the axis by 2 to match the xarray creation
         prediction_doy= np.expand_dims(prediction_doy, axis=0)
