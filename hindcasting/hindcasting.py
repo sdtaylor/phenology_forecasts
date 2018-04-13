@@ -19,9 +19,9 @@ doy_0 = np.datetime64('2018-01-01')
 num_climate_ensemble = 5
 
 hindcast_begin_date = tools.string_to_date('20180101', h=False)
-hindcast_end_date   = tools.string_to_date('20180115', h=False)
+hindcast_end_date   = tools.string_to_date('20180401', h=False)
 
-hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.csv')[1:3]
+hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.csv')
 
 current_season_observed_file = config['tmp_folder']+'climate_observations_2018.nc'
 
@@ -51,17 +51,22 @@ class hindcast_worker:
         self.range_masks = xr.open_dataset(config['species_range_file'])
     
     def run_job(self, job_details):
-        print('running job: '+str(job_details['date']))
+        # We are pretending the forecast date is this date in the past
+        hindcast_issue_date = job_details['date']
+        
         climate_forecast_folder = job_details['tmp_folder']+'climate_forecasts/'
         tools.make_folder(climate_forecast_folder)
+        tools.cleanup_tmp_folder(climate_forecast_folder)
         
+        print('running job: '+str(job_details['date']))
+     
         # Make the observed climate only up to the prior day of the forecast date
         current_season_observed = xr.open_dataset(job_details['current_season_observed_file'])
-        observed_days_to_keep = current_season_observed.time < np.datetime64(job_details['date'])
+        observed_days_to_keep = current_season_observed.time < np.datetime64(hindcast_issue_date)
         current_season_observed = current_season_observed.sel(time=observed_days_to_keep)
         
         # Download and process climate forecasts
-        cfs_forecasts.get_forecasts_from_date(forecast_date=job_details['date'],
+        cfs_forecasts.get_forecasts_from_date(forecast_date=hindcast_issue_date,
                                               destination_folder=climate_forecast_folder,
                                               lead_time = 36,
                                               forecast_ensemble_size=num_climate_ensemble,
@@ -108,20 +113,20 @@ class hindcast_worker:
 
         # Add forecast details and save
         provenance_note = \
-        """This is a phenology hindcast run on {d1} with modelled issue date
+        """This is a phenology hindcast run on {d1} with a modeled issue date
         of {d2}
         
         Forecasts for plant phenology of select species flowering and/or leaf out
         times. Made on from NOAA CFSv2 forecasts downscaled using PRISM climate data.
         Plant phenology models made using National Phenology Network data. 
-        """.format(d1=today, d2=job_details['date'])
+        """.format(d1=today, d2=hindcast_issue_date.date())
         
         all_species_forecasts.attrs['note']=provenance_note
-        all_species_forecasts.attrs['issue_date']=str(job_details['date'])
+        all_species_forecasts.attrs['issue_date']=str(hindcast_issue_date.date())
         all_species_forecasts.attrs['model_run_date']=str(today)
         all_species_forecasts.attrs['crs']='+init=epsg:4269'
 
-        hindcast_filename = config['phenology_hindcast_folder']+'phenology_hindcast_'+str(job_details['date'])+'.nc'
+        hindcast_filename = config['phenology_hindcast_folder']+'phenology_hindcast_'+str(hindcast_issue_date.date())+'.nc'
     
         all_species_forecasts = all_species_forecasts.chunk({'lat':50,'lon':50})
         all_species_forecasts.to_netcdf(hindcast_filename, encoding={'prediction':{'zlib':True,
