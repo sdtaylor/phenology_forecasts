@@ -4,7 +4,7 @@ import glob
 import datetime
 from time import sleep
 from tools import tools
-from tools.phenology_tools import predict_phenology_from_climate
+#from tools.phenology_tools import predict_phenology_from_climate
 from automated_forecasting.climate import cfs_forecasts
 #from automated_forecasting.phenology import apply_phenology_models
 from pyPhenology import utils
@@ -42,13 +42,15 @@ doy_0 = np.datetime64('2018-01-01')
 
 today = datetime.datetime.today().date()
 
-land_mask = xr.open_dataset(config['mask_file'])
 ######################################################
 # Setup dask cluster
 ######################################################
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
+from dask import delayed
 cluster = SLURMCluster(processes=1,queue='hpg1-compute', threads=1, memory='4GB', walltime='00:60:00')
+
+print('Starting up workers')
 workers = []
 for _ in range(num_hipergator_workers):
     workers.extend(cluster.start_workers(1))
@@ -65,10 +67,15 @@ while len(dask_client.scheduler_info()['workers']) < num_hipergator_workers:
     if wait_time > 600:
         workers.extend(cluster.start_workers(1))
 
+print('All workers accounted for')
 # xr import must be after dask.array, and I think after setup
 # up the cluster/client. 
 import dask.array as da
 import xarray as xr
+
+
+# For spatial reference
+land_mask = xr.open_dataset(config['mask_file'])
 
 #####################################################
 # I am having issues on the hipergator where these locations
@@ -85,6 +92,7 @@ def hipergator_correction(climate_forecast):
 # A special wrapper so that pyPheonlogy.model.predict will work inside
 # xarray.apply_ufunc, which will automatically parallelize it over the
 # dask.distributed cluster.
+
 def apply_phenology_model(climate, model, doy_0):
     doy_series = pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
     # time is the "core" dimension here, so apply_ufunc moves it to the end. 
@@ -104,7 +112,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
     
     ##################################
     # process the climate forecasts for this date
-    climate_forecast_folder = config['tmp_folder']+'hindcasts/'+date_i+'/'
+    climate_forecast_folder = config['data_folder']+'hindcasts/past_climate/'+str(date_i)+'/'
     tools.make_folder(climate_forecast_folder)
     # Make the observed climate only up to the prior day of the forecast date
     current_season_observed = xr.open_dataset(current_season_observed_file)
@@ -131,7 +139,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
     num_timesteps = len(obj.time)
     # Load in the just generated climate foreasts. 
     # This is where the dask magic happens. These files are opened on the cluster
-    climate_ensemble = [xr.open_dataset(f, chunks={'time':num_timesteps,'lon':100,'lat':100}).persist() for f in current_climate_forecast_files]
+    climate_ensemble = [xr.open_dataset(f, chunks={'time':num_timesteps,'lon':200,'lat':200}).persist() for f in current_climate_forecast_files]
     latitude_length = len(land_mask.lat)
     longitude_length = len(land_mask.lon)
     
@@ -139,7 +147,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
     # Apply phenology models to this past forecast date
     ##################
     num_species_processed=0
-    for i, forecast_info in enumerate(forecast_metadata.to_dict('records')):
+    for species_i, forecast_info in enumerate(forecast_metadata.to_dict('records')):
         species = forecast_info['species']
         phenophase = forecast_info['Phenophase_ID']
         model_file = config['phenology_model_folder']+forecast_info['model_file']
@@ -150,10 +158,10 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         
         prediction_array = np.empty((num_climate_ensemble, num_bootstraps, latitude_length, longitude_length))
         for bootstrap_i, bootstrap_model in enumerate(model.model_list):
-            for climate_i, climate in climate_ensemble:
+            for climate_i, climate in enumerate(climate_ensemble):
                 
                 # This step get run on the cluster. with only predictions being saved
-                prediction_array[climate_i, bootstrap_i] = apply_phenology_model(cliamte = climate, 
+                prediction_array[climate_i, bootstrap_i]= apply_phenology_model(climate = climate['tmean'], 
                                                                                  model=bootstrap_model,
                                                                                  doy_0=doy_0)
     
