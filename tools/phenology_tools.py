@@ -8,8 +8,8 @@ from pyPhenology import utils
 # figure out, or reproduce it on serenity. 11 pixels is nothing
 # so I'm just going to mark them all NA and move on. 
 def hipergator_correction(climate_forecast):
-    bad_pixels_axis_1 = np.array([ 47,  51,  68, 128, 139, 143, 213, 238, 372, 411, 440])
-    bad_pixels_axis_2 = np.array([ 700,  794,  506, 1220,  595,  626, 1179,  688,  516,  481,  463])
+    bad_pixels_axis_1 = np.array([ 47,  51,  68, 128, 139, 143, 203, 213, 238, 372, 411, 440])
+    bad_pixels_axis_2 = np.array([ 700,  794,  506, 1220,  595,  626, 511, 1179,  688,  516,  481,  463])
     
     climate_forecast['tmean'][:,bad_pixels_axis_1,bad_pixels_axis_2] = np.nan
     
