@@ -5,37 +5,29 @@ import datetime
 from time import sleep
 import time
 from tools import tools
-#from automated_forecasting.phenology import apply_phenology_models
 from pyPhenology import utils
 
+import hindcast_config
 config = tools.load_config()
 
-
-######
-# Climate stuff
-num_climate_ensemble = 5
-climate_lead_time = 36 # This is in weeks
-num_hipergator_workers=10
-
-hindcast_begin_date = tools.string_to_date('20180101', h=False)
-hindcast_end_date   = tools.string_to_date('20180401', h=False)
-#  Run a hindcast every 4 days
-date_range=pd.date_range(hindcast_begin_date, hindcast_end_date, freq='4D').to_pydatetime()
+begin_date = tools.string_to_date(hindcast_config.begin_date, h=False)
+end_date   = tools.string_to_date(hindcast_config.end_date, h=False)
+date_range=pd.date_range(begin_date, 
+                         end_date,
+                         freq = hindcast_config.frequency).to_pydatetime()
 
 ######
 # Species & phenology modeling stuff
 hindcast_species = pd.read_csv(config['data_folder']+'species_for_hindcasting.csv')
 phenology_model_metadata = pd.read_csv(config['phenology_model_metadata_file'])
 forecast_metadata = hindcast_species.merge(phenology_model_metadata, 
-                                       left_on =['species','Phenophase_ID','current_forecast_version'],
-                                       right_on=['species','Phenophase_ID','forecast_version'], 
-                                       how='left')
+                                                           left_on =['species','Phenophase_ID','current_forecast_version'],
+                                                           right_on=['species','Phenophase_ID','forecast_version'], 
+                                                           how='left')
 #######
 # Other stuff
 
-current_season=2018
-
-doy_0 = np.datetime64('2018-01-01')
+doy_0 = np.datetime64(hindcast_config.doy_0)
 
 today = datetime.datetime.today().date()
 
@@ -49,13 +41,13 @@ cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=2, memory='4GB'
 
 print('Starting up workers')
 workers = []
-for _ in range(num_hipergator_workers):
+for _ in range(hindcast_config.num_hipergator_workers):
     workers.extend(cluster.start_workers(1))
     sleep(60)
 dask_client = Client(cluster)
 
 wait_time=0
-while len(dask_client.scheduler_info()['workers']) < num_hipergator_workers:
+while len(dask_client.scheduler_info()['workers']) < hindcast_config.num_hipergator_workers:
     print('waiting on workers: {s} sec. so far'.format(s=wait_time))
     sleep(10)
     wait_time+=10
@@ -137,7 +129,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         num_bootstraps = len(model.model_list)
         
         
-        prediction_array = np.empty((num_climate_ensemble, num_bootstraps, latitude_length, longitude_length))
+        prediction_array = np.empty((hindcast_config.num_climate_ensemble, num_bootstraps, latitude_length, longitude_length))
         #predicts = []
         for bootstrap_i, bootstrap_model in enumerate(model.model_list):
             #predicts.append([])
@@ -156,7 +148,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         prediction_array = np.expand_dims(prediction_array, axis=0)
         prediction_dataset = xr.Dataset(data_vars = {'prediction':(('species','phenophase', 'climate_ensemble','bootstrap', 'lat','lon'), prediction_array)},
                                           coords = {'species':[species], 'phenophase':[phenophase],
-                                                    'climate_ensemble':range(num_climate_ensemble), 'bootstrap':range(num_bootstraps),
+                                                    'climate_ensemble':range(hindcast_config.num_climate_ensemble), 'bootstrap':range(num_bootstraps),
                                                     'lat':land_mask.lat, 'lon':land_mask.lon})
     
         #prediction_dataset.attrs['species']=species
