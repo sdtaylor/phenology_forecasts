@@ -11,7 +11,9 @@ from pyPhenology import utils
 
 
 
-def run(climate_forecast_folder = None, phenology_forecast_folder = None):
+def run(climate_forecast_folder = None, 
+        phenology_forecast_folder = None,
+        species_list = None):
     """Build phenology models
     
     """
@@ -36,14 +38,21 @@ def run(climate_forecast_folder = None, phenology_forecast_folder = None):
     
     print(str(len(current_climate_forecast_files)) + ' current climate forecast files: \n' + str(current_climate_forecast_files))
     
-    species_list = pd.read_csv(config['species_list_file'])
-    species_list = species_list[['species','Phenophase_ID','current_forecast_version']]
+    # Load default species list if no special one was passed
+    if not species_list:
+        species_list = pd.read_csv(config['species_list_file'])
+        species_list = species_list[['species','Phenophase_ID','current_forecast_version']]
+        
     phenology_model_metadata = pd.read_csv(config['phenology_model_metadata_file'])
     
     forecast_metadata = species_list.merge(phenology_model_metadata, 
                                            left_on =['species','Phenophase_ID','current_forecast_version'],
                                            right_on=['species','Phenophase_ID','forecast_version'], 
                                            how='left')
+    
+    # Default location to write phenology forecasts
+    if not phenology_forecast_folder:
+        phenology_forecast_folder = config['phenology_forecast_folder']
     
     print(divider)
     
