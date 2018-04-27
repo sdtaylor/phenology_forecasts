@@ -32,29 +32,41 @@ def broadcast_downscale_model(model, start_date, end_date, verbose=True):
     
     return model_broadcasted
 
-def run():
+def get_forecasts_from_date(forecast_date, destination_folder,
+                            lead_time = 36, forecast_ensemble_size=5,
+                            current_season_observed=None):
+    """Download and process forecasts from a specific date
+    
+    
+    In the daily forecasting the date will be "today", but in hindcasting
+    will be dates in the  past. In which case it will obtain n forecasts 
+    starting on the 18 hour of the forecast date and working backword in 
+    time. n being equal to forecast_ensemble_size.
+    
+    ie. forecast_date = '20180215' will get forecasts at 
+    ['2018021518','2018021512','2018021506','2018021500','2018021418']
+    or more prior ones if <5 are available. 
+    
+    current_season_observed
+        xarray object of one produced by download_latest_observations
+    """
     config = tools.load_config()
     
     land_mask = xr.open_dataset(config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
     
-    # The weather up until today. This accounts for PRISM potentially not being
-    # updated to the most recent day (ie. yesterday). 
-    current_season_observed = xr.open_dataset(config['current_season_observations_file'])
     most_recent_observed_day = pd.Timestamp(current_season_observed.time.values[-1]).to_pydatetime()
     first_forecast_day = most_recent_observed_day + datetime.timedelta(days=1)
-    
-    max_lead_time_weeks = 36
-    forecast_ensemble_n = 5
-    
-    today = pd.Timestamp.today().date()
-    last_forecast_day = today + pd.offsets.Week(max_lead_time_weeks)
+
+    #today = pd.Timestamp.today().date()
+    last_forecast_day = forecast_date + pd.offsets.Week(lead_time)
     
     # Get info for more forecasts than needed in case some fail
     # during processing. 4 forecasts are issued every day, so 10
     # extra is about 2 days worth. 
     cfs = cfs_tools.cfs_ftp_info()
-    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_n + 10)
+    most_recent_forecasts = cfs.last_n_forecasts(n=forecast_ensemble_size + 20,
+                                                 from_date=forecast_date)
     cfs.close()
     
     # Arrange the downscale model to easily do array math with the 
@@ -70,7 +82,7 @@ def run():
     num_forecasts_added = 0
     print(len(most_recent_forecasts))
     for forecast_info in most_recent_forecasts:
-        if num_forecasts_added == forecast_ensemble_n:
+        if num_forecasts_added == forecast_ensemble_size:
             break
         
         local_filename = config['tmp_folder']+ os.path.basename(forecast_info['download_url'])
@@ -78,7 +90,7 @@ def run():
         
         print('\n\n\n')
         print('Attempting to process climate forecast {i} of {n} with initial time {t}'.format(i=num_forecasts_added,
-                                                                                       n=forecast_ensemble_n,
+                                                                                       n=forecast_ensemble_size,
                                                                                        t = initial_time))
         print('download URL: ' + str(forecast_info['download_url']))
 
@@ -143,7 +155,7 @@ def run():
         
         # TODO: add provenance metadata
         try:
-            processed_filename = config['current_forecast_folder']+'cfsv2_'+forecast_info['initial_time']+'.nc'
+            processed_filename = destination_folder+'cfsv2_'+forecast_info['initial_time']+'.nc'
             forecast_obj.to_netcdf(processed_filename)
         except:
             print('processing error in saving file')
@@ -152,8 +164,5 @@ def run():
         print('Successfuly proccessed forecast from initial time: '+str(initial_time))
         num_forecasts_added+=1
 
-    assert num_forecasts_added==forecast_ensemble_n, 'not enough forecasts added. {added} of {needed}'.format(added=num_forecasts_added, 
-                                                                                                              needed=forecast_ensemble_n)
-    
-if __name__=='__main__':
-    run()()
+    assert num_forecasts_added==forecast_ensemble_size, 'not enough forecasts added. {added} of {needed}'.format(added=num_forecasts_added, 
+                                                                                                              needed=forecast_ensemble_size)

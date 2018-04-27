@@ -8,7 +8,7 @@ tmp_folder: tmp/
 
 mask_file: land_mask.nc
 
-google_auth: 
+google_auth: /home/shawn/.google_cloud_auth/phenology_updater.json
 
 #######################################################
 # Phenology models attributes
@@ -17,6 +17,8 @@ species_range_file: species_ranges.nc
 phenology_model_folder: phenology_models/
 
 phenology_forecast_folder: phenology_forecasts/
+
+phenology_hindcast_folder: phenology_hindcasts/
 
 species_list_file: species_list.csv
 
@@ -60,6 +62,8 @@ historic_observations_folder: historic_observations/
 historic_reanalysis_folder: historic_reanalysis/
 
 current_season_observations_file: current_season_observations.nc
+
+prism_cache_folder: prism_cache/
 
 current_forecast_folder: current_forecasts/
 

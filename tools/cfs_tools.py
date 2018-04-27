@@ -142,19 +142,22 @@ class cfs_ftp_info:
         return to_return[path_type]
     
     def last_n_forecasts(self, from_date=None, n = 10):
-        # By default start checking from the current date at the 18:00 iteration
-        if not from_date:
-            from_date = tools.date_to_string(datetime.datetime.today()) + '18'
-        else:
-            from_date = tools.date_to_string(from_date) + '18'
+        # The first timestamp to check for is the 18:00 interation of the day
+        # prior to the specified date, or if no date is specific, from the current date.
+        # 
         
+        if not from_date:
+            from_date = tools.date_to_string(datetime.datetime.today()) + '00'
+        else:
+            from_date = tools.date_to_string(from_date) + '00'
+        
+        # This is hour 00 of the specified date. it will become hour 1800
+        # in the first iteration of the while loop
         latest_forecast_timestamp = tools.string_to_date(from_date, h=True)
         
         six_hours = datetime.timedelta(hours=6)
-        latest_forecast_timestamp+=six_hours
         
         all_forecasts = []
-        
         while len(all_forecasts) < n:
             latest_forecast_timestamp-=six_hours
 
