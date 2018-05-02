@@ -2,8 +2,9 @@ from tools import tools
 import time
 import datetime
 import subprocess
+import pandas as pd
 
-from automated_forecasting.climate import download_latest_observations, download_latest_forecasts
+from automated_forecasting.climate import download_latest_observations, cfs_forecasts
 from automated_forecasting.phenology import apply_phenology_models
 
 #####################
@@ -40,7 +41,8 @@ except:
 # Get the latest climate forecasts
 message('Downloading latest forecasts ' + str(now()))
 try:
-    download_latest_forecasts.run()
+    cfs_forecasts.get_forecasts_from_date(forecast_date = now(),
+                                          destination_folder = config['current_forecast_folder'])
     message(min_elapsed() + ' min in downloading latest forecasts succeeded ' + str(now()))
 except:
     message(min_elapsed() + ' min in downloading latest forecasts failed ' + str(now()))

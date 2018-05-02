@@ -58,7 +58,7 @@ def run(climate_forecast_folder = None,
     
     # Load the climate forecasts
     
-    current_climate_forecasts = [xr.open_dataset(f) for f in current_climate_forecast_files]
+    #current_climate_forecasts = [xr.open_dataset(f) for f in current_climate_forecast_files]
     
     num_species_processed=0
     for i, forecast_info in enumerate(forecast_metadata.to_dict('records')):
@@ -80,10 +80,10 @@ def run(climate_forecast_folder = None,
     
     
         prediction, prediction_sd = predict_phenology_from_climate(model,
-                                                                   current_climate_forecasts,
-                                                                    post_process='automated',
-                                                                    doy_0=doy_0,
-                                                                    species_range=species_range)
+                                                                   current_climate_forecast_files,
+                                                                   post_process='automated',
+                                                                   doy_0=doy_0,
+                                                                   species_range=species_range)
         
         species_forecast = xr.Dataset(data_vars = {'doy_prediction':(('species','phenophase', 'lat','lon'), prediction),
                                                    'doy_sd':(('species', 'phenophase', 'lat','lon'), prediction_sd)},
