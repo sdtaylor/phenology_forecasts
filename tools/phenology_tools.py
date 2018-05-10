@@ -3,16 +3,6 @@ import numpy as np
 import xarray as xr
 from pyPhenology import utils
 
-# I am having issues on the hipergator where these locations
-# are missing some, but not all, temperature values. I can't 
-# figure out, or reproduce it on serenity. 11 pixels is nothing
-# so I'm just going to mark them all NA and move on. 
-def hipergator_correction(climate_forecast):
-    bad_pixels_axis_1 = np.array([ 47,  51,  68, 128, 139, 143, 203, 213, 238, 372, 411, 440])
-    bad_pixels_axis_2 = np.array([ 700,  794,  506, 1220,  595,  626, 511, 1179,  688,  516,  481,  463])
-    
-    climate_forecast['tmean'][:,bad_pixels_axis_1,bad_pixels_axis_2] = np.nan
-    
 def predict_phenology_from_climate(model, climate_forecast_files, post_process, 
                           doy_0, species_range=None):
     """Predict a phenology model over climate ensemble
@@ -53,9 +43,7 @@ def predict_phenology_from_climate(model, climate_forecast_files, post_process,
     
     species_ensemble = []
     for climate_file in climate_forecast_files:
-        print(climate_file)
         climate = xr.open_dataset(climate_file)
-        hipergator_correction(climate)
         doy_series =  pd.TimedeltaIndex(climate.time.values - doy_0, freq='D').days.values
         
         # When using a bootstrap model in hindcasting we want *all*
