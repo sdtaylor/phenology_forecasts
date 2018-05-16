@@ -54,6 +54,7 @@ def get_forecasts_from_date(forecast_date, destination_folder,
     
     if not current_season_observed:
         current_season_observed = xr.open_dataset(config['current_season_observations_file'])
+    current_season_observed = current_season_observed.drop('status')
     
     land_mask = xr.open_dataset(config['mask_file'])
     tmean_names = config['variables_to_use']['tmean']
