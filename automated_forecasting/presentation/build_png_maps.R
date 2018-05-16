@@ -5,6 +5,7 @@ library(ncdf4)
 library(lubridate)
 #library(leaflet)
 source('automated_forecasting/presentation/map_utils.R')
+source('tools/tools.R')
 
 config = load_config()
 
