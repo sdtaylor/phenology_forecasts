@@ -1,45 +1,5 @@
 library(tidyverse)
 
-####################################################################
-#From the NPN dataset extract the doy observations for an
-#select species and specied phenophase (ie flowering vs leafout)
-#distinct() to compact down multiple observations on the same day
-subset_npn_data = function(this_species, this_phenophase){
-  obs_subset = all_observations %>%
-    filter(species==this_species, Phenophase_ID == this_phenophase) %>%
-    distinct()
-  
-  if(nrow(obs_subset)==0){return(data.frame())}
-  
-  return(obs_subset)
-}
-
-###################################################################
-# Prepend the root data folder to all files and folders
-# specified. 
-load_config = function(){
-  config = yaml::yaml.load_file('config.yaml')
-  
-  data_folder = config$data_folder
-
-  config_attributes = names(config)
-  # Don't prepend the root data_folder
-  config_attributes = config_attributes[-which('data_folder' %in% config_attributes)]
-  
-  for(a in config_attributes){
-    is_dir = grepl('folder',a)
-    is_file= grepl('file',a)
-    if(is_dir | is_file){
-      config[[a]] = paste0(data_folder,config[[a]])
-    }
-    if(is_dir){
-      if(!dir.exists(config[[a]])) dir.create(config[[a]])
-    }
-  }
-  return(config)
-}
-
-
 #################################################################
 #Takes a data.frame in the format colnames(species, site_id, year, status, doy)
 #where status is 1 or 0, and observations include *all* the observations from the dataset.
@@ -49,6 +9,7 @@ load_config = function(){
 #observation.
 # prior_obs_cutoff: Only use observations where the prior status=0 observation is < this amount
 #                 if equal to -1 (the default) then don't enforce this. Only used in NPN data
+#################################################################
 process_phenology_observations = function(df, prior_obs_cutoff=-1){
   #Add an observation ID for each unique series
   df = df %>%
@@ -61,6 +22,7 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
   phenophase_0 = df %>%
     group_by(species, site_id, year, individual_id, Phenophase_ID) %>%
     top_n(1, -doy) %>%
+    filter(row_number()==1) %>%
     ungroup() %>%
     filter(status==0) %>%
     select(species, site_id, year, individual_id, Phenophase_ID) %>%
@@ -71,10 +33,11 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
     filter(status==1) %>%
     group_by(species, site_id, year, individual_id, Phenophase_ID) %>%
     top_n(1,-doy) %>%
+    filter(row_number()==1) %>% # some trees have multiple
     ungroup() %>%
     left_join(phenophase_0, by=c('species','site_id','year','individual_id','Phenophase_ID')) %>%
     filter(has_prior_obs=='yes') %>% 
-    select(-status, -has_prior_obs)
+    select(-status, -has_prior_obs) 
   
   #Get the doy for the most recent observation, which should be status==0
   prior_observations = df_subset %>%
@@ -99,14 +62,15 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
   df_subset = df_subset %>%
     filter(!is.na(doy_difference)) %>%
     mutate(doy = round(doy_difference/2 + doy_prior)) %>%
-    select(species, site_id,year,doy, Phenophase_ID)
+    select(species, site_id,year,doy, Phenophase_ID, individual_id)
   
   return(df_subset)
 }
 
 
 ###############################################################
-
+# From the  output of raster::extract(), but everything into
+# the format: year,doy,site_id,temperature
 ##############################################################
 process_extracted_prism_data = function(extracted){
   extracted = extracted %>%
