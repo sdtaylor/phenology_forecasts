@@ -72,7 +72,7 @@ process_phenology_observations = function(df, prior_obs_cutoff=-1){
 # From the  output of raster::extract(), but everything into
 # the format: year,doy,site_id,temperature
 ##############################################################
-process_extracted_prism_data = function(extracted){
+process_extracted_prism_data = function(extracted, winter_doy_begin){
   extracted = extracted %>%
     tidyr::gather(filename, temperature, -site_id) %>%
     dplyr::mutate(date=stringr::word(filename, 5, 5, sep='_')) %>%
@@ -83,17 +83,19 @@ process_extracted_prism_data = function(extracted){
   temperature_data = extracted %>%
     mutate(date = as.Date(as.character(date), '%Y%m%d')) %>%
     mutate(year = lubridate::year(date), doy = lubridate::yday(date))
-  
-  #Limit temp data to fall and mid summer
-  #temperature_data = temperature_data %>%
-  #  filter(doy <=180 | doy >= 240)
-  
+  # To have temperature represented as a constant julian day, the fall months
+  # essentially need to be repeated twice. For example. Dec. 1, 2014 will become
+  # doy -31 for the 2015 season, but will *also* be doy 335 for the 2014 season.
+  winter_buffer = temperature_data %>%
+    filter(doy>=winter_doy_begin)
+
   #Assign fall (begining in Oct.) temp to the next years growing season.
-  #Also set Jan 1 as doy 0, anything before that as negative doy's
+  #Also set Jan 1 as doy 1, anything before that as negative doy's
   temperature_data = temperature_data %>%
-    mutate(year = ifelse(doy>=300, year+1, year)) %>%
-    mutate(base_date = lubridate::as_date(paste0(year,'-01-01'))) %>%
-    mutate(doy = date - base_date) %>%
+    mutate(year = ifelse(doy>=winter_doy_begin, year+1, year)) %>%
+    bind_rows(winter_buffer) %>%
+    mutate(base_date = as.Date(paste0(year,'-01-01'))) %>%
+    mutate(doy = (date - base_date) + 1) %>% # Add 1 to ensure jan 1 = doy 1
     select(-date, -base_date)
   
   #Cuttoff to 2 decimals to save space in the csv files
