@@ -4,6 +4,7 @@ library(tidyverse)
 library(prism)
 library(sp)
 source('tools/tools.R')
+source('tools/npn_data_tools.R')
 
 config=load_config()
 
@@ -84,7 +85,7 @@ prism_stacked = raster::stack(prism_file_info$abs_path, quick=FALSE)
 
 temp_data = as.data.frame(raster::extract(prism_stacked, sites_spatial)) %>%
   bind_cols(site_info) %>%
-  process_extracted_prism_data() 
+  process_extracted_prism_data(winter_doy_begin=300) 
 
 # Put lat/lon in it as well
 temp_data = temp_data %>%
