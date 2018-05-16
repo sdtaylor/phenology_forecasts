@@ -54,8 +54,20 @@ if(args$data_source=='local_file'){
     species_info = species_list[i,]
 
     if(!isTRUE(species_info$observation_downloaded) | args$update_mode=='all'){
-      species_data = all_observations %>%
-        filter(species == species_info$species, Phenophase_ID==species_info$Phenophase_ID)
+      
+      # For fall coloring, only use "yes" observations where >50% of leaves are colored
+      # This also allows the  inclusion of the older 181 phenophase of ">=50% of leaves colored"
+      if(species_info$Phenophase_ID==498){
+        old_phenophase = all_observations %>%
+          filter(species == species_info$species, Phenophase_ID==181)
+        
+        species_data = all_observations %>%
+          filter(species == species_info$species, Phenophase_ID==498) %>%
+          filter((status==1 & intensity %in% c("50-74%","75-94%","95% or more")) | (status==0))
+      } else {
+        species_data = all_observations %>%
+          filter(species == species_info$species, Phenophase_ID==species_info$Phenophase_ID)
+      }
       
       if(nrow(species_data)==0){
         print(paste('Species has no data: ',species_info$species, species_info$Phenophase_ID))

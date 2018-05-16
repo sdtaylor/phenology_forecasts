@@ -3,7 +3,7 @@ library(docopt)
 library(tidyverse)
 library(prism)
 library(sp)
-source('model_building/phenology/phenology_observation_functions.R')
+source('tools/tools.R')
 
 config=load_config()
 
