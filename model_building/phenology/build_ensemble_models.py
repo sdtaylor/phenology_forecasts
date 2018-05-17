@@ -35,12 +35,18 @@ def build_phenology_model(species_info):
         m1 = pyPhenology.models.Linear(parameters={'time_start':(180,300), 'time_length':(10,90)})
         m2 = pyPhenology.models.FallCooling()
         ensemble_models = [m1,m2]
+        
+        model_note = """Weighted ensemble using stacking,40 iterations, and 3 models (FallCooling, Naive, and Linear w/ fall time estimated."""
+
     else: 
         m1 = pyPhenology.models.Alternating()
         m2 = pyPhenology.models.ThermalTime()
         m3 = pyPhenology.models.Uniforc()
         m4 = pyPhenology.models.Linear(parameters={'spring_start':(-30,60), 'spring_length':(1,120)})
         ensemble_models = [m1,m2,m3,m4]
+        
+        model_note = """Weighted ensemble using stacking,40 iterations, and 4 models (Thermaltime, Uniforc, Alternating, Linear w/ springtime estimated."""
+
     
     model = pyPhenology.models.WeightedEnsemble(core_models=ensemble_models)
     
@@ -55,7 +61,6 @@ def build_phenology_model(species_info):
     
     ###################
     # Entry for model metadata
-    model_note = """Weighted ensemble using stacking,50 iterations, and 4 models (Thermaltime, Uniforc, Alternating, Linear w/ springtime estimated."""
     
     model_metadata ={'species':species_name,
                      'Phenophase_ID':phenophase,
