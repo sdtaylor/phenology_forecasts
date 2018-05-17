@@ -56,6 +56,7 @@ if(args$data_source=='local_file'){
     if(!isTRUE(species_info$observation_downloaded) | args$update_mode=='all'){
       
       # For fall coloring, only use "yes" observations where >50% of leaves are colored
+      # and are actually in the fall season. (doy 180-365)
       # This also allows the  inclusion of the older 181 phenophase of ">=50% of leaves colored"
       if(species_info$Phenophase_ID==498){
         old_phenophase = all_observations %>%
@@ -64,6 +65,9 @@ if(args$data_source=='local_file'){
         species_data = all_observations %>%
           filter(species == species_info$species, Phenophase_ID==498) %>%
           filter((status==1 & intensity %in% c("50-74%","75-94%","95% or more")) | (status==0))
+        
+        species_data = species_data %>%
+          filter((status==1 & doy>180) | (status==0))
       } else {
         species_data = all_observations %>%
           filter(species == species_info$species, Phenophase_ID==species_info$Phenophase_ID)
