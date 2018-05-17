@@ -30,12 +30,19 @@ def build_phenology_model(species_info):
     except:
         return({})
 
-    m1 = pyPhenology.models.Alternating()
-    m2 = pyPhenology.models.ThermalTime()
-    m3 = pyPhenology.models.Uniforc()
-    m4 = pyPhenology.models.Linear(parameters={'spring_start':(-30,60), 'spring_length':(1,120)})
+    # Different ensemble for fall sensesence model
+    if phenophase==498:
+        m1 = pyPhenology.models.Linear(parameters={'time_start':(180,300), 'time_length':(10,90)})
+        m2 = pyPhenology.models.FallCooling()
+        ensemble_models = [m1,m2]
+    else: 
+        m1 = pyPhenology.models.Alternating()
+        m2 = pyPhenology.models.ThermalTime()
+        m3 = pyPhenology.models.Uniforc()
+        m4 = pyPhenology.models.Linear(parameters={'spring_start':(-30,60), 'spring_length':(1,120)})
+        ensemble_models = [m1,m2,m3,m4]
     
-    model = pyPhenology.models.WeightedEnsemble(core_models=[m1,m2,m3,m4])
+    model = pyPhenology.models.WeightedEnsemble(core_models=ensemble_models)
     
     model.fit(species_obs, temperature_obs, iterations=40)
     
@@ -70,14 +77,13 @@ from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
 from time import sleep
 
-num_hipergator_workers=50
-cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=1, memory='4GB', walltime='192:00:00')
+num_hipergator_workers=80
+cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=1, memory='4GB', walltime='192:00:00',
+                       death_timeout=600, local_directory='/tmp/')
 
 print('Starting up workers')
-workers = []
-for _ in range(num_hipergator_workers):
-    workers.extend(cluster.start_workers(1))
-    sleep(10)
+workers = cluster.start_workers(num_hipergator_workers)
+
 dask_client = Client(cluster)
 
 wait_time=0
@@ -107,7 +113,7 @@ job_list=species_info.to_dict('records')
 # as well as the results when the jobs are finished
 remote_jobs = dask_client.map(build_phenology_model, job_list)
 
-# This collects all the job resutls (a list of returned values from build_phenology_model)
+# This collects all the job results (a list of returned values from build_phenology_model)
 # it blocks until all jobs have completed
 model_metadata = dask_client.gather(remote_jobs)
 
