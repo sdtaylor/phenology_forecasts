@@ -42,6 +42,8 @@ def run():
     print('most recent observed date on file: ' + str(latest_observed_day))
     prism_days_to_add = pd.date_range(latest_observed_day, np.datetime64(yesterday), closed='right')
     
+    # Force the daily status to unicode. Otherwise xarray gets very confused
+    observed_weather['status'] = observed_weather.status.astype('<U11')
     
     # TODO: download all of them
     for day in prism_days_to_add:
