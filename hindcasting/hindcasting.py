@@ -37,13 +37,11 @@ today = datetime.datetime.today().date()
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
 from dask import delayed
-cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=2, memory='4GB', walltime='144:00:00')
+cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=2, memory='4GB', walltime='144:00:00',
+                       death_timeout=600, local_directory='/tmp/')
 
 print('Starting up workers')
-workers = []
-for _ in range(hindcast_config.num_hipergator_workers):
-    workers.extend(cluster.start_workers(1))
-    sleep(60)
+workers = cluster.start_workers(hindcast_config.num_hipergator_workers)
 dask_client = Client(cluster)
 
 wait_time=0
@@ -126,29 +124,34 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         base_model_name = forecast_info['base_model']
         model = utils.load_saved_model(model_file)
     
-        num_bootstraps = len(model.model_list)
+        # The number of models in the ensemble
+        num_pheno_ensembles = len(model.model_list)
+        pheno_ensemble_names = [m['model_name'] for m in model.get_params()]
         
-        
-        prediction_array = np.empty((hindcast_config.num_climate_ensemble, num_bootstraps, latitude_length, longitude_length))
+        prediction_array = np.empty((hindcast_config.num_climate_ensemble, num_pheno_ensembles, latitude_length, longitude_length))
         #predicts = []
-        for bootstrap_i, bootstrap_model in enumerate(model.model_list):
+        for ensemble_model_i, ensemble_model in enumerate(model.model_list):
             #predicts.append([])
             for climate_i, climate in enumerate(climate_ensemble):
 
-                # This step get run on the cluster. with only predictions being saved
-                prediction_array[climate_i, bootstrap_i]= apply_phenology_model(climate = climate['tmean'], 
-                                                                                 model=bootstrap_model,
+                # This step get run on the cluster. with only predictions being saved locally on the "head" machine
+                prediction_array[climate_i, ensemble_model_i]= apply_phenology_model(climate = climate['tmean'], 
+                                                                                 model=ensemble_model,
                                                                                  doy_0=doy_0).values
                 # Potentially a more clever/quicker way of doing it, but not working just yet
                 #predicts[-1].append( apply_phenology_model(climate = climate['tmean'], 
                 #                                                                 model=bootstrap_model,
                 #                                                                 doy_0=doy_0).persist())
+        
+        # apply nan to non predictions
+        prediction_array[prediction_array==999]=np.nan
         # extend the axis by 2 to include dimensions for species and phenophase
         prediction_array = np.expand_dims(prediction_array, axis=0)
         prediction_array = np.expand_dims(prediction_array, axis=0)
-        prediction_dataset = xr.Dataset(data_vars = {'prediction':(('species','phenophase', 'climate_ensemble','bootstrap', 'lat','lon'), prediction_array)},
+        prediction_dataset = xr.Dataset(data_vars = {'prediction':(('species','phenophase', 'climate_ensemble','phenology_ensemble', 'lat','lon'), prediction_array),
+                                                     'model_weights':(('phenology_ensemble'),model.weights)},
                                           coords = {'species':[species], 'phenophase':[phenophase],
-                                                    'climate_ensemble':range(hindcast_config.num_climate_ensemble), 'bootstrap':range(num_bootstraps),
+                                                    'climate_ensemble':range(hindcast_config.num_climate_ensemble), 'phenology_ensemble':pheno_ensemble_names,
                                                     'lat':land_mask.lat, 'lon':land_mask.lon})
     
         #prediction_dataset.attrs['species']=species
