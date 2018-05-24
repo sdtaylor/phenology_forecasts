@@ -13,10 +13,10 @@ current_season=current_growing_season()
 
 ##################################################
 # TODO: put this in a file if a bunch of this gets added
-all_phenophase_info = data_frame(Phenophase_ID = c(371,501),
-                                 noun = c('leaf','flower'),
-                                 noun_plural = c('leaves','flowers'),
-                                 verb = c('leaf out','flowering'))
+all_phenophase_info = data_frame(Phenophase_ID = c(371,501,498),
+                                 noun = c('leaf','flower','fall color'),
+                                 noun_plural = c('leaves','flowers','fall colors'),
+                                 verb = c('leaf out','flowering','fall coloring'))
 
 species_info = read_csv(config$species_list_file)
 
