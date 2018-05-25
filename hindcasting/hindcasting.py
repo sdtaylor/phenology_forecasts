@@ -148,8 +148,13 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         # extend the axis by 2 to include dimensions for species and phenophase
         prediction_array = np.expand_dims(prediction_array, axis=0)
         prediction_array = np.expand_dims(prediction_array, axis=0)
+        
+        model_weights = model.weights
+        model_weights = np.expand_dims(model_weights, axis=0)
+        model_weights = np.expand_dims(model_weights, axis=0)
+
         prediction_dataset = xr.Dataset(data_vars = {'prediction':(('species','phenophase', 'climate_ensemble','phenology_ensemble', 'lat','lon'), prediction_array),
-                                                     'model_weights':(('phenology_ensemble'),model.weights)},
+                                                     'model_weights':(('species', 'phenophase', 'phenology_ensemble'),model_weights)},
                                           coords = {'species':[species], 'phenophase':[phenophase],
                                                     'climate_ensemble':range(hindcast_config.num_climate_ensemble), 'phenology_ensemble':pheno_ensemble_names,
                                                     'lat':land_mask.lat, 'lon':land_mask.lon})
