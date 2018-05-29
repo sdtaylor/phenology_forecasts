@@ -40,6 +40,7 @@ for forecast_date_folder in available_forecast_date_folders:
                                 'phenology_weight':float(subset.sel(climate_ensemble=climate_i,
                                                               phenology_ensemble=phenology_i).model_weights.values),
                                 'phenology_model':str(phenology_i.phenology_ensemble.values),
+                                'climate_ensemble':int(climate_i.climate_ensemble.values),
                                 'issue_date':forecast_issue_date})
                     forecast_data.append(new_row)
         
