@@ -1,4 +1,4 @@
-from pyPhenology import models
+from pyPhenology import models, utils
 import pandas as pd
 import numpy as np
 from tools import tools
@@ -56,6 +56,9 @@ for i, species_info in enumerate(all_species_info.to_dict('records')):
 
     model.save_params(config['phenology_model_folder']+model_filename)
     
+    # reload the model to clear the fitting data
+    # Otherwise the prediction below balks.
+    model = utils.load_saved_model(config['phenology_model_folder']+model_filename)
     #######################################################
     # make entry for this specifc model in model metadata file
     # forecast version is -1 cause the models themselves will 
@@ -76,18 +79,9 @@ for i, species_info in enumerate(all_species_info.to_dict('records')):
     ########################################################
     # Add to netcfd of naive forecast. But only if there
     # is a range mask available
-    
-    if species_info['species'] not in range_masks.species.values:
-        print('Skipping {s} {p}, no range mask'.format(s=species, p=phenophase))
-        continue
-    else:
-        species_range = range_masks.sel(species=species)
-    
     bootstrap_predictions = model.predict(predictors={'latitude':latitude_array},
                                           aggregation='none')
     
-    # Keep only values in the range
-    bootstrap_predictions[:,~species_range.range.values]=np.nan
     
     prediction = np.mean(bootstrap_predictions, axis=0)
     prediction_sd = np.std(bootstrap_predictions, axis=0)
@@ -101,7 +95,7 @@ for i, species_info in enumerate(all_species_info.to_dict('records')):
     species_model = xr.Dataset(data_vars = {'doy_prediction':(('species','phenophase', 'lat','lon'), prediction),
                                                'doy_sd':(('species', 'phenophase', 'lat','lon'), prediction_sd)},
                                       coords = {'species':[species], 'phenophase':[phenophase],
-                                                'lat':species_range.lat, 'lon':species_range.lon})
+                                                'lat':land_mask.lat, 'lon':land_mask.lon})
     
     if i==0:
         all_naive_models = species_model
