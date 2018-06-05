@@ -1,5 +1,6 @@
 library(tidyverse)
-source('tools/phenology_observation_functions.R')
+source('tools/npn_data_tools.R')
+source('tools/tools.R')
 
 config = load_config()
 
@@ -17,10 +18,14 @@ all_observations = current_season_observations %>%
 
 # add in lat/lon
 site_info = current_season_sites %>%
-  select(site_id=Site_ID, latitude=Latitude, longitude=Longitude)
+  select(site_id=Site_ID, latitude=Latitude, longitude=Longitude, Site_Type)
 
 all_observations = all_observations %>%
   left_join(site_info, by='site_id')
+
+# Drop group sites
+all_observations = all_observations %>%
+  filter(Site_Type!='Group')
 
 if(sum(is.na(all_observations$latitude))>0){
   warning('some missing coordinates')
