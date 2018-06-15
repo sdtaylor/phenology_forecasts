@@ -26,6 +26,8 @@ phenology_model_metadata_file: phenology_model_metadata.csv
 
 phenology_observations_folder: phenology_observations/
 
+phenology_naive_model_file: phenology_naive_models.nc
+
 # Observations used for validation
 phenology_current_season_observation_file: phenology_current_observations.csv
 
