@@ -1,4 +1,4 @@
-library(rnpn)
+#library(rnpn)
 library(docopt)
 library(tidyverse)
 source('tools/tools.R')
@@ -36,17 +36,44 @@ species_list = read_csv(config$species_list_file)
 
 today = as.character(Sys.Date())
 
-args$local_obs_file = '/home/shawn/data/phenology/npn_core/status_intensity_observation_data.csv'
-args$local_site_file= '/home/shawn/data/phenology/npn_core/ancillary_site_data.csv'
+args$local_obs_file = paste0(config$data_folder,'prior_years_npn_data/individual_phenometrics_data.csv')
+args$local_site_file= paste0(config$data_folder,'prior_years_npn_data/ancillary_site_data.csv')
 
 if(args$data_source=='local_file'){
   #The raw npn data.
-  all_observations = read_csv(args$local_obs_file) %>%
-    select(site_id = Site_ID, individual_id = Individual_ID, Phenophase_ID, Observation_Date, status = Phenophase_Status,
-           intensity_id = Intensity_Category_ID, intensity = Intensity_Value, Genus, Species) %>%
-    mutate(species= tolower(paste(Genus,Species,sep=' ')), 
-           year   = lubridate::year(Observation_Date),
-           doy    = lubridate::yday(Observation_Date))
+  all_observations = read_csv(args$local_obs_file) 
+  
+  # Drop any conflicts where multiple observers disagree, or single observers
+  # mark multiple onsets
+  all_observations = all_observations %>%
+    filter(!Observed_Status_Conflict_Flag %in% c("MultiObserver-StatusConflict","OneObserver-StatusConflict")) %>%
+    filter(Multiple_FirstY==0)
+  
+  # Keep only observations that had a prior 'no' within 30 days
+  all_observations = all_observations %>%
+    filter(NumDays_Since_Prior_No >0, NumDays_Since_Prior_No<=30)
+  
+  # Correct observed date as midpoint between 1st 'no' and  most prior 'no'
+  all_observations$First_Yes_DOY = ceiling(with(all_observations, First_Yes_DOY - (NumDays_Since_Prior_No/2)))
+  
+  # Rename to variables I like
+  all_observations = all_observations %>%
+    select(site_id = Site_ID, individual_id = Individual_ID, Phenophase_ID, Genus, Species, 
+           latitude=Latitude, longitude=Longitude,
+           year=First_Yes_Year, doy=First_Yes_DOY) %>%
+    mutate(species= tolower(paste(Genus,Species,sep=' '))) 
+  
+  # Add in a unique observation ID for every species and phenophase
+  all_observations = all_observations %>%
+    group_by(species, Phenophase_ID) %>%
+    mutate(observation_id = 1:n()) %>%
+    ungroup()
+  
+  # Sanity check. No individual plant should have > 1 doy a year for any phenophase
+  individual_phenophase_obs = all_observations %>% 
+    group_by(individual_id, year, Phenophase_ID) %>% 
+    tally()
+  if(any(individual_phenophase_obs$n>1)) stop('> 1 observations/year/phenophase/individual')
   
   all_sites = read_csv(args$local_site_file)
   
@@ -55,47 +82,23 @@ if(args$data_source=='local_file'){
 
     if(!isTRUE(species_info$observation_downloaded) | args$update_mode=='all'){
       
-      # For fall coloring, only use "yes" observations where >50% of leaves are colored
-      # and are actually in the fall season. (doy 180-365)
-      # This also allows the  inclusion of the older 181 phenophase of ">=50% of leaves colored"
-      if(species_info$Phenophase_ID==498){
-        old_phenophase = all_observations %>%
-          filter(species == species_info$species, Phenophase_ID==181)
-        
-        species_data = all_observations %>%
-          filter(species == species_info$species, Phenophase_ID==498) %>%
-          filter((status==1 & intensity %in% c("50-74%","75-94%","95% or more")) | (status==0))
-        
-        species_data = species_data %>%
-          filter((status==1 & doy>180) | (status==0))
-      } else {
-        species_data = all_observations %>%
-          filter(species == species_info$species, Phenophase_ID==species_info$Phenophase_ID)
-      }
+      species_data = all_observations %>%
+        filter(species == species_info$species, Phenophase_ID==species_info$Phenophase_ID)
       
       if(nrow(species_data)==0){
-        print(paste('Species has no data: ',species_info$species, species_info$Phenophase_ID))
-        next
-      }
-      
-      # Only keep positive observations that were  preceeded via a negative observation
-      # with 30 days. And transform the observation date to the midpoint of those to dates.
-      processed_data = process_phenology_observations(species_data, prior_obs_cutoff = 30)
-      
-      if(nrow(processed_data)==0){
         print(paste('Species/phenophase has no data after processing: ',species_info$species, species_info$Phenophase_ID))
         next
       }
-    
+      
       species_observation_file = paste(species_info$species, species_info$Phenophase_ID,sep='_')
       species_observation_file = paste0(species_observation_file,'.csv')
       species_observation_file = gsub(' ','_',species_observation_file)
       
-      write_csv(processed_data, paste0(config['phenology_observations_folder'],species_observation_file))
+      write_csv(species_data, paste0(config['phenology_observations_folder'],species_observation_file))
       
       species_info$observation_downloaded=TRUE
       species_info$download_date=today
-      species_info$n_observations=nrow(processed_data)
+      species_info$n_observations=nrow(species_data)
       species_info$download_source='local'
       species_info$observation_file = species_observation_file
       

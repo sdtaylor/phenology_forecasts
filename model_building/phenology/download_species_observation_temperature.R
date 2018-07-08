@@ -21,7 +21,7 @@ Options:
 args <- docopt(d)
 ###############################################
 
-args$local_site_file = '~/data/phenology/npn_core/ancillary_site_data.csv'
+args$local_site_file = paste0(config$data_folder,'prior_years_npn_data/ancillary_site_data.csv')
 options(prism.path = config$daily_prism_folder)
 
 if(args$update_prism_files){
