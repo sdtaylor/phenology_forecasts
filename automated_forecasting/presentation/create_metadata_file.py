@@ -67,10 +67,10 @@ def run():
                              'default':0},
                             {'value':'501',
                              'display_text':'Flowers',
-                             'default':1},
+                             'default':0},
                             {'value':'498',
                              'display_text':'Fall colors',
-                             'default':0}]
+                             'default':1}]
     
     ############
     available_images = image_metadata.img_filename.tolist()
