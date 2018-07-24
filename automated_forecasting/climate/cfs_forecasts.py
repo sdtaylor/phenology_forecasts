@@ -117,6 +117,13 @@ def get_forecasts_from_date(forecast_date, destination_folder,
             print('processing error in download/converting')
             continue
         
+        # If the last day of the CFS forecast is off a lot a bunch from the
+        # last day we're shooting for skip it. This happens occasionaly cause of
+        # I'm assuming, errors on NOAA's end
+        if forecast_obj.forecast_time[-1].values < np.datetime64(last_forecast_day):
+            print('Skipping due to bad forecast end date. ends on {d}'.format(d=forecast_obj.forecast_time[-1].values))
+            continue
+        
         # ~1.0 deg cfs grid to 4km prism grid.
         #TODO: use distance_weighted method with k:2
         try:
