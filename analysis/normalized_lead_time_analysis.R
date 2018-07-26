@@ -166,19 +166,19 @@ x_pos_line= -100
 indicator_lines=data.frame(y=c(-0.05, 0.05), yend=c(-0.12, 0.12),
                            x=c(x_pos_line,x_pos_line), xend=c(x_pos_line,x_pos_line))
 
-x_pos_text=-95
+x_pos_text=-93
 indicator_text=data.frame(y=c(-0.17, 0.17), x=x_pos_text, t=c('Worse than\n naive model','Better than\n naive model'))
 
 ylim_high = 0.25
 ylim_low  =-0.25
 
 ####
-ggplot(aggregate_forecast_error, aes(x=lead_time, y=skill, color=error_type)) + 
-  geom_line(size=1.5) +
+aggregate_plot = ggplot(aggregate_forecast_error, aes(x=lead_time, y=skill, color=error_type)) + 
+  geom_line(size=4) +
   scale_color_manual(values=c("#000000")) + 
-  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=0.8, arrow = arrow(length=unit(0.25,'cm')),
+  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
-  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=4.5, inherit.aes = F) +
+  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15, inherit.aes = F) +
   ylim(ylim_low, ylim_high) +
   scale_x_continuous(labels = function(x){x*-1}) + 
   geom_hline(yintercept = 0, linetype='dashed', size=1) + 
@@ -186,37 +186,44 @@ ggplot(aggregate_forecast_error, aes(x=lead_time, y=skill, color=error_type)) +
   theme_bw() +
   theme(legend.position = c(0.6,0.1),
         legend.direction = 'horizontal',
-        legend.text = element_text(size=16),
+        legend.text = element_text(size=40),
         legend.key.width = unit(2,'cm'),
         legend.key.height = unit(0.5,'cm'),
-        axis.title = element_text(size=18),
-        axis.text = element_text(size=12))
-  
+        axis.title = element_text(size=48),
+        axis.text = element_text(size=40),
+        panel.grid = element_line(size=1.5),
+        panel.border = element_rect(size=1.8))
+
+ggsave(file = 'analysis/aggregate_forecast_error.png', plot = aggregate_plot, height = 40, width = 45, units = 'cm')  
 #####
-ggplot(phenophase_forecast_error, aes(x=lead_time, y=skill, color=as.factor(phenophase_with_n))) + 
-  geom_line(size=1.5) +
+phenophase_plot = ggplot(phenophase_forecast_error, aes(x=lead_time, y=skill, color=as.factor(phenophase_with_n))) + 
+  geom_line(size=4) +
   scale_color_manual(values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")) + 
-  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=0.8, arrow = arrow(length=unit(0.25,'cm')),
+  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
-  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=4.5, inherit.aes = F) +
+  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15, inherit.aes = F) +
   ylim(ylim_low, ylim_high) +
   scale_x_continuous(labels = function(x){x*-1}) + 
   geom_hline(yintercept = 0, linetype='dashed', size=1) + 
   labs(y='Skill',x='Lead time in days', color='') + 
   theme_bw() +
   theme(legend.position = c(0.6,0.3),
-        legend.text = element_text(size=16),
-        legend.key.width = unit(2,'cm'),
-        legend.key.height = unit(0.5,'cm'),
-        axis.title = element_text(size=18),
-        axis.text = element_text(size=12)) 
+        legend.text = element_text(size=40),
+        legend.key.width = unit(4,'cm'),
+        legend.key.height = unit(1,'cm'),
+        axis.title = element_text(size=48),
+        axis.text = element_text(size=40),
+        panel.grid = element_line(size=1.5),
+        panel.border = element_rect(size=1.8))
+
+ggsave(file = 'analysis/phenophase_forecast_error.png', plot = phenophase_plot, height = 40, width = 45, units = 'cm')  
 ####
-ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.factor(genus_with_n))) + 
-  geom_line(size=1.5) +
+genus_plot = ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.factor(genus_with_n))) + 
+  geom_line(size=4) +
   scale_color_manual(values=c("#E69F00", "#009E73", "#999999", "#0072B2", "#CC79A7")) + 
-  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=0.8, arrow = arrow(length=unit(0.25,'cm')),
+  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
-  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=4.5, inherit.aes = F) +
+  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15, inherit.aes = F) +
   ylim(ylim_low, ylim_high) +
   scale_x_continuous(labels = function(x){x*-1}) + 
   geom_hline(yintercept = 0, linetype='dashed', size=1) + 
@@ -225,20 +232,23 @@ ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.factor(genus_wit
   theme_bw() +
   theme(legend.position = c(0.6,0.1),
         legend.direction = 'horizontal',
-        legend.text = element_text(size=12),
-        legend.key.width = unit(2,'cm'),
-        legend.key.height = unit(0.5,'cm'),
-        axis.title = element_text(size=18),
-        axis.text = element_text(size=12)) +
+        legend.text = element_text(size=40),
+        legend.key.width = unit(4,'cm'),
+        legend.key.height = unit(1,'cm'),
+        axis.title = element_text(size=48),
+        axis.text = element_text(size=40),
+        panel.grid = element_line(size=1.5),
+        panel.border = element_rect(size=1.8)) +
   guides(color=guide_legend(nrow=3))
 
+ggsave(file = 'analysis/genus_forecast_error.png', plot = genus_plot, height = 40, width = 45, units = 'cm')  
 ####
-ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.factor(habit_with_n))) + 
-  geom_line(size=1.5) +
-  scale_color_manual(values=c( '#009E73','#0072B2')) + 
-  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=0.8, arrow = arrow(length=unit(0.25,'cm')),
+habit_plot = ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.factor(habit_with_n))) + 
+  geom_line(size=4) +
+  scale_color_manual(values=c( '#009E73','#E69F00')) + 
+  geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
-  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=4.5, inherit.aes = F) +
+  geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15, inherit.aes = F) +
   ylim(ylim_low, ylim_high) +
   scale_x_continuous(labels = function(x){x*-1}) + 
   geom_hline(yintercept = 0, linetype='dashed', size=1) + 
@@ -247,14 +257,19 @@ ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.factor(habit_wit
   theme_bw() +
   theme(legend.position = c(0.6,0.1),
         legend.direction = 'horizontal',
-        legend.text = element_text(size=14),
-        legend.key.width = unit(2,'cm'),
-        legend.key.height = unit(0.5,'cm'),
-        axis.title = element_text(size=18),
-        axis.text = element_text(size=12)) +
+        legend.text = element_text(size=40),
+        legend.key.width = unit(4,'cm'),
+        legend.key.height = unit(1,'cm'),
+        legend.spacing = unit(10,'cm'),
+        axis.title = element_text(size=48),
+        axis.text = element_text(size=40),
+        panel.grid = element_line(size=1.5),
+        panel.border = element_rect(size=1.8)) +
   guides(color=guide_legend(nrow=2))
 
-sample_sizes = forecast_error %>%
+ggsave(file = 'analysis/habit_forecast_error.png', plot = habit_plot, height = 40, width = 45, units = 'cm')  
+################
+sample_sizes = species_forecast_error %>%
   select(species, Phenophase_ID, lead_time, n) %>%
   distinct()
 
