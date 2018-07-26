@@ -39,7 +39,7 @@ ensemble_model_forecast = forecast_data %>%
   group_by(Phenophase_ID, issue_date, site_id, species, issue_doy) %>%
   summarise(doy_prediction = mean(prediction_mean),
             sum_sq = sum((prediction_mean-doy_prediction)**2),
-            doy_sd = sqrt(mean(phenology_sd) + (sum_sq / (n()-1)))) %>%
+            doy_sd = sqrt(mean(phenology_sd^2) + (sum_sq / (n()-1)))) %>%
   ungroup() %>%
   select(-sum_sq) %>%
   mutate(phenology_model='Ensemble') 
