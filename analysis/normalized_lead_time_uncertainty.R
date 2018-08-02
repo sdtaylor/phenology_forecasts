@@ -132,24 +132,35 @@ species_uncertainty = all_uncertainty %>%
 
 ###############################################
 
-
+dark_blue_color = '#242F40'
+orangish_color = '#CCA43B'
+yellowish = '#EEE3AB'
+whitish = '#D9CFC1'
+light_text_color = 'grey90'
+###########
 aggregate_uncertainty_plot = ggplot(aggregate_uncertainty, mapping=aes(x=lead_time, y=0, fill=uncertainty_source)) +
   #geom_crossbar(aes(ymin=-SD*1.96, ymax=SD*1.96, alpha=uncertainty_source), fatten = 0.2) +
   geom_ribbon(aes(ymin=-SD*1.96, ymax=SD*1.96, alpha=uncertainty_source), color='black', size=1.2) + 
-  scale_fill_manual(values=c('grey60','#E69F00','#0072B2')) + 
-  scale_alpha_manual(values=c(1,1,0.8)) +
+  scale_fill_manual(values=c('#e6c229','#1a8fe3','#d11149')) + 
+  #scale_fill_brewer(palette = 'Dark2') + 
+  scale_alpha_manual(values=c(0.9,1,0.6)) +
   scale_x_continuous(labels = function(x){x*-1}) + 
-  labs(y='95% CI in days',x='Lead time in days', fill='', alpha='') +
+  labs(y='95% CI in days',x='Days until event', fill='', alpha='') +
   theme_bw() +
   theme(legend.position = c(0.6,0.04),
        legend.direction = 'horizontal',
-       legend.text = element_text(size=40),
+       legend.text = element_text(size=40,  color=light_text_color),
        legend.key.width = unit(4,'cm'),
        legend.key.height = unit(1,'cm'),
-       axis.title = element_text(size=48),
-       axis.text = element_text(size=40),
-       panel.grid = element_line(size=1.5),
-       panel.border = element_rect(size=1.8)) 
+       legend.key = element_rect(fill=NA),
+       legend.background = element_rect(fill=dark_blue_color),
+       axis.title = element_text(size=48, color='black'),
+       axis.text = element_text(size=40, color='black'),
+       panel.grid.major = element_line(size=1.5, color='grey40'),
+       panel.grid.minor = element_blank(),
+       panel.border = element_rect(size=1.8),
+       panel.background = element_rect(fill=dark_blue_color),
+       plot.background = element_rect(fill=yellowish, color=yellowish))
 
 ggsave('analysis/aggregate_forecast_uncertainty.png', plot = aggregate_uncertainty_plot, height = 40, width = 45, units = 'cm')
 
