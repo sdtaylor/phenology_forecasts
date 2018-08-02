@@ -149,7 +149,7 @@ phenophase_forecast_error = forecast_data %>%
             n=n()) %>%
   ungroup() 
 
-phenophase_forecast_error$Phenophase_ID = factor(phenophase_forecast_error$Phenophase_ID, levels=c(371,501), labels=c('Budburst','Open Flowers'))
+phenophase_forecast_error$Phenophase_ID = factor(phenophase_forecast_error$Phenophase_ID, levels=c(501,371), labels=c('Open Flowers','Budburst'), ordered = TRUE)
 phenophase_forecast_error$phenophase_with_n = with(phenophase_forecast_error, paste0(Phenophase_ID,' (n=',n,')'))
 
 species_forecast_error = forecast_data %>%
@@ -206,6 +206,9 @@ aggregate_plot = ggplot(aggregate_forecast_error, aes(x=lead_time, y=skill, colo
 
 ggsave(file = 'analysis/aggregate_forecast_error.png', plot = aggregate_plot, height = 40, width = 45, units = 'cm')  
 #####
+phenophase_labels = phenophase_forecast_error %>%
+  filter(lead_time==0)
+
 phenophase_plot = ggplot(phenophase_forecast_error, aes(x=lead_time, y=skill, color=as.factor(phenophase_with_n))) + 
   geom_hline(yintercept = 0,color='black', size=2) + 
   geom_line(size=4) +
@@ -213,8 +216,9 @@ phenophase_plot = ggplot(phenophase_forecast_error, aes(x=lead_time, y=skill, co
   geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3, color=light_text_color, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
   geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15, color=light_text_color, inherit.aes = F) +
+  geom_text(data=phenophase_labels, aes(x=0.5, y=skill, label=c('Budburst','Flowers')), size=12, color=light_text_color, hjust=0,nudge_x = 0) +
   ylim(ylim_low, ylim_high) +
-  scale_x_continuous(labels = function(x){x*-1}) + 
+  scale_x_continuous(labels = function(x){x*-1}, limits=c(-101,10)) + 
   labs(y='Skill',x='Days until event', color='') + 
   theme_bw() +
   theme(legend.position = c(0.67,0.2),
@@ -229,10 +233,18 @@ phenophase_plot = ggplot(phenophase_forecast_error, aes(x=lead_time, y=skill, co
         panel.grid.minor = element_blank(),
         panel.border = element_rect(size=1.8),
         panel.background = element_rect(fill=dark_blue_color),
-        plot.background = element_rect(fill=yellowish, color=yellowish))
+        plot.background = element_rect(fill=yellowish, color=yellowish)) + 
+  guides(color=guide_legend(ncol = 1,
+                            keyheight = 4,
+                            reverse = TRUE))
 
 ggsave(file = 'analysis/phenophase_forecast_error.png', plot = phenophase_plot, height = 40, width = 45, units = 'cm')  
 ####
+
+genus_labels = genus_forecast_error %>%
+  filter(lead_time==0) %>%
+  mutate(lead_time=0.5)
+
 genus_plot = ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.factor(genus_with_n))) + 
   geom_hline(yintercept = 0, color='black', size=2) + 
   geom_line(size=4) +
@@ -240,12 +252,13 @@ genus_plot = ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.fac
   geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3,color=light_text_color, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
   geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15,color=light_text_color, inherit.aes = F) +
+  geom_text(data=genus_labels, aes(x=0.5, y=skill, label=genus), size=10, color=light_text_color, hjust=0,nudge_x = 0) +
   ylim(ylim_low, ylim_high) +
-  scale_x_continuous(labels = function(x){x*-1}) + 
+  scale_x_continuous(labels = function(x){x*-1}, limits = c(-101,8)) + 
   #ggtitle('By Genus') + 
   labs(y='Skill',x='Days until event', color='') + 
   theme_bw() +
-  theme(legend.position = c(0.6,0.15),
+  theme(legend.position = c(0.55,0.12),
         legend.direction = 'horizontal',
         legend.text = element_text(size=45, color=light_text_color),
         legend.key.width = unit(4,'cm'),
@@ -264,6 +277,9 @@ genus_plot = ggplot(genus_forecast_error, aes(x=lead_time, y=skill, color=as.fac
 
 ggsave(file = 'analysis/genus_forecast_error.png', plot = genus_plot, height = 40, width = 45, units = 'cm')  
 ####
+habit_labels = habit_forecast_error %>%
+  filter(lead_time==0)
+
 habit_plot = ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.factor(habit_with_n))) + 
   geom_hline(yintercept = 0, color='black', size=2) + 
   geom_line(size=4) +
@@ -271,8 +287,9 @@ habit_plot = ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.fac
   geom_segment(data=indicator_lines, aes(x=x, xend=xend, y=y, yend=yend), size=3,color=light_text_color, arrow = arrow(length=unit(1,'cm')),
                inherit.aes = F) +
   geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15,color=light_text_color, inherit.aes = F) +
+  geom_text(data=habit_labels, aes(x=0.5, y=skill, label=habit), size=15, color=light_text_color, hjust=0,nudge_x = 0) +
   ylim(ylim_low, ylim_high) +
-  scale_x_continuous(labels = function(x){x*-1}) + 
+  scale_x_continuous(labels = function(x){x*-1}, limits=c(-101,6)) + 
   #ggtitle('By Habit') + 
   labs(y='Skill',x='Days until event', color='') + 
   theme_bw() +
@@ -292,7 +309,8 @@ habit_plot = ggplot(habit_forecast_error, aes(x=lead_time, y=skill, color=as.fac
         panel.background = element_rect(fill=dark_blue_color),
         plot.background = element_rect(fill=yellowish, color=yellowish)) +
   guides(color=guide_legend(nrow=2,
-                            keyheight = 4))
+                            keyheight = 4,
+                            reverse = TRUE))
 
 ggsave(file = 'analysis/habit_forecast_error.png', plot = habit_plot, height = 40, width = 45, units = 'cm')  
 ################
