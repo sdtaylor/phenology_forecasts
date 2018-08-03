@@ -186,7 +186,7 @@ aggregate_plot = ggplot(aggregate_forecast_error, aes(x=lead_time, y=skill, colo
                inherit.aes = F) +
   geom_text(data=indicator_text, aes(x=x,y=y, label=t),size=15,color=light_text_color, inherit.aes = F) +
   ylim(ylim_low, ylim_high) +
-  scale_x_continuous(labels = function(x){x*-1}) + 
+  scale_x_continuous(labels = function(x){x*-1},  limits = c(-101,8)) + 
   labs(y='Skill',x='Days until event', color='') + 
   theme_bw() +
   theme(legend.position = c(0.7,0.2),
