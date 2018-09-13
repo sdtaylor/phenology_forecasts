@@ -22,6 +22,7 @@ def run(climate_forecast_folder = None,
     config = tools.load_config()
     
     today = datetime.datetime.today().date()
+    current_doy = today.timetuple().tm_yday
     
     print(divider)
     print('Applying phenology models - ' + str(today))
@@ -41,8 +42,12 @@ def run(climate_forecast_folder = None,
     # Load default species list if no special one was passed
     if not species_list:
         species_list = pd.read_csv(config['species_list_file'])
-        species_list = species_list[['species','Phenophase_ID','current_forecast_version']]
+        species_list = species_list[['species','Phenophase_ID','current_forecast_version',
+                                     'season_start_doy','season_end_doy']]
         
+    # Only forecast species and phenophases in the current season
+    species_list = species_list[(current_doy >= species_list.season_start_doy) & (current_doy <= species_list.season_end_doy)]
+    
     phenology_model_metadata = pd.read_csv(config['phenology_model_metadata_file'])
     
     forecast_metadata = species_list.merge(phenology_model_metadata, 
