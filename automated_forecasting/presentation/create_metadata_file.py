@@ -4,7 +4,7 @@ import pandas as pd
 from tools import tools
 import json
 import datetime
-from random import randrange
+from random import shuffle
 
 def run():
 
@@ -49,17 +49,28 @@ def run():
     
     # change the space in the species to an underscore.
     image_metadata['species'] = image_metadata['species'].apply(lambda x: x.replace(' ','_'))
+    image_metadata['default'] = 0
     
-    available_species = image_metadata[['species','display_text']].drop_duplicates().rename(columns={'species':'value'}).to_dict('records')
+    # Get info needed for javascript menu. The value to pass around (species w/ and underscore),
+    # the common/scientific name display text, and whether its the default one to show
+    available_species = image_metadata[['species','display_text','default']].drop_duplicates().rename(columns={'species':'value'}).to_dict('records')
     
-    # Default species is random every time
-    default_i = randrange(0, len(available_species))
-    for i, species_metadata in enumerate(available_species):
-        if i == default_i:
-            species_metadata['default']=1
-        else:
-            species_metadata['default']=0
+    # Set the default species to something random.
+    def image_available(species, phenophase=498, most_recent_date=most_recent_date):
+        matching_images = image_metadata.query('species == @species & \
+                                                phenophase == @phenophase & \
+                                                issue_date_object == @most_recent_date')
+        return matching_images.shape[0] > 0
     
+    shuffle(available_species)
+    
+    for species_metadata in available_species:
+        if image_available(species_metadata['value']):
+            species_metadata['default'] = 1
+            break
+    
+    # Sort again to it's alphabetical by species in the website menu
+    available_species = sorted(available_species, key=lambda s: s['value'])
     #####################
     
     available_phenophase = [{'value':'371',
