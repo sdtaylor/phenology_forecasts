@@ -97,15 +97,6 @@ class prism_ftp_info:
 def make_blank_day_like(d):
     pass
 
-def current_growing_season():
-    today = datetime.datetime.today()
-    year = today.strftime('%Y')
-    season_begin = year+config['season_month_begin']+config['season_day_begin']
-    cutoff = datetime.datetime.strptime(season_begin, '%Y%m%d')
-    if today >  cutoff:
-        year = str(int(year) + 1)
-    return year
-
 def round_to_current_day(t):
     return t - datetime.timedelta(hours=t.hour, 
                                   minutes=t.minute, 

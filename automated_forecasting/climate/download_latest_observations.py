@@ -9,7 +9,7 @@ from tools import prism_tools, tools
 config = tools.load_config()
 
 def run():
-    current_season=prism_tools.current_growing_season()
+    current_season=tools.current_growing_season(config)
     observed_weather_file = config['current_season_observations_file']
     
     today = datetime.datetime.today().date()
