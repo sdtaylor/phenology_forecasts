@@ -10,6 +10,8 @@ def run():
 
     config = tools.load_config()
     
+    current_season=tools.current_growing_season(config)
+    
     image_metadata = pd.read_csv(config['phenology_forecast_figure_metadata_file'])
     
     # Sort by issue date and then species so they are displayed correctly in the dropdown
@@ -17,8 +19,9 @@ def run():
     image_metadata.sort_values(['issue_date_object','species'], inplace=True)
     
     ###############################
-    # TODO: Here is were I'll delete older stuff after some period of time, like
-    # 2-3 months or something.
+    # Keep only images from the current growing season
+    image_metadata = image_metadata[image_metadata.forecast_season == int(current_season)]
+    
     ###############################
     
     # Create menu items with a pretty display name and an internal code
@@ -75,13 +78,13 @@ def run():
     
     available_phenophase = [{'value':'371',
                              'display_text':'Leaves',
-                             'default':0},
+                             'default':1},
                             {'value':'501',
                              'display_text':'Flowers',
                              'default':0},
                             {'value':'498',
                              'display_text':'Fall colors',
-                             'default':1}]
+                             'default':0}]
     
     ############
     available_images = image_metadata.img_filename.tolist()

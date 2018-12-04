@@ -23,15 +23,19 @@ species_phenophase_seasons = all_obs %>%
   summarise(avg_doy = mean(doy)) %>%
   ungroup() %>%
   mutate(season_start_doy = case_when(
-           avg_doy < 180 ~ 1,
+           avg_doy < 180 ~ -31,
            avg_doy > 180 ~ 180),
          season_end_doy = case_when(
            avg_doy < 180 ~ 180,
-           avg_doy > 180 ~ 365)) %>%
+           avg_doy > 180 ~ 320)) %>%
   select(-avg_doy)
 
-species_phenophase_seasons = avg_dates %>%
-  select(species, Phenophase_ID, season)
+
+# Drop  prior end/start dates to update
+if(any(c('season_start_doy','season_end_doy') %in% colnames(species_list))){
+  species_list = species_list %>%
+    select(-season_start_doy, -season_end_doy)
+}
 
 species_list = species_list %>%
   left_join(species_phenophase_seasons, by=c('species','Phenophase_ID'))
