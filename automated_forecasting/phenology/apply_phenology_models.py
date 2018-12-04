@@ -21,15 +21,28 @@ def run(climate_forecast_folder = None,
     
     config = tools.load_config()
     
+    current_season=tools.current_growing_season(config)
+    current_season_doy_0 = str(int(current_season)) + '0101'
+    current_season_doy_0 = tools.string_to_date(current_season_doy_0, h=False).date()
     today = datetime.datetime.today().date()
+  
     current_doy = today.timetuple().tm_yday
+    season_first_date = str(int(current_season)-1) + config['season_month_begin'] + config['season_day_begin']
+    season_first_date = tools.string_to_date(season_first_date, h=False).date()
+    
+    # if the season for spring forecasts has started. Nov 1
+    if today >= season_first_date:
+        # adjust the current doy to potentially be negative to reflect the doy
+        # for the following calendar year.
+        if today < current_season_doy_0:
+            current_doy -= 365
     
     print(divider)
     print('Applying phenology models - ' + str(today))
     
     range_masks = xr.open_dataset(config['species_range_file'])
     
-    doy_0 = np.datetime64('2018-01-01')
+    doy_0 = np.datetime64(current_season_doy_0)
     
     # Default location of climate forecasts
     if not climate_forecast_folder:
