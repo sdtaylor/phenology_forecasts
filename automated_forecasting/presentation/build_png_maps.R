@@ -239,9 +239,26 @@ for(spp in available_species){
     
     image_metadata = image_metadata %>%
       bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, forecast_season = current_season,
-                           forecast_issue_date=issue_date,img_filename=c(static_filename_prediction, static_filename_uncertainty, static_filename_anomaly)))
+                           issue_date=issue_date,
+                           image_filename=c(static_filename_prediction, static_filename_uncertainty, static_filename_anomaly),
+                           image_type = c('prediction_image','uncertainty_image','anomaly_image')))
     
+    image_metadata = image_metadata %>%
+      spread(image_type, image_filename)
   }
 }
 
 append_csv(image_metadata, config$phenology_forecast_figure_metadata_file)
+
+
+
+# The following was used  to convert the old metadata file to the new one with a column fo reach image type
+# kept here for safekeeping during transition of website to django
+# x= read_csv(config$phenology_forecast_figure_metadata_file)
+# x=separate(x,image_filename, c('drop1','drop2','drop3','drop4','image_type'), sep ="_", remove=FALSE) %>% 
+#   mutate(image_type = str_sub(image_type, 1,-5), 
+#          image_type = paste0(image_type,'_image')) %>% 
+#   select(-drop1,-drop2,-drop3,-drop4) %>%
+#   distinct() %>% 
+#   spread(image_type, image_filename)
+# write_csv(x, config$phenology_forecast_figure_metadata_file)
