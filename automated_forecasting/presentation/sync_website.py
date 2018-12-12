@@ -3,7 +3,7 @@ import glob
 from random import shuffle
 import datetime
 
-from google.cloud import storage
+#from google.cloud import storage
 #from google.oauth2 import service_account
 from tools import tools, api_client
 import pandas as pd
@@ -124,8 +124,9 @@ def run(update_all_images=False, metadata_only=False):
     
     ###########################################
     # update image/forecast metadata on the django app
-    client = api_client.PhenologyForecastAPIClient()
-    client.login(username='',password='')
+    client = api_client.PhenologyForecastAPIClient(hostname='https://phenology.naturecast.org/api/',
+                                                   credential_file='/home/shawn/.phenology_naturecast_org_auth.yaml')
+    client.login()
     
     # get everything currently on the django site
     current_issue_dates = pd.DataFrame(client.issue_date_list())

@@ -4,7 +4,7 @@ import pandas as pd
 
 class PhenologyForecastAPIClient():
     def __init__(self, credential_file=None, 
-                 hostname='http://localhost:8000/api/'):
+                 hostname='https://phenology.naturecast.org/api/'):
         self.logged_in=False
         self.headers={}
         self.hostname = hostname
@@ -32,7 +32,7 @@ class PhenologyForecastAPIClient():
             raise RuntimeError('Credential file reques "username" and',
                                '"password" fields')
         
-        return credentials[['username','password']]
+        return {'username': credentials['username'], 'password':credentials['password']}
         
     def login(self, username=None, password=None):
         if username is None and password is None:
@@ -43,7 +43,7 @@ class PhenologyForecastAPIClient():
         else:
             credentials = {'username':username, 'password':password}
         
-        token_request = r.post('http://localhost:8000/accounts/api/api-token-auth/', 
+        token_request = r.post('https://phenology.naturecast.org/accounts/api/api-token-auth/', 
                               data=credentials)
         if token_request.ok:
             token = token_request.json()['token']
