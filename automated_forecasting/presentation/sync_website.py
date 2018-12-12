@@ -77,6 +77,9 @@ def get_available_stuff():
                             {'phenophase':'501',
                              'display_text':'Flowers',
                              'default':0},
+                            {'phenophase':'390',
+                             'display_text':'Ripe fruit',
+                             'default':0},
                             {'phenophase':'498',
                              'display_text':'Fall colors',
                              'default':0}]
