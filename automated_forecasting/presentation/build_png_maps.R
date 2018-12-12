@@ -40,7 +40,7 @@ capitilize = function(s){
 
 args=commandArgs(trailingOnly = TRUE)
 phenology_forecast_filename = args[1]
-#phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-12-03.nc'
+#phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-12-12.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
 # Naive model (doy ~ latitude) used here as the average DOY to calculate annomolies.
@@ -133,15 +133,22 @@ for(spp in available_species){
       next()
     }
   
-    # The average doy
-    spp_average_doy = raster_from_netcdf(naive_model_forecasts, phenophase = pheno, species = spp, variable = 'doy_prediction') %>%
-      #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
-      rasterToPoints() %>%
-      data.frame()
-    colnames(spp_average_doy) = c('lat','lon','long_term_average')
-      
-    raster_df = raster_df %>%
-      left_join(spp_average_doy, by=c('lat','lon'))
+    # The average DOY to calculate the annomoly is not available for species where I just have the model
+    # obtained from other people, and not the actual observations.
+    make_anomlay_image = species_info %>%
+      filter(species == spp, Phenophase_ID==pheno) %>%
+      pull(observation_downloaded)
+    
+    if(make_anomlay_image){
+      spp_average_doy = raster_from_netcdf(naive_model_forecasts, phenophase = pheno, species = spp, variable = 'doy_prediction') %>%
+        #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
+        rasterToPoints() %>%
+        data.frame()
+      colnames(spp_average_doy) = c('lat','lon','long_term_average')
+  
+      raster_df = raster_df %>%
+        left_join(spp_average_doy, by=c('lat','lon'))
+    }
     
     phenophase_info = all_phenophase_info %>%
       filter(Phenophase_ID==pheno)
@@ -169,6 +176,7 @@ for(spp in available_species){
     legend_title_anomaly = paste0('Anomaly for ',tools::toTitleCase(phenophase_info$verb))
     static_filename_anomaly = paste0(filename_base,'_anomaly.png')
     
+    if(!make_anomlay_image){static_filename_anomaly = NA}
     ################
     # stand alone static image prediction
     static_image_prediction= static_image_base_plot +
@@ -208,27 +216,29 @@ for(spp in available_species){
     
     ###################
     # calculate annomoly. Negative numbers means it's earlier, positive mean it's later than average
-    raster_df$anomoly = with(raster_df, doy_prediction-long_term_average)
-    
-    # static image for annomoly
-    static_image_anomaly=static_image_base_plot + 
-      geom_raster(data = raster_df, aes(x=lat, y=lon, fill=anomoly)) +
-      geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) + 
-    #  scale_fill_gradient2(midpoint = 0, low='#D55E00', high = '#56B4E9', limits=c(-30,30),
-    #                       breaks = anomaly_legend_breaks, labels = anomaly_legend_labels)+
-      scale_fill_distiller(type='div', palette='RdYlBu', direction = 1, limits=c(-30,30), breaks=anomaly_legend_breaks,
-                           labels = anomaly_legend_labels) +
-     # guides(fill = guide_colorbar(title = legend_title_anomaly,
-    #                               title.position = 'top',
-    #                               title.hjust = 0.5)) + 
-      theme(legend.key.width = unit(1.0, 'cm')) +
-      labs(title = figure_title_anomaly, 
-           subtitle = figure_subtitle_anomaly,
-           fill = legend_title_anomaly)
-    
-    ggsave(static_image_anomaly,filename=paste0(issue_date_forecast_folder,static_filename_anomaly),
-           height = 12.5, width = 17, units = 'cm')
+    # raster_df$anomoly = with(raster_df, doy_prediction-long_term_average)
     # 
+    # # static image for annomoly
+    if(make_anomlay_image){
+      static_image_anomaly=static_image_base_plot +
+        geom_raster(data = raster_df, aes(x=lat, y=lon, fill=anomoly)) +
+        geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey20', size=0.3) +
+      #  scale_fill_gradient2(midpoint = 0, low='#D55E00', high = '#56B4E9', limits=c(-30,30),
+      #                       breaks = anomaly_legend_breaks, labels = anomaly_legend_labels)+
+        scale_fill_distiller(type='div', palette='RdYlBu', direction = 1, limits=c(-30,30), breaks=anomaly_legend_breaks,
+                             labels = anomaly_legend_labels) +
+       # guides(fill = guide_colorbar(title = legend_title_anomaly,
+      #                               title.position = 'top',
+      #                               title.hjust = 0.5)) +
+        theme(legend.key.width = unit(1.0, 'cm')) +
+        labs(title = figure_title_anomaly,
+             subtitle = figure_subtitle_anomaly,
+             fill = legend_title_anomaly)
+
+      ggsave(static_image_anomaly,filename=paste0(issue_date_forecast_folder,static_filename_anomaly),
+             height = 12.5, width = 17, units = 'cm')
+    }
+    # # 
     # # Display only the data for interactive map
     # # TODO: need to change CRS
     # r = raster_from_netcdf(phenology_forecast, phenophase = pheno, species =  spp, variable = 'doy_prediction')
@@ -243,10 +253,11 @@ for(spp in available_species){
                            image_filename=c(static_filename_prediction, static_filename_uncertainty, static_filename_anomaly),
                            image_type = c('prediction_image','uncertainty_image','anomaly_image')))
     
-    image_metadata = image_metadata %>%
-      spread(image_type, image_filename)
   }
 }
+
+image_metadata = image_metadata %>%
+  spread(image_type, image_filename)
 
 append_csv(image_metadata, config$phenology_forecast_figure_metadata_file)
 
