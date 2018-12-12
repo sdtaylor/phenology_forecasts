@@ -106,7 +106,7 @@ static_image_base_plot = ggplot() +
         legend.key.height = unit(0.4, 'cm'),
         legend.title = element_text(size=10),
         legend.text = element_text(size=6),
-        plot.title = element_text(size=13),
+        plot.title = element_text(size=12),
         plot.subtitle = element_text(size=9),
         plot.background = element_rect(fill='grey97'),
         panel.background =  element_rect(fill='grey97'),
