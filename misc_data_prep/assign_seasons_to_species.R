@@ -40,4 +40,10 @@ if(any(c('season_start_doy','season_end_doy') %in% colnames(species_list))){
 species_list = species_list %>%
   left_join(species_phenophase_seasons, by=c('species','Phenophase_ID'))
 
+# NA's are from species with no observations, where I got models from other people. 
+# they're generally in spring so set it to that.
+species_list$season_start_doy[is.na(species_list$season_start_doy)] = -31
+species_list$season_end_doy[is.na(species_list$season_end_doy)] = 180
+
+
 write_csv(species_list, config$species_list_file)
