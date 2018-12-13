@@ -42,5 +42,7 @@ current_growing_season = function(){
 ###################################################################
 #Appending a csv without re-writing the header.
 append_csv=function(df, filename){
-  write.table(df, filename, sep = ',', row.names = FALSE, col.names = !file.exists(filename), append = file.exists(filename))
+  readr::read_csv(filename) %>%
+    bind_rows(df) %>%
+    readr::write_csv(filename)
 }
