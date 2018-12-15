@@ -72,21 +72,11 @@ except:
     message('building static images failed ' + str(now()))
     raise
 
-# Generate a new json metadata file
-from automated_forecasting.presentation import create_metadata_file
-message('Creating json metadata file' + str(now()))
-try:
-    create_metadata_file.run()
-    message('creating json metadata file succeeded')
-except:
-    message('creating json metadata file failed')
-    raise
-
 # Sync the images folder and upload the new json file
 from automated_forecasting.presentation import sync_website
 message('Syncing website data' + str(now()))
 try:
-    sync_website.run()
+    sync_website.run(update_all_images=True)
     message('Syncing website data succeeded')
 except:
     message('Syncing website data failed')

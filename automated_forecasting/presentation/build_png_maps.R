@@ -40,7 +40,7 @@ capitilize = function(s){
 
 args=commandArgs(trailingOnly = TRUE)
 phenology_forecast_filename = args[1]
-#phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-12-12.nc'
+#phenology_forecast_filename = '/home/shawn/data/phenology_forecasting/phenology_forecasts/phenology_forecast_2018-12-14.nc'
 phenology_forecast = ncdf4::nc_open(phenology_forecast_filename)
 
 # Naive model (doy ~ latitude) used here as the average DOY to calculate annomolies.
@@ -143,7 +143,7 @@ for(spp in available_species){
       spp_average_doy = raster_from_netcdf(naive_model_forecasts, phenophase = pheno, species = spp, variable = 'doy_prediction') %>%
         #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
         rasterToPoints() %>%
-        data.frame()
+        as_tibble()
       colnames(spp_average_doy) = c('lat','lon','long_term_average')
   
       raster_df = raster_df %>%
@@ -249,7 +249,7 @@ for(spp in available_species){
     # png::writePNG(map_image, target=paste0(issue_date_forecast_folder,map_filename))
     
     image_metadata = image_metadata %>%
-      bind_rows(data.frame(species=spp, common_name = common_name, phenophase=pheno, forecast_season = current_season,
+      bind_rows(data_frame(species=spp, common_name = common_name, phenophase=pheno, forecast_season = current_season,
                            issue_date=issue_date,
                            image_filename=c(static_filename_prediction, static_filename_uncertainty, static_filename_anomaly),
                            image_type = c('prediction_image','uncertainty_image','anomaly_image')))
@@ -260,9 +260,9 @@ for(spp in available_species){
 image_metadata = image_metadata %>%
   spread(image_type, image_filename)
 
+image_metadata$issue_date = as_date(image_metadata$issue_date)
+
 append_csv(image_metadata, config$phenology_forecast_figure_metadata_file)
-
-
 
 # The following was used  to convert the old metadata file to the new one with a column fo reach image type
 # kept here for safekeeping during transition of website to django

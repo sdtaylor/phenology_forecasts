@@ -1,10 +1,9 @@
 import os
+import subprocess
 import glob
 from random import shuffle
 import datetime
 
-#from google.cloud import storage
-#from google.oauth2 import service_account
 from tools import tools, api_client
 import pandas as pd
 
@@ -33,10 +32,10 @@ def get_available_stuff():
     available_issue_dates=image_metadata[['issue_date','forecast_season']].drop_duplicates().copy()
     available_issue_dates['display_text'] = pd.to_datetime(available_issue_dates.issue_date).dt.strftime('%b %d, %Y')
 
-    # Last entry should be the one to display
-    available_issue_dates['default']=0
-    available_issue_dates['default'][-1:] = 1
-    
+    # while the  latest available  forecast is displayed by the django view,
+    # the "default" entry is still used for displaying past dates, so needs
+    # an entry here.
+    available_issue_dates['default']=0    
     available_issue_dates = available_issue_dates.to_dict('records')
     ####################
     available_species = []
@@ -91,44 +90,18 @@ def get_available_stuff():
             available_issue_dates, available_forecasts)
     
 def run(update_all_images=False, metadata_only=False):
-    config = tools.load_config()
-    
-    #########################################
-    # Google  Cloud image upload
-    if config['google_auth'] == None:
-        raise RuntimeError('google authentation file not set')
         
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS']=config['google_auth']
-    
-    client = storage.Client()
-    phenology_bucket = client.bucket('phenology.naturecast.org')
-    
-    # Iteration thru all the images and upload if they are not already there
-    issue_date_folders = glob.glob(config['phenology_forecast_figure_folder']+'2*')
-    
-    if not metadata_only:
-        for f in issue_date_folders:
-            issue_date = os.path.basename(f)
-            available_images = glob.glob(f+'/*.png')
-            
-            for image_path in available_images:
-                image_filename = os.path.basename(image_path)
-                storage_path = 'images/{issue_date}/{filename}'.format(issue_date=issue_date,
-                                                                       filename=image_filename)
-                
-                image_blob = phenology_bucket.blob(storage_path)
-                if image_blob.exists() and not update_all_images:
-                    pass
-                    #print('{i} exists, moving on'.format(i=image_filename))
-                else:
-                    print('uploading {i}'.format(i=image_filename))
-                    image_blob.upload_from_filename(image_path)
-                    image_blob.make_public()
+    # sync the local static image directory and the one on the remote server
+    if update_all_images:
+        subprocess.call(['rsync','-av',
+                         '-e ssh -i /home/shawn/.ssh/phenology_box.cer',
+                         config['phenology_forecast_figure_folder'],
+                         'ubuntu@phenology.naturecast.org:~/projects/phenology_forecasts_app/static/main/images/'])
     
     ###########################################
     # update image/forecast metadata on the django app
     client = api_client.PhenologyForecastAPIClient(hostname='https://phenology.naturecast.org/api/',
-                                                   credential_file='/home/shawn/.phenology_naturecast_org_auth.yaml')
+                                                   credential_file='/home/shawn/.phenology_naturecast_org_api_auth.yaml')
     client.login()
     
     # get everything currently on the django site
@@ -142,17 +115,10 @@ def run(update_all_images=False, metadata_only=False):
     for x in available_species:
         if x['species'] not in current_species.species.tolist():
             client.species_create(x)
-        else:
-            # The only thing really being updated here is the default one to
-            # display. It's easier to just update every one instead of 
-            # checking which ones need to be changed. 
-            client.species_update(x)
     
     for x in available_issue_dates:
         if x['issue_date'] not in current_issue_dates.issue_date.tolist():
             client.issue_date_create(x)
-        else:
-            client.issue_date_update(x)
     
     # make sure any new species and issue dates get refreshed
     client._load_current_entries()
@@ -160,7 +126,7 @@ def run(update_all_images=False, metadata_only=False):
     for x in available_forecasts:
         if x['prediction_image'] not in current_forecasts.prediction_image.tolist():
             client.forecast_create(x)
-        # No updates ever done for forecasts
+        # No updates ever done for forecasts, only creates of new ones
 
 if __name__=='__main__':
     run()
