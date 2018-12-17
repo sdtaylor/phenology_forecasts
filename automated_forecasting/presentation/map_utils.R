@@ -44,13 +44,13 @@ get_forecast_df = function(nc_object, phenophase, species, downscale_factor=NA){
                                       variable = 'doy_prediction', downscale_factor = downscale_factor) %>%
     #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
     rasterToPoints() %>%
-    data.frame()
+    as_tibble()
   colnames(doy_prediction) = c('lat','lon','doy_prediction')
   
   doy_sd = raster_from_netcdf(nc_object, phenophase = phenophase, species = species, variable = 'doy_sd') %>%
     #raster_set_change_crs(current=nc_crs, to=new_crs) %>%
     rasterToPoints() %>%
-    data.frame()
+    as_tibble()
   colnames(doy_sd) = c('lat','lon','doy_sd')
   
   full_forecast = doy_prediction %>%
