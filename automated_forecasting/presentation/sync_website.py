@@ -128,7 +128,7 @@ def run(update_all_images=False, metadata_only=False):
     ###########################################
     # update image/forecast metadata on the django app
     client = api_client.PhenologyForecastAPIClient(hostname='https://phenology.naturecast.org/api/',
-                                                   credential_file='/home/shawn/.phenology_naturecast_org_auth.yaml')
+                                                   credential_file='/home/shawn/.phenology_naturecast_org_api_auth.yaml')
     client.login()
     
     # get everything currently on the django site
@@ -140,27 +140,19 @@ def run(update_all_images=False, metadata_only=False):
     available_species, available_phenophases, available_issue_dates, available_forecasts = get_available_stuff()
     
     for x in available_species:
-        if x['species'] not in current_species.species.tolist():
+        if current_species.empty or x['species'] not in current_species.species.tolist():
             client.species_create(x)
-        else:
-            # The only thing really being updated here is the default one to
-            # display. It's easier to just update every one instead of 
-            # checking which ones need to be changed. 
-            client.species_update(x)
     
     for x in available_issue_dates:
-        if x['issue_date'] not in current_issue_dates.issue_date.tolist():
+        if current_issue_dates.empty or x['issue_date'] not in current_issue_dates.issue_date.tolist():
             client.issue_date_create(x)
-        else:
-            client.issue_date_update(x)
     
     # make sure any new species and issue dates get refreshed
     client._load_current_entries()
     
     for x in available_forecasts:
-        if x['prediction_image'] not in current_forecasts.prediction_image.tolist():
+        if current_forecasts.empty or x['prediction_image'] not in current_forecasts.prediction_image.tolist():
             client.forecast_create(x)
-        # No updates ever done for forecasts
 
 if __name__=='__main__':
     run()

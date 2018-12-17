@@ -136,15 +136,6 @@ class PhenologyForecastAPIClient():
         "uncertainty_image_filename": "acer_rubrum_371_2018-12-03_uncertainty.png",
         "anomaly_image_filename": "acer_rubrum_371_2018-12-03_anomaly.png",
         }
-        
-        Note because of Django REST limitations with related fields, the issue_date,
-        species, and phenophases must be uploaded as the primary key instead 
-        of the actual entry. Thus here they are converted to the pk.
         """
         endpoint = 'forecasts/create/'
-        
-        forecast_info['species'] = self._get_species_pk(forecast_info['species'])
-        forecast_info['issue_date'] = self._get_issue_date_pk(forecast_info['issue_date'])
-        forecast_info['phenophase'] = self._get_phenophase_pk(forecast_info['phenophase'])
-        
         return self._make_request(r.post, endpoint, data=forecast_info)
