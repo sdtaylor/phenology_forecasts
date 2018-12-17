@@ -15,8 +15,9 @@ raster_from_netcdf = function(nc_object, phenophase, species, variable, downscal
   
   data_matrix = ncvar_get(nc_object, varid=variable, start = start[dim_order], count = count[dim_order])
   
-  lon = nc_object$dim$lon$vals
-  lat = nc_object$dim$lat$vals
+  # do not need high precision for static images
+  lon = round(nc_object$dim$lon$vals, 4)
+  lat = round(nc_object$dim$lat$vals, 4)
   raster_obj = raster(t(data_matrix), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat))
   
   if(!is.na(downscale_factor)){
