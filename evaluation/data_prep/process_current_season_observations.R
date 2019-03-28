@@ -4,8 +4,8 @@ source('tools/tools.R')
 
 config = load_config()
 
-current_season_observations = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_data_2018/individual_phenometrics_data.csv')
-current_season_sites = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_data_2018/ancillary_site_data.csv')
+current_season_observations = read_csv(paste0(config$data_folder,'evaluation/phenology_data_2019/individual_phenometrics_data.csv'))
+current_season_sites = read_csv(paste0(config$data_folder,'evaluation/phenology_data_2019/ancillary_site_data.csv'))
 
 # Drop any conflicts where multiple observers disagree, or single observers
 # mark multiple onsets
@@ -33,5 +33,5 @@ current_season_observations = current_season_observations %>%
   mutate(observation_id = 1:n()) %>%
   ungroup()
 
-write_csv(current_season_observations, config$phenology_current_season_observation_file)
+write_csv(current_season_observations, paste0(config$data_folder,'evaluation/phenology_2019_observations.csv'))
 

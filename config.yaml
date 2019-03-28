@@ -28,8 +28,6 @@ phenology_observations_folder: phenology_observations/
 
 phenology_naive_model_file: phenology_naive_models.nc
 
-# Observations used for validation
-phenology_current_season_observation_file: phenology_current_observations.csv
 
 phenology_observations_temperature_file: phenology_observations/observation_temperatures.csv
 
