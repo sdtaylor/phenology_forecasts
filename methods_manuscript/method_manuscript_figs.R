@@ -33,10 +33,9 @@ forecast_data = forecast_data %>%
 individual_plant_info = forecast_data %>%
   select(individual_id, species,Phenophase_ID, site_id, latitude, longitude) %>%
   distinct()
-
+                    
 focal_individuals = c(79752,13596, 182516, 91840, 25365, 98168)
-#focal_individuals = c(10207, 116301, 90115, 102271, 69162, 148429,152284,87758,46645, 129991)
-#focal_sites = c(19187)
+
 timeseries_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',
                                      '2019-01-01','2019-01-21',
                                      '2019-02-01','2019-02-17',
@@ -119,7 +118,6 @@ baseplot = ggplot() +
         legend.position = 'blank') +
   labs(x='',y='')
 
-focal_individuals = c(79752,13596, 182516, 91840, 25365, 98168)
 
 timeseries79752 = generate_individual_timeseries(79752)
 timeseries25365 = generate_individual_timeseries(25365)
@@ -185,16 +183,25 @@ ggsave('methods_manuscript/all_2019_timeseries.png', plot=giant_plot, width=120,
 ################################
 # density plots of absolute errors
 
-error_plot_issue_dates = lubridate::ymd(c('2018-12-03',
-                                          '2019-01-01',
-                                          '2019-02-01',
-                                          '2019-03-01',
-                                          '2019-03-25'))
+error_plot_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',"2018-12-21",
+                                          '2019-01-01',"2019-01-09",'2019-01-21',
+                                          '2019-02-01',"2019-02-13",'2019-02-21',
+                                          '2019-03-01','2019-01-17'))
 
 
 forecast_data %>%
   filter(issue_date %in% error_plot_issue_dates, species=='acer rubrum') %>%
   mutate(absolute_error = doy_prediction - doy_observed) %>%
+ggplot(aes(x=issue_date, y=absolute_error)) + 
+  geom_hline(yintercept = 0) + 
+  geom_boxplot(aes(group=issue_date), width=5) + 
+  geom_jitter(width = 1, height = 0) + 
+  scale_x_date(date_labels = '%b. %e') +
+  theme_bw() +
+  labs(x='Issue Date', y='Absolute Error')
+  
+  
+  
 ggplot(aes(x=absolute_error, fill=species)) +
   geom_histogram() +
   scale_fill_viridis_d() +
