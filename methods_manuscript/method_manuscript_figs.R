@@ -78,6 +78,7 @@ generate_individual_timeseries = function(id){
                   width=7, position = position_dodge(width=10)) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
+    scale_x_date(date_labels = '%b. %e') + 
     labs(color='',x='',y='',title=plot_title) +
     theme_bw() +
     theme(legend.position = 'none',
