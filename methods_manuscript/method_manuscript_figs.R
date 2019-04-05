@@ -2,10 +2,15 @@ library(tidyverse)
 library(cowplot)
 
 forecast_data = read_csv('/home/shawn/data/phenology_forecasting/evaluation/forecast_data_2019.csv') %>%
-  select(-latitude, -longitude)
+  select(-latitude, -longitude) 
 observations_2019 = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_2019_observations.csv') %>%
   select(-latitude, -longitude) %>%
   rename(doy_observed = doy)
+
+# This plant has both flowers and budburst available. Keep only budburst, as all the other plants
+# in the map figure have only a single phenophase available. 
+observations_2019 = observations_2019 %>%
+  filter(!((individual_id==25365) & (Phenophase_ID==501)))
 
 # Combine obserations + forecasts for all the different issue dates. 
 # drop anything with missing data. which can happen when an observations is outside
@@ -14,14 +19,15 @@ forecast_data = forecast_data %>%
   left_join(observations_2019, by=c('site_id','Phenophase_ID','species')) %>%
   filter(complete.cases(.))
 
-site_info = forecast_data %>%
-  select(site_id, latitude, longitude ) %>%
-  distinct()
+all_site_info = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_data_2019/ancillary_site_data.csv') %>%
+  select(site_id = Site_ID, latitude=Latitude, longitude=Longitude ) %>%
+  filter(longitude < -50, longitude>-130) #remove some data with bogus coordinates
 
+evaluated_sites = all_site_info %>%
+  filter(site_id %in% forecast_data$site_id)
 
 forecast_data = forecast_data %>%
-  left_join(site_info, by='site_id')
-
+  left_join(all_site_info, by='site_id')
 # TODO:
 #   -add y buffer around timeseries
 #   -species names as titles instead of strip text 
@@ -39,7 +45,7 @@ focal_individuals = c(79752,13596, 182516, 91840, 25365, 98168)
 timeseries_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',
                                      '2019-01-01','2019-01-21',
                                      '2019-02-01','2019-02-17',
-                                     '2019-03-01','2019-01-17'))
+                                     '2019-03-01','2019-03-17'))
 
 ###################################################
 doy_to_date = function(x){
@@ -59,30 +65,36 @@ generate_individual_timeseries = function(id){
     mutate(phenophase = case_when(
       Phenophase_ID==371 ~ 'Budburst',
       Phenophase_ID==501 ~ 'Flowers'
-    )) %>%
-    mutate(individual_label = paste0(capitilize(species),' - ',phenophase,' (Plant: ',individual_id,', Site: ',site_id,')'))
+    ))
+    
   
   plot_title = individual_data %>%
-    pull(individual_label) %>%
-    unique()
+    mutate(individual_title = paste0(capitilize(species),' - ',phenophase)) %>%
+    pull(individual_title) %>%
+    unique() 
+  plot_subtitle = individual_data %>%
+    mutate(individual_title = paste0('(Plant: ',individual_id,', Site: ',site_id,')')) %>%
+    pull(individual_title) %>%
+    unique() 
   
-  plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 10
-  plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 10
+  plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 4
+  plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 4
   ggplot(individual_data, aes(x=issue_date, y=doy_observed)) +
     #geom_point(position = position_dodge(width=10), shape=10, size=5) +
     geom_hline(aes(yintercept=doy_observed), size=1, linetype='dashed', color='black') + 
-    geom_line(aes(y=doy_prediction),position = position_dodge(width=10), size=1,  color='grey60') + 
+    geom_line(aes(y=doy_prediction),position = position_dodge(width=10), size=1,  color='#0072B2') + 
     geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2)), 
-                  size=1, color='grey60',
+                  size=1, color='#0072B2',
                   width=7, position = position_dodge(width=10)) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
     scale_x_date(date_labels = '%b. %e') + 
-    labs(color='',x='',y='',title=plot_title) +
+    labs(color='',x='',y='',title=plot_title,subtitle = plot_subtitle) +
     theme_bw() +
     theme(legend.position = 'none',
-          plot.title = element_text(size=7, margin=margin(b=0), debug = F),
-          axis.text = element_text(size=6),
+          plot.title = element_text(size=10, margin=margin(b=1),vjust = 0, debug = F),
+          plot.subtitle = element_text(size=6,margin=margin(b=0), hjust = 0, debug=F),
+          axis.text = element_text(size=8),
           strip.background = element_rect(fill='grey90'),
           panel.background = element_rect(fill = "white"),
           plot.background = element_rect(fill = "transparent", color = NA))
@@ -93,7 +105,7 @@ get_individual_map_points = function(individual_ids){
     filter(individual_id %in% individual_ids) %>%
     select(individual_id, site_id) %>%
     distinct() %>%
-    left_join(site_info, by='site_id')
+    left_join(evaluated_sites, by='site_id')
 }
   
 ######################################################
@@ -102,10 +114,11 @@ basemap = map_data('state')
 
 individual_points = get_individual_map_points(focal_individuals)
 baseplot = ggplot() + 
-  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey40', size=0.8) +
+  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='black', size=0.5) +
   #geom_point(data=individual_points, aes(x=longitude, y=latitude, color=as.factor(individual_id)), shape=17, size=4) + 
   #ggrepel::geom_label_repel(data=individual_points, aes(x=longitude, y=latitude, label=individual_id,color=as.factor(individual_id))) + 
-  geom_point(data=site_info, aes(x=longitude, y=latitude), shape=1, stroke=1.5, size=3, color='grey60') + 
+  geom_point(data=evaluated_sites, aes(x=longitude, y=latitude), shape=1, stroke=1.5, size=3, color='#009E73') + 
+  geom_point(data=all_site_info, aes(x=longitude, y=latitude), size=0.5, color='#D55E00') + 
   theme_bw() +
   coord_fixed(1.3) +  
   theme(panel.background = element_blank(),
@@ -128,24 +141,24 @@ timeseries98168 = generate_individual_timeseries(98168)
 
 connecting_lines = tribble(
   ~individual_id, ~x_start, ~y_start, ~x_end, ~y_end,
-  79752,          0.512,      0.61,      0.6,   0.705,
-  25365,          0.508,      0.435,      0.45,    0.365,
-  13596,          0.57,      0.38,      0.61,    0.32,
-  182516,         0.36,      0.615,      0.32,    0.705,
+  79752,          0.512,      0.61,      0.6,   0.72,
+  25365,          0.508,      0.435,      0.43,    0.3,
+  13596,          0.57,      0.38,      0.65,    0.31,
+  182516,         0.36,      0.615,      0.28,    0.72,
   91840,          0.358,      0.527,       0.332,    0.54,
-  98168,          0.56,      0.493,      0.64,    0.49,
+  98168,          0.56,      0.493,      0.7,    0.52,
   NA, NA, NA, NA, NA
 )
 
 full_map_plot = ggdraw() + 
   draw_plot(baseplot, scale=0.4) +
-  geom_segment(data=connecting_lines, aes(x=x_start, y=y_start, xend=x_end, yend=y_end), size=1) + 
-  draw_plot(timeseries79752, x=0.5, y=0.6, width = 0.4, height = 0.3, scale=.8) +
-  draw_plot(timeseries25365, x=0.1, y=0.13, width = 0.4, height = 0.3, scale=.8) +
-  draw_plot(timeseries13596, x=0.55, y=0.13, width = 0.4, height = 0.3, scale=.8) +
-  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.3, scale=.8) +
-  draw_plot(timeseries91840, x=-0.02, y=0.4, width = 0.4, height = 0.3, scale=.8) +
-  draw_plot(timeseries98168, x=0.58, y=0.33, width = 0.4, height = 0.3, scale=.8) +
+  geom_segment(data=connecting_lines, aes(x=x_start, y=y_start, xend=x_end, yend=y_end), size=1, color='grey30') + 
+  draw_plot(timeseries79752, x=0.5, y=0.6, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries25365, x=0.1, y=0.02, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries91840, x=-0.02, y=0.3, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries98168, x=0.58, y=0.3, width = 0.4, height = 0.4, scale=.8) +
   #scale_x_continuous(breaks=seq(0,1,0.1)) +
   #scale_y_continuous(breaks=seq(0,1,0.1)) + 
   #theme(panel.grid.major = element_line(color='#56B4E9', size=0.3)) +
