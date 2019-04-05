@@ -199,26 +199,21 @@ ggsave('methods_manuscript/all_2019_timeseries.png', plot=giant_plot, width=120,
 error_plot_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',"2018-12-21",
                                           '2019-01-01',"2019-01-09",'2019-01-21',
                                           '2019-02-01',"2019-02-13",'2019-02-21',
-                                          '2019-03-01','2019-01-17'))
+                                          '2019-03-01','2019-03-17'))
 
 
-forecast_data %>%
-  filter(issue_date %in% error_plot_issue_dates, species=='acer rubrum') %>%
+error_plot = forecast_data %>%
+  filter(issue_date %in% error_plot_issue_dates) %>%
   mutate(absolute_error = doy_prediction - doy_observed) %>%
 ggplot(aes(x=issue_date, y=absolute_error)) + 
-  geom_hline(yintercept = 0) + 
-  geom_boxplot(aes(group=issue_date), width=5) + 
-  geom_jitter(width = 1, height = 0) + 
+  geom_hline(yintercept = 0, size=1, color='black') + 
+  geom_boxplot(aes(group=issue_date), width=4, size=0.5, color='grey40', outlier.color = 'transparent') + 
+  geom_jitter(width = 1.5, height = 0, size=2, alpha=0.3, color='#56B4E9') + 
+  #scale_color_manual(values=c('black','red')) + 
   scale_x_date(date_labels = '%b. %e') +
   theme_bw() +
+  theme(axis.text = element_text(color='black'),
+        panel.grid = element_blank()) + 
   labs(x='Issue Date', y='Absolute Error')
-  
-  
-  
-ggplot(aes(x=absolute_error, fill=species)) +
-  geom_histogram() +
-  scale_fill_viridis_d() +
-  #geom_density() + 
-  geom_vline(xintercept=0, color='red') +
-  facet_wrap(~issue_date, ncol=2) +
-  theme(legend.position = 'none')
+
+ggsave('methods_manuscript/error_timeseries.png', plot=error_plot, width=20, height = 8, units = 'cm', dpi=500)
