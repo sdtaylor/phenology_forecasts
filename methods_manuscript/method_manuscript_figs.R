@@ -7,11 +7,6 @@ observations_2019 = read_csv('/home/shawn/data/phenology_forecasting/evaluation/
   select(-latitude, -longitude) %>%
   rename(doy_observed = doy)
 
-# This plant has both flowers and budburst available. Keep only budburst, as all the other plants
-# in the map figure have only a single phenophase available. 
-observations_2019 = observations_2019 %>%
-  filter(!((individual_id==25365) & (Phenophase_ID==501)))
-
 # Combine obserations + forecasts for all the different issue dates. 
 # drop anything with missing data. which can happen when an observations is outside
 # the range for a respective species.
@@ -43,9 +38,10 @@ individual_plant_info = forecast_data %>%
 focal_individuals = c(79752,13596, 182516, 91840, 25365, 98168)
 
 timeseries_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',
-                                     '2019-01-01','2019-01-21',
-                                     '2019-02-01','2019-02-17',
-                                     '2019-03-01','2019-03-17'))
+                                     '2019-01-01','2019-01-13',
+                                     '2019-01-29','2019-02-17',
+                                     '2019-03-01','2019-03-17',
+                                     '2019-04-01'))
 
 ###################################################
 doy_to_date = function(x){
@@ -67,9 +63,13 @@ generate_individual_timeseries = function(id){
       Phenophase_ID==501 ~ 'Flowers'
     ))
     
+  # Add some dummy rows so that the phenophase  get's colored correctly even when only 1
+  # phenophase is available for an individual. 
+  individual_data = individual_data %>%
+    bind_rows(tibble(phenophase=c('Budburst','Flowers')))
   
   plot_title = individual_data %>%
-    mutate(individual_title = paste0(capitilize(species),' - ',phenophase)) %>%
+    mutate(individual_title = paste0(capitilize(species))) %>%
     pull(individual_title) %>%
     unique() 
   plot_subtitle = individual_data %>%
@@ -79,20 +79,20 @@ generate_individual_timeseries = function(id){
   
   plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 4
   plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 4
-  ggplot(individual_data, aes(x=issue_date, y=doy_observed)) +
+  ggplot(individual_data, aes(x=issue_date, y=doy_observed, color=phenophase)) +
     #geom_point(position = position_dodge(width=10), shape=10, size=5) +
-    geom_hline(aes(yintercept=doy_observed), size=1, linetype='dashed', color='black') + 
-    geom_line(aes(y=doy_prediction),position = position_dodge(width=10), size=1,  color='#0072B2') + 
-    geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2)), 
-                  size=1, color='#0072B2',
-                  width=7, position = position_dodge(width=10)) +
+    geom_hline(aes(yintercept=doy_observed, color=phenophase), size=1, linetype='dashed') + 
+    geom_line(aes(y=doy_prediction),position = position_dodge(width=2), size=1) + 
+    geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2), color=phenophase), 
+                  size=1,
+                  width=5, position = position_dodge(width=2)) +
+    scale_color_manual(values=c('springgreen4','#CC79A7')) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
     scale_x_date(date_labels = '%b. %e') + 
-    labs(color='',x='',y='',title=plot_title,subtitle = plot_subtitle) +
+    labs(color='Phenophase',x='',y='',title=plot_title,subtitle = plot_subtitle) +
     theme_bw() +
-    theme(legend.position = 'none',
-          plot.title = element_text(size=10, margin=margin(b=1),vjust = 0, debug = F),
+    theme(plot.title = element_text(size=10, margin=margin(b=1),vjust = 0, debug = F),
           plot.subtitle = element_text(size=6,margin=margin(b=0), hjust = 0, debug=F),
           axis.text = element_text(size=8),
           strip.background = element_rect(fill='grey90'),
@@ -117,7 +117,7 @@ baseplot = ggplot() +
   geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='black', size=0.5) +
   #geom_point(data=individual_points, aes(x=longitude, y=latitude, color=as.factor(individual_id)), shape=17, size=4) + 
   #ggrepel::geom_label_repel(data=individual_points, aes(x=longitude, y=latitude, label=individual_id,color=as.factor(individual_id))) + 
-  geom_point(data=evaluated_sites, aes(x=longitude, y=latitude), shape=1, stroke=1.5, size=3, color='#009E73') + 
+  geom_point(data=evaluated_sites, aes(x=longitude, y=latitude), shape=1, stroke=1, size=3, color='#0072B2') + 
   geom_point(data=all_site_info, aes(x=longitude, y=latitude), size=0.5, color='#D55E00') + 
   theme_bw() +
   coord_fixed(1.3) +  
@@ -132,23 +132,33 @@ baseplot = ggplot() +
   labs(x='',y='')
 
 
-timeseries79752 = generate_individual_timeseries(79752)
-timeseries25365 = generate_individual_timeseries(25365)
-timeseries13596 = generate_individual_timeseries(13596)
-timeseries182516 = generate_individual_timeseries(182516)
-timeseries91840 = generate_individual_timeseries(91840)
-timeseries98168 = generate_individual_timeseries(98168)
+# Only need the legend once, so remove it from the main timeseries plots
+no_legend = theme(legend.position = 'none')
+
+timeseries79752 = generate_individual_timeseries(79752) + no_legend
+timeseries25365 = generate_individual_timeseries(25365) + no_legend
+timeseries13596 = generate_individual_timeseries(13596) + no_legend
+timeseries182516 = generate_individual_timeseries(182516) + no_legend
+timeseries91840 = generate_individual_timeseries(91840) + no_legend
+timeseries98168 = generate_individual_timeseries(98168) + no_legend
 
 connecting_lines = tribble(
   ~individual_id, ~x_start, ~y_start, ~x_end, ~y_end,
   79752,          0.512,      0.61,      0.6,   0.72,
   25365,          0.508,      0.435,      0.43,    0.3,
-  13596,          0.57,      0.38,      0.65,    0.31,
-  182516,         0.36,      0.615,      0.28,    0.72,
+  13596,          0.57,      0.38,      0.65,    0.32,
+  182516,         0.36,      0.615,      0.27,    0.72,
   91840,          0.358,      0.527,       0.332,    0.54,
-  98168,          0.56,      0.493,      0.7,    0.52,
+  98168,          0.56,      0.493,      0.7,    0.53,
   NA, NA, NA, NA, NA
 )
+
+timeseries_legend = cowplot::get_legend(generate_individual_timeseries(25365) +
+  theme(legend.background = element_rect(fill=NA, color='black', size=0.25),
+        legend.key.width = unit(10,'mm'),
+        legend.key.height = unit(4,'mm'),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8)))
 
 full_map_plot = ggdraw() + 
   draw_plot(baseplot, scale=0.4) +
@@ -158,7 +168,8 @@ full_map_plot = ggdraw() +
   draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) +
   draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) +
   draw_plot(timeseries91840, x=-0.02, y=0.3, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries98168, x=0.58, y=0.3, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries98168, x=0.58, y=0.29, width = 0.4, height = 0.4, scale=.8) +
+  draw_plot(timeseries_legend, x=0.45, y=0.15, width=0.15, height=0.15, scale=0.2) +
   #scale_x_continuous(breaks=seq(0,1,0.1)) +
   #scale_y_continuous(breaks=seq(0,1,0.1)) + 
   #theme(panel.grid.major = element_line(color='#56B4E9', size=0.3)) +
@@ -199,7 +210,8 @@ ggsave('methods_manuscript/all_2019_timeseries.png', plot=giant_plot, width=120,
 error_plot_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',"2018-12-21",
                                           '2019-01-01',"2019-01-09",'2019-01-21',
                                           '2019-02-01',"2019-02-13",'2019-02-21',
-                                          '2019-03-01','2019-03-17'))
+                                          '2019-03-01','2019-03-13','2019-03-25',
+                                          '2019-04-01'))
 
 
 error_plot = forecast_data %>%
@@ -207,10 +219,11 @@ error_plot = forecast_data %>%
   mutate(absolute_error = doy_prediction - doy_observed) %>%
 ggplot(aes(x=issue_date, y=absolute_error)) + 
   geom_hline(yintercept = 0, size=1, color='black') + 
-  geom_boxplot(aes(group=issue_date), width=4, size=0.5, color='grey40', outlier.color = 'transparent') + 
-  geom_jitter(width = 1.5, height = 0, size=2, alpha=0.3, color='#56B4E9') + 
+  geom_jitter(width = 1.5, height = 0, size=2, alpha=0.15, color='#56B4E9') + 
+  geom_boxplot(aes(group=issue_date), width=4, size=0.5, color='grey40',fill=NA, outlier.color = 'transparent') + 
   #scale_color_manual(values=c('black','red')) + 
   scale_x_date(date_labels = '%b. %e') +
+  scale_y_continuous(breaks=c(-50,-25,0,25,50,75,100)) +
   theme_bw() +
   theme(axis.text = element_text(color='black'),
         panel.grid = element_blank()) + 
