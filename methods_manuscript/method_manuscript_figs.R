@@ -1,9 +1,13 @@
 library(tidyverse)
 library(cowplot)
 
-forecast_data = read_csv('/home/shawn/data/phenology_forecasting/evaluation/forecast_data_2019.csv') %>%
+forecast_data = read_csv('/home/shawn/data/phenology_forecasting/evaluation/forecast_data_2018.csv') %>%
   select(-latitude, -longitude) 
-observations_2019 = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_2019_observations.csv') %>%
+
+# forecast_data = read_csv('/home/shawn/data/phenology_forecasting/evaluation/naive_model_data_2018.csv') %>%
+#   select(-latitude, -longitude) %>%
+#   filter(Phenophase_ID %in% c(371,501))
+observations = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_2018_observations.csv') %>%
   select(-latitude, -longitude) %>%
   rename(doy_observed = doy)
 
@@ -11,11 +15,12 @@ observations_2019 = read_csv('/home/shawn/data/phenology_forecasting/evaluation/
 # drop anything with missing data. which can happen when an observations is outside
 # the range for a respective species.
 forecast_data = forecast_data %>%
-  left_join(observations_2019, by=c('site_id','Phenophase_ID','species')) %>%
+  left_join(observations, by=c('site_id','Phenophase_ID','species')) %>%
   filter(complete.cases(.))
 
 all_site_info = read_csv('/home/shawn/data/phenology_forecasting/evaluation/phenology_data_2019/ancillary_site_data.csv') %>%
   select(site_id = Site_ID, latitude=Latitude, longitude=Longitude ) %>%
+  filter(latitude <= 35) %>%
   filter(longitude < -50, longitude>-130) #remove some data with bogus coordinates
 
 evaluated_sites = all_site_info %>%
@@ -82,10 +87,10 @@ generate_individual_timeseries = function(id){
   ggplot(individual_data, aes(x=issue_date, y=doy_observed, color=phenophase)) +
     #geom_point(position = position_dodge(width=10), shape=10, size=5) +
     geom_hline(aes(yintercept=doy_observed, color=phenophase), size=1, linetype='dashed') + 
-    geom_line(aes(y=doy_prediction),position = position_dodge(width=2), size=1) + 
+    geom_line(aes(y=doy_prediction),position = position_dodge(width=3), size=1) + 
     geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2), color=phenophase), 
                   size=1,
-                  width=5, position = position_dodge(width=2)) +
+                  width=5, position = position_dodge(width=3)) +
     scale_color_manual(values=c('springgreen4','#CC79A7')) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
@@ -149,7 +154,7 @@ connecting_lines = tribble(
   13596,          0.57,      0.38,      0.65,    0.32,
   182516,         0.36,      0.615,      0.27,    0.72,
   91840,          0.358,      0.527,       0.332,    0.54,
-  98168,          0.56,      0.493,      0.7,    0.53,
+  98168,          0.56,      0.493,      0.7,    0.52,
   NA, NA, NA, NA, NA
 )
 
@@ -175,58 +180,111 @@ full_map_plot = ggdraw() +
   #theme(panel.grid.major = element_line(color='#56B4E9', size=0.3)) +
   geom_blank()
 
-ggsave('methods_manuscript/map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 500)
+ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 500)
   
 
 ################################
 ################################
 # plot of all ~400 timeseries of predictions
-giant_plot = forecast_data %>%
-  mutate(individual_label = paste(species,individual_id,'(',round(latitude,1),round(longitude,2),')')) %>%
-ggplot(aes(x=issue_date, y=doy_observed, color=as.factor(Phenophase_ID))) +
-  #geom_point(position = position_dodge(width=10), shape=10, size=5) +
-  geom_hline(aes(yintercept=doy_observed, color=as.factor(Phenophase_ID)), size=1, linetype='dashed') + 
-  geom_line(aes(y=doy_prediction),position = position_dodge(width=10), size=1) + 
-  geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2)), 
-                size=1,
-                width=7, position = position_dodge(width=10)) +
-  scale_color_brewer(palette = 'Dark2') + 
-  scale_y_continuous(labels = doy_to_date) + 
-  labs(color='',x='',y='') +
-  facet_wrap(~individual_label, scales='free_y') + 
+# giant_plot = forecast_data %>%
+#   mutate(individual_label = paste(species,individual_id,'(',round(latitude,1),round(longitude,2),')')) %>%
+# ggplot(aes(x=issue_date, y=doy_observed, color=as.factor(Phenophase_ID))) +
+#   #geom_point(position = position_dodge(width=10), shape=10, size=5) +
+#   geom_hline(aes(yintercept=doy_observed, color=as.factor(Phenophase_ID)), size=1, linetype='dashed') + 
+#   geom_line(aes(y=doy_prediction),position = position_dodge(width=10), size=1) + 
+#   geom_errorbar(aes(ymin=doy_prediction-(doy_sd*2), ymax=doy_prediction+(doy_sd*2)), 
+#                 size=1,
+#                 width=7, position = position_dodge(width=10)) +
+#   scale_color_brewer(palette = 'Dark2') + 
+#   scale_y_continuous(labels = doy_to_date) + 
+#   labs(color='',x='',y='') +
+#   facet_wrap(~individual_label, scales='free_y') + 
+#   theme_bw() +
+#   theme(legend.position = 'none',
+#         plot.title = element_text(size=7, margin=margin(b=0), debug = F),
+#         axis.text = element_text(size=6),
+#         strip.background = element_rect(fill='grey90'))
+# 
+# ggsave('methods_manuscript/all_2019_timeseries.png', plot=giant_plot, width=120, height = 80, units = 'cm', dpi=200)
+
+
+################################
+################################
+# timeseries of uncertainty
+forecast_metrics = forecast_data %>%
+  group_by(issue_date) %>%
+  summarize(mean_uncertainty = mean(doy_sd),
+            rmse = sqrt(mean(doy_observed - doy_prediction)^2)) %>%
+  ungroup() %>%
+  gather(metric, metric_value, mean_uncertainty, rmse) %>%
+  filter(issue_date < lubridate::ymd('2018-05-01'))
+forecast_metrics$metric = factor(forecast_metrics$metric, levels=c('rmse','mean_uncertainty'), labels=c('RMSE','Average S.D.'))
+
+metric_plot = ggplot(forecast_metrics, aes(x=issue_date, y=metric_value, color=metric)) +
+  geom_point(size=3) + 
+  geom_line(size=1.2) +
+  scale_color_manual(values=c("grey10", "grey60",'red')) + 
+  labs(x = 'Issue Date', y='', color='') +
   theme_bw() +
-  theme(legend.position = 'none',
-        plot.title = element_text(size=7, margin=margin(b=0), debug = F),
-        axis.text = element_text(size=6),
-        strip.background = element_rect(fill='grey90'))
+  theme(legend.position = c(0.8,0.75),
+        legend.title = element_blank(),
+        legend.key.width = unit(20,'mm'),
+        legend.background = element_rect(fill='white', color='black', size=0.25),
+        axis.text = element_text(size=12),
+        axis.title = element_text(size=16),
+        legend.text = element_text(size=12))
 
-ggsave('methods_manuscript/all_2019_timeseries.png', plot=giant_plot, width=120, height = 80, units = 'cm', dpi=200)
+metric_plot  = ggdraw(metric_plot) + 
+  draw_label('2018 data', size=40, alpha=0.5, y=0.3)
 
+ggsave('methods_manuscript/figure_4_metric_timeseries.png', plot=metric_plot, width=20, height = 8, units = 'cm', dpi=500)
 
 ################################
 ################################
-# density plots of absolute errors
+# timeseries boxplots of absolute errors
 
-error_plot_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',"2018-12-21",
-                                          '2019-01-01',"2019-01-09",'2019-01-21',
-                                          '2019-02-01',"2019-02-13",'2019-02-21',
-                                          '2019-03-01','2019-03-13','2019-03-25',
-                                          '2019-04-01'))
+### 2018
+error_plot_issue_dates = lubridate::ymd(c('2018-01-05',"2018-01-17",'2018-01-25',
+                                          '2018-02-02',"2018-02-13",'2018-02-21',
+                                          '2018-03-01','2018-03-13','2018-03-25',
+                                          '2018-04-01','2018-04-10','2018-04-22',
+                                          '2018-05-03'))
+### 2019
+# error_plot_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',"2018-12-21",
+#                                           '2019-01-01',"2019-01-09",'2019-01-21',
+#                                           '2019-02-01',"2019-02-13",'2019-02-21',
+#                                           '2019-03-01','2019-03-13','2019-03-25',
+#                                           '2019-04-01'))
 
+mean_errors = forecast_data %>%
+  filter(issue_date %in% error_plot_issue_dates) %>%
+  #filter(latitude <= 35) %>%
+  mutate(absolute_error = (doy_prediction - doy_observed)) %>%
+  group_by(issue_date) %>%
+  summarise(mae = round(mean(absolute_error),1),
+            median_error = median(absolute_error)) %>%
+  ungroup()
 
 error_plot = forecast_data %>%
   filter(issue_date %in% error_plot_issue_dates) %>%
-  mutate(absolute_error = doy_prediction - doy_observed) %>%
+  #filter(latitude <= 35) %>%
+  mutate(absolute_error = (doy_prediction - doy_observed)) %>%
 ggplot(aes(x=issue_date, y=absolute_error)) + 
   geom_hline(yintercept = 0, size=1, color='black') + 
   geom_jitter(width = 1.5, height = 0, size=2, alpha=0.15, color='#56B4E9') + 
-  geom_boxplot(aes(group=issue_date), width=4, size=0.5, color='grey40',fill=NA, outlier.color = 'transparent') + 
+  geom_boxplot(aes(group=issue_date), width=4, size=0.5, color='grey30',fill=NA, outlier.color = 'transparent') + 
+  geom_label(data=mean_errors, aes(y=-40, label=mae), alpha=0.8) +
   #scale_color_manual(values=c('black','red')) + 
   scale_x_date(date_labels = '%b. %e') +
-  scale_y_continuous(breaks=c(-50,-25,0,25,50,75,100)) +
+  ylim(-50,50) + 
+  #scale_y_continuous(breaks=c(-50,-25,0,25,50,75,100)) +
   theme_bw() +
-  theme(axis.text = element_text(color='black'),
-        panel.grid = element_blank()) + 
+  theme(axis.text = element_text(color='black', size=22),
+        panel.grid = element_blank(),
+        axis.title = element_text(size=30)) + 
   labs(x='Issue Date', y='Absolute Error')
 
-ggsave('methods_manuscript/error_timeseries.png', plot=error_plot, width=20, height = 8, units = 'cm', dpi=500)
+error_plot = ggdraw(error_plot) + 
+  draw_label('2018 data', size=80, alpha=0.5, y=0.8)
+
+ggsave('methods_manuscript/figure_5_error_timeseries.png', plot=error_plot, width=40, height = 16, units = 'cm', dpi=500)
