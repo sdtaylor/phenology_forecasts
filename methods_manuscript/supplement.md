@@ -13,14 +13,15 @@ header-includes:
 - \usepackage{lineno}
 - \linenumbers
 fontsize: 12pt
-bibliography: refs.bib
+bibliography: refs.bak.bib
 ---
 
 # Automated data-intensive forecasting of plant phenology throughout the United States
 
 Shawn D. Taylor, Ethan P. White
 
-Supplemental Information
+Supplemental Information  
+Supplemental Tables 1-2
 
 \newpage
 ### Phenology Model Descriptions
@@ -80,4 +81,148 @@ Fit a linear regression model.
 
 The two parameters from the regression model are saved in a netCFD file which can later be referenced by location and calendar month (Figure 1, H). This downscaling model, at the scale of the continental U.S.A., is used to downscale the most recent CFSv2 forecasts to a 4km resolution during the automated steps. 
 
+\newpage
+### Table S1
+Species and their associated phenophases used in the forecast system. Note not all species have forecasts for all phenophases due to data availabilty.
+\tiny
+
+|      |Species                   |Budburst     |Fall Colors  |Flowers      |Ripe Fruits  |
+|-----:|:-------------------------|:------------|:------------|:------------|:------------|
+|     1|Acacia greggii            |             |             |$\checkmark$ |             |
+|     2|Acer circinatum           |$\checkmark$ |             |$\checkmark$ |             |
+|     3|Acer macrophyllum         |$\checkmark$ |             |$\checkmark$ |             |
+|     4|Acer negundo              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|     5|Acer pensylvanicum        |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|     6|Acer rubrum               |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|     7|Acer saccharinum          |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|     8|Acer saccharum            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|     9|Aesculus californica      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    10|Alnus incana              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    11|Alnus rubra               |$\checkmark$ |$\checkmark$ |             |             |
+|    12|Amelanchier alnifolia     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    13|Artemisia tridentata      |             |             |$\checkmark$ |             |
+|    14|Berberis aquifolium       |             |             |$\checkmark$ |$\checkmark$ |
+|    15|Betula alleghaniensis     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    16|Betula lenta              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    17|Betula nigra              |$\checkmark$ |             |$\checkmark$ |             |
+|    18|Betula papyrifera         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    19|Carpinus caroliniana      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    20|Carya glabra              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    21|Celtis occidentalis       |$\checkmark$ |             |             |             |
+|    22|Cephalanthus occidentalis |$\checkmark$ |             |$\checkmark$ |             |
+|    23|Cercis canadensis         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    24|Chilopsis linearis        |             |             |$\checkmark$ |             |
+|    25|Clintonia borealis        |             |             |$\checkmark$ |             |
+|    26|Cornus florida            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    27|Cornus racemosa           |$\checkmark$ |             |             |             |
+|    28|Cornus sericea            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    29|Corylus cornuta           |             |             |$\checkmark$ |$\checkmark$ |
+|    30|Diospyros virginiana      |$\checkmark$ |             |             |             |
+|    31|Fagus grandifolia         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    32|Fouquieria splendens      |             |             |$\checkmark$ |             |
+|    33|Fraxinus americana        |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    34|Fraxinus pennsylvanica    |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    35|Gaultheria shallon        |             |             |$\checkmark$ |$\checkmark$ |
+|    36|Ginkgo biloba             |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    37|Gleditsia triacanthos     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    38|Hamamelis virginiana      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    39|Ilex verticillata         |$\checkmark$ |             |$\checkmark$ |             |
+|    40|Juglans nigra             |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    41|Liquidambar styraciflua   |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    42|Liriodendron tulipifera   |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    43|Magnolia grandiflora      |$\checkmark$ |             |$\checkmark$ |             |
+|    44|Maianthemum canadense     |             |             |$\checkmark$ |             |
+|    45|Nyssa sylvatica           |$\checkmark$ |             |$\checkmark$ |             |
+|    46|Ostrya virginiana         |$\checkmark$ |             |$\checkmark$ |             |
+|    47|Oxydendrum arboreum       |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    48|Platanthera praeclara     |$\checkmark$ |             |$\checkmark$ |             |
+|    49|Platanus racemosa         |$\checkmark$ |             |$\checkmark$ |             |
+|    50|Populus deltoides         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    51|Populus fremontii         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    52|Populus tremuloides       |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    53|Prunus americana          |$\checkmark$ |             |$\checkmark$ |             |
+|    54|Prunus serotina           |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    55|Prunus virginiana         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    56|Quercus agrifolia         |$\checkmark$ |             |$\checkmark$ |             |
+|    57|Quercus alba              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    58|Quercus douglasii         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    59|Quercus gambelii          |$\checkmark$ |$\checkmark$ |             |             |
+|    60|Quercus laurifolia        |$\checkmark$ |             |             |             |
+|    61|Quercus lobata            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    62|Quercus macrocarpa        |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    63|Quercus palustris         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    64|Quercus rubra             |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    65|Quercus velutina          |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    66|Quercus virginiana        |$\checkmark$ |             |$\checkmark$ |             |
+|    67|Rhododendron macrophyllum |$\checkmark$ |             |$\checkmark$ |             |
+|    68|Robinia pseudoacacia      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    69|Salix hookeriana          |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    70|Salix lasiolepis          |$\checkmark$ |             |$\checkmark$ |             |
+|    71|Sassafras albidum         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    72|Sorbus americana          |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    73|Tilia americana           |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    74|Ulmus americana           |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    75|Umbellularia californica  |$\checkmark$ |             |$\checkmark$ |             |
+|    76|Vaccinium corymbosum      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
+|    77|Vaccinium membranaceum    |             |             |$\checkmark$ |$\checkmark$ |
+|    78|Yucca brevifolia          |             |             |$\checkmark$ |             |
+|      |**Total**                 |**67**       |**47**       |**72**       |**4**        |
+
+\newpage
+### Table S2
+Species and their associated phenophases evaluated from the 2019 season. Data are from the USA National Phenology Network from Jan. 1, 2019 - May 5, 2019.
+
+|      |Species                 |Phenophase | Total Observations| Mean Julian Day|
+|-----:|:-----------------------|:---------------|---------:|--------:|
+|     1|Acer circinatum         |Budburst        |       682|     87.0|
+|     2|Acer circinatum         |Flowers         |        62|     96.0|
+|     3|Acer macrophyllum       |Budburst        |       186|     84.0|
+|     4|Acer macrophyllum       |Flowers         |        62|     90.0|
+|     5|Acer negundo            |Budburst        |        93|     94.0|
+|     6|Acer negundo            |Flowers         |        62|     52.0|
+|     7|Acer rubrum             |Budburst        |       651|     80.0|
+|     8|Acer rubrum             |Flowers         |       589|     68.0|
+|     9|Acer saccharinum        |Budburst        |        31|     86.0|
+|    10|Acer saccharinum        |Flowers         |        62|     88.0|
+|    11|Aesculus californica    |Budburst        |        31|     59.0|
+|    12|Alnus rubra             |Budburst        |        62|     72.0|
+|    13|Amelanchier alnifolia   |Budburst        |        31|     83.0|
+|    14|Betula nigra            |Flowers         |        31|     87.0|
+|    15|Carpinus caroliniana    |Budburst        |        31|     40.0|
+|    16|Carpinus caroliniana    |Flowers         |        31|     40.0|
+|    17|Carya glabra            |Budburst        |        62|     46.0|
+|    18|Carya glabra            |Flowers         |        31|     85.0|
+|    19|Cercis canadensis       |Budburst        |       155|     72.0|
+|    20|Cercis canadensis       |Flowers         |       124|     53.0|
+|    21|Cornus florida          |Budburst        |       620|     83.0|
+|    22|Cornus florida          |Flowers         |       186|     74.0|
+|    23|Cornus sericea          |Budburst        |        62|     84.0|
+|    24|Corylus cornuta         |Flowers         |        30|     76.0|
+|    25|Fagus grandifolia       |Budburst        |        31|     43.0|
+|    26|Hamamelis virginiana    |Budburst        |        31|     89.0|
+|    27|Liquidambar styraciflua |Budburst        |       310|     68.0|
+|    28|Liquidambar styraciflua |Flowers         |        31|     47.0|
+|    29|Liriodendron tulipifera |Budburst        |       279|     83.0|
+|    30|Liriodendron tulipifera |Flowers         |        62|     84.0|
+|    31|Magnolia grandiflora    |Budburst        |        93|     74.0|
+|    32|Nyssa sylvatica         |Budburst        |        31|     68.0|
+|    33|Populus tremuloides     |Flowers         |        62|     86.0|
+|    34|Prunus serotina         |Budburst        |       403|     75.0|
+|    35|Prunus serotina         |Flowers         |       217|     49.0|
+|    36|Prunus virginiana       |Budburst        |        93|     84.0|
+|    37|Quercus agrifolia       |Budburst        |       124|     72.0|
+|    38|Quercus alba            |Budburst        |        93|     62.0|
+|    39|Quercus alba            |Flowers         |        31|     81.0|
+|    40|Quercus laurifolia      |Budburst        |       279|     50.0|
+|    41|Quercus rubra           |Budburst        |        62|     59.0|
+|    42|Quercus virginiana      |Budburst        |       217|     52.0|
+|    43|Quercus virginiana      |Flowers         |       155|     59.0|
+|    44|Sassafras albidum       |Flowers         |        31|     61.0|
+|    45|Ulmus americana         |Budburst        |       124|     77.0|
+|    46|Vaccinium corymbosum    |Budburst        |       155|     66.0|
+|    47|Vaccinium corymbosum    |Flowers         |       186|     58.0|
+|      |Total                   |                |      7067|     72.8|
+
+\normalsize
+\newpage
 ## References
