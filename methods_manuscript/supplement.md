@@ -20,8 +20,12 @@ bibliography: refs.bak.bib
 
 Shawn D. Taylor, Ethan P. White
 
-Supplemental Information  
-Supplemental Tables 1-2
+**Supplemental Information**  
+Phenology Model Descriptions  
+Description of the phenology model weighting  
+Description of the climate downscaling model   
+
+**Supplemental Tables 1-2**
 
 \newpage
 ### Phenology Model Descriptions
@@ -45,6 +49,7 @@ For all models, except the Linear and Naive models, the daily mean temperature $
 \normalsize
 
 \newpage
+
 ### Description of the phenology model weighting
 
 We used a weighted ensemble of the four models for each species and phenophase. The weights for each model within the ensemble were derived via stacking as described in -@dormann2018. The steps for calculating weights are as followed:
@@ -68,6 +73,7 @@ Uncertainty is the 95% confidience interval of the estimates from the five clima
 $$2 * \sqrt{var(\sum_{i=1}^{4}w_{i}\widehat{DOY}_{n,i})}$$
 
 \newpage
+
 ### Description of the climate downscaling model
 
 The Climate Forecast System Version 2 (CFSv2) is a coupled atmosphere-ocean-land global circulation model maintained by the National Oceanic and Atmospheric Administration (NOAA)[@saha2014]. The model tracks over 1000 global state variables of varying resolution and forecast length, such as ocean temperature and heights of pressure bands. Here we use the 2-meter temperature variable, which has a 6-hour timestep and a spatial resolution of 0.25 degrees latitude/longitude. The forecast is updated every 6 hours with the latest initial conditions and projected out 9 months. 
@@ -82,6 +88,7 @@ Fit a linear regression model.
 The two parameters from the regression model are saved in a netCFD file which can later be referenced by location and calendar month (Figure 1, H). This downscaling model, at the scale of the continental U.S.A., is used to downscale the most recent CFSv2 forecasts to a 4km resolution during the automated steps. 
 
 \newpage
+
 ### Table S1
 Species and their associated phenophases used in the forecast system. Note not all species have forecasts for all phenophases due to data availabilty.
 \tiny
@@ -168,9 +175,13 @@ Species and their associated phenophases used in the forecast system. Note not a
 |    78|Yucca brevifolia          |             |             |$\checkmark$ |             |
 |      |**Total**                 |**67**       |**47**       |**72**       |**4**        |
 
+\normalsize
 \newpage
+
 ### Table S2
 Species and their associated phenophases evaluated from the 2019 season. Data are from the USA National Phenology Network from Jan. 1, 2019 - May 5, 2019.
+
+\tiny  
 
 |      |Species                 |Phenophase | Total Observations| Mean Julian Day|
 |-----:|:-----------------------|:---------------|---------:|--------:|
@@ -225,4 +236,5 @@ Species and their associated phenophases evaluated from the 2019 season. Data ar
 
 \normalsize
 \newpage
-## References
+
+##References
