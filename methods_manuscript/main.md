@@ -34,8 +34,8 @@ Keywords: climate, budburst, flowering, phenophase, ecology
 
 Article Type: Methods
 
-Abstract word count: 188  
-Main text word count: XXX; Reference count: 40  
+Abstract word count: 190  
+Main text word count: 4020; Reference count: 45  
 Figure count: 5; Table count: 0;  Text boxes: 0  
 
 Corresponding Author contact info:  
@@ -121,6 +121,9 @@ The initial development of this system has highlighted several potential areas f
 In addition to areas for improvement in the forecasting system itself, it’s development has highlighted areas for potential improvement in phenology modeling. While climate observations and forecasts are continuously updated by our system, it does not currently integrate observations about how phenology is progressing within a year to update the models. USA-NPN data are available in near realtime after they are submitted by volunteers, thus there is opportunity for data assimilation of phenology observations. Making new forecasts with the latest information not only on the current state of the climate, but also on the current state of the plants themselves would likely be very informative [@luo2011; @dietze2017]. For example, if a species is leafing out sooner than expected in one area it is likely that it will also leaf out sooner than expected in nearby regions. This type of data assimilation is important for making accurate forecasts in other disciplines including weather [@luo2011]. However, process based plant phenology models were not designed with data assimilation in mind [@chuine2013]. -@clark2014b built a bayesian hierarchical phenology model of budburst which incorporates the discrete observations of phenology data. This could serve as a starting point for a phenology forecasting model that incorporates data assimilation and allows species with relatively few observations to borrow strength from species with a large number of observations. The model from -@clark2014b also incorporates all stages of the bud development process into a continuous latent state, thus there is also potential for forecasting the current phenological state of plants, instead of just the transition dates as is currently done in this forecast system. 
 
 Using recent advances in open source software and large-scale open data collection we have implemented an automated high resolution, continental scale, species-level phenology forecast system. Implementing a system of this scale was made possible by a new phenology data stream and new computational tools that facilitate large scale analysis with limited computing and human resources. While most recent research papers describing ecological forecast systems focus on only the modelling aspect [@chen2011; @carrillo2018; @vandoren2018], we focus on the implementation and automation because the majority of time spent implementing these systems involves data logistics and pipeline development [see also @welch2019; @white2018]. Major challenges included the automated processing of large meteorological datasets, efficient application of hundreds of phenological models, and stable, consistently updated, and easy to understand dissemination of forecasts. By discussing our approach to automated forecasting on data-intensive questions we hope to provide guidance for others developing ecological forecasting systems. While many areas for improvement remain for this system, including improved  phenology models and more user friendly dissemination of forecasts, this system provides a fully automated actionable forecasts on large scale ecological phenology.
+
+## Acknowledgments
+This research was supported by the Gordon and Betty Moore Foundation’s Data-Driven Discovery Initiative through Grant GBMF4563 to E.P. White. We thank the USA National Phenology Network and the many participants who contribute to its Nature’s Notebook program.
 
 \newpage
 # References
