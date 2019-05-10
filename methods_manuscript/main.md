@@ -51,7 +51,7 @@ Statement of authorship:
 ST designed and built the automated system. ST and EW wrote the manuscript. 
 
 Data accessibility statement:  
-All data and code used in the analysis is permanently archived on Zenodo (https://doi.org10.5281/zenodo.2577452).
+All data and code used in the analysis is permanently archived on Zenodo (https://doi.org/10.5281/zenodo.2577452).
 
 
 \normalsize
