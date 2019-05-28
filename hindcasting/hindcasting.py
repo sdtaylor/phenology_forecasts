@@ -37,8 +37,10 @@ today = datetime.datetime.today().date()
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
 from dask import delayed
-cluster = SLURMCluster(processes=1,queue='hpg2-compute', threads=2, memory='4GB', walltime='144:00:00',
-                       death_timeout=600, local_directory='/tmp/')
+import dask
+cluster = SLURMCluster(processes=1,queue='hpg2-compute', cores=1, memory='10GB', walltime='96:00:00',
+                       job_extra=['--qos ewhite-b'],
+                       death_timeout=600, local_directory='/tmp/', interface='ib0')
 
 print('Starting up workers')
 workers = cluster.start_workers(hindcast_config.num_hipergator_workers)
@@ -124,41 +126,69 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         base_model_name = forecast_info['base_model']
         model = utils.load_saved_model(model_file)
     
+        #pair down models for testing
+        #model.model_list = model.model_list[0:2]
+        #model.model_list[0].model_list = model.model_list[0].model_list[0:20]
+        #model.model_list[1].model_list = model.model_list[1].model_list[0:20]
+        for submodel in model.model_list:
+            submodel.model_list = submodel.model_list[0:20]
+
         # The number of models in the ensemble
         num_pheno_ensembles = len(model.model_list)
-        pheno_ensemble_names = [m['model_name'] for m in model.get_params()]
+        pheno_ensemble_names = [m['parameters'][0]['model_name'] for m in model._get_model_info()['core_models']]
+        num_bootstraps = len(model.model_list[0].model_list)
         
-        prediction_array = np.empty((hindcast_config.num_climate_ensemble, num_pheno_ensembles, latitude_length, longitude_length))
+        #prediction_array = np.empty((hindcast_config.num_climate_ensemble, num_pheno_ensembles, num_bootstraps, latitude_length, longitude_length))
         #predicts = []
+        ensemble_results = []
         for ensemble_model_i, ensemble_model in enumerate(model.model_list):
             #predicts.append([])
+            climate_ensemble_results=[]
             for climate_i, climate in enumerate(climate_ensemble):
+                
+                bootstrap_results = []
+                for bootstrap_i, bootstrap_model in enumerate(ensemble_model.model_list):
 
-                # This step get run on the cluster. with only predictions being saved locally on the "head" machine
-                prediction_array[climate_i, ensemble_model_i]= apply_phenology_model(climate = climate['tmean'], 
-                                                                                 model=ensemble_model,
-                                                                                 doy_0=doy_0).values
-                # Potentially a more clever/quicker way of doing it, but not working just yet
-                #predicts[-1].append( apply_phenology_model(climate = climate['tmean'], 
-                #                                                                 model=bootstrap_model,
-                #                                                                 doy_0=doy_0).persist())
+                    print('pheno-ensemble: {p}, climate-ensemble: {c}, bootstrap: {b}'.format(p=ensemble_model_i, c=climate_i, b=bootstrap_i))
+                    # This step get run on the cluster. with only predictions being saved locally on the "head" machine
+                    bootstrap_results.append(apply_phenology_model(climate = climate['tmean'], 
+                                                                                     model=bootstrap_model,
+                                                                                     doy_0=doy_0).persist())
+                    # Potentially a more clever/quicker way of doing it, but not working just yet
+                    #predicts[-1].append( apply_phenology_model(climate = climate['tmean'], 
+                    #                                                                 model=bootstrap_model,
+                    #                                                                 doy_0=doy_0).persist())
         
+                #bootstrap_results = dask.compute(*bootstrap_results)
+                climate_ensemble_results.append(da.stack(bootstrap_results))
+                time.sleep(10) # let the dask scheduler catch up
+            ensemble_results.append(da.stack(climate_ensemble_results))
+        
+        prediction_array = da.stack(ensemble_results)
+        ensemble_results=[]
+        climate_ensemble_results=[]
         # apply nan to non predictions
-        prediction_array[prediction_array==999]=np.nan
+        #prediction_array[prediction_array==999]=np.nan
         # extend the axis by 2 to include dimensions for species and phenophase
-        prediction_array = np.expand_dims(prediction_array, axis=0)
-        prediction_array = np.expand_dims(prediction_array, axis=0)
+        #prediction_array = np.expand_dims(prediction_array, axis=0)
+        #prediction_array = np.expand_dims(prediction_array, axis=0)
         
-        model_weights = model.weights
-        model_weights = np.expand_dims(model_weights, axis=0)
-        model_weights = np.expand_dims(model_weights, axis=0)
-
-        prediction_dataset = xr.Dataset(data_vars = {'prediction':(('species','phenophase', 'climate_ensemble','phenology_ensemble', 'lat','lon'), prediction_array),
-                                                     'model_weights':(('species', 'phenophase', 'phenology_ensemble'),model_weights)},
-                                          coords = {'species':[species], 'phenophase':[phenophase],
+        #model_weights = model.weights
+        #model_weights = np.expand_dims(model_weights, axis=0)
+        #model_weights = np.expand_dims(model_weights, axis=0)
+        
+        print(prediction_array.shape)
+        #prediction_array = dask.optimize(prediction_array)[0]
+        #prediction_array = prediction_array.persist()
+       
+        prediction_dataset = xr.Dataset(data_vars = {'prediction':(('phenology_ensemble','climate_ensemble','bootstrap', 'lat','lon'), prediction_array.compute())},
+                                          coords = {'bootstrap':range(num_bootstraps),
                                                     'climate_ensemble':range(hindcast_config.num_climate_ensemble), 'phenology_ensemble':pheno_ensemble_names,
                                                     'lat':land_mask.lat, 'lon':land_mask.lon})
-    
+        prediction_array=None
+        prediction_dataset = prediction_dataset.expand_dims('species', axis=0).assign_coords(species=[species])
+        prediction_dataset = prediction_dataset.expand_dims('phenophase', axis=0).assign_coords(species=[phenophase])
+        
         #prediction_dataset.attrs['species']=species
         #prediction_dataset.attrs['phenophase']=phenophase
         prediction_dataset.attrs['issue_date']=str(hindcast_issue_date.date())
@@ -166,8 +196,11 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         prediction_dataset.attrs['crs']='+init=epsg:4269'
         
         hindcast_filename = phenology_hindcast_save_folder+species.replace(' ','_')+'_'+str(phenophase)+'_hindcast_'+str(hindcast_issue_date.date())+'.nc'
-        prediction_dataset.to_netcdf(hindcast_filename,encoding={'prediction':{'zlib':True,
-                                                                                   'complevel':4, 
-                                                                                   'dtype':'int32', 
-                                                                                   'scale_factor':0.001,  
-                                                                                   '_FillValue': -9999}} )
+        prediction_dataset.to_netcdf(hindcast_filename)
+        prediction_dataset.close()
+        #prediction_dataset.to_netcdf(hindcast_filename,encoding={'prediction':{'zlib':True,
+        #                                                                           'complevel':4, 
+        #                                                                           'dtype':'int32', 
+        #                                                                           'scale_factor':0.001,  
+        #                                                                           '_FillValue': -9999}} )
+        prediction_dataset=None
