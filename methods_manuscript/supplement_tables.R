@@ -1,7 +1,6 @@
 library(tidyverse)
 #library(raster)
 library(ncdf4)
-library(raster)
 library(kableExtra)
 
 source('automated_forecasting/presentation/map_utils.R')
@@ -116,12 +115,15 @@ eval_observations =  read_csv(paste0(config$data_folder,'evaluation/phenology_20
   dplyr::select(-latitude, -longitude) %>%
   rename(doy_observed = doy)
 
-# Combine obserations + forecasts for all the different issue dates. 
+# Combine observations and forecasts to filter to only speces/phenophases for which
+# forecasts were made. 
 # drop anything with missing data. which can happen when an observations is outside
 # the range for a respective species.
 eval_observations = forecast_data %>%
   left_join(eval_observations, by=c('site_id','Phenophase_ID','species')) %>%
-  filter(complete.cases(.))
+  filter(complete.cases(.)) %>%
+  select(species, Phenophase_ID, observation_id, doy_observed) %>%
+  distinct()
 
 eval_data_table = eval_observations %>%
   rename(phenophase=Phenophase_ID) %>%
@@ -129,14 +131,27 @@ eval_data_table = eval_observations %>%
   mutate(species = capitilize(species)) %>%
   group_by(species, phenophase_name) %>%
   summarise(total_obs = n(),
-            mean_doy = round(mean(doy_observed),0)) %>%
-  ungroup()
+            mean_doy = round(mean(doy_observed),1)) %>%
+  ungroup() %>%
+  mutate(table_text = paste0(total_obs,' (',mean_doy,')')) %>%
+  select(species, phenophase_name, table_text) %>%
+  spread(phenophase_name, table_text, fill='')
 
 # Add Totals row at the bottom.
+bottom_row_totals = eval_observations %>%
+  rename(phenophase=Phenophase_ID) %>%
+  add_phenophase_name_col() %>%
+  group_by( phenophase_name) %>%
+  summarise(total_obs = n(),
+            mean_doy = round(mean(doy_observed),1)) %>%
+  ungroup() %>%
+  mutate(table_text = paste0(total_obs,' (',mean_doy,')')) %>%
+  select(phenophase_name, table_text) %>%
+  spread(phenophase_name, table_text) %>%
+  mutate(species='Total')
+  
 eval_data_table = eval_data_table %>%
-  bind_rows(tibble(species='Total',
-                   total_obs = sum(eval_data_table$total_obs),
-                   mean_doy = round(mean(eval_observations$doy_observed),1)))
+  bind_rows(bottom_row_totals)
 
 # add a left side index column
 eval_data_table = tibble(index=1:nrow(eval_data_table)) %>%
@@ -144,7 +159,8 @@ eval_data_table = tibble(index=1:nrow(eval_data_table)) %>%
 
 # copy/paste to supplement.md
 kable(eval_data_table, 'markdown')  
-  
+
+print(paste('Number of 2019 species evaluated: ',length(unique(eval_observations$species))))  
   
   
 

@@ -30,7 +30,7 @@ Description of the climate downscaling model
 \newpage
 ### Phenology Model Descriptions
 
-For all models, except the Linear and Naive models, the daily mean temperature $T_{i}$ is first transformed via the specified forcing equation. The cumulative sum of forcing is then calculated from a specific start date (either $DOY=1$ or using the fitted parameter $t_{1}$). The phenological event is estimated to be the $DOY$ where cumulative forcing is greater than or equal to the specified total required forcing (either $F^{*}$ or the specified equation). Parameters for each model are as follows: For the Linear model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively and $T_{mean}$ is the average daily temperature between the spring start date and end using the parameters $Spring_{start}$ and $Spring_{start} + Spring_{length}$; in the Thermal Time model $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $T_{base}$ is the threshold daily mean temperature above which forcing accumulates; for the Alternating model $NCD$ is the number of chill days (daily mean temperature below 0$^{\circ}$C) from $DOY=1$ to the $DOY$ of the phenological event, $a$, $b$, and $c$ are the three fitted model coefficients; for the Uniforc model, is $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $b$ and $c$ are two additional fitted parameters which define the sigmoid function. For the Naive model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively, for the average Julian day of a phenological event corrected for latitude. The Naive model is used as the long-term average for the annomally calculation.
+For all models, except the Linear and Naive models, the daily mean temperature $T_{i}$ is first transformed via the specified forcing equation. The cumulative sum of forcing is then calculated from a specific start date (either $DOY=1$ or using the fitted parameter $t_{1}$). The phenological event is estimated to be the $DOY$ where cumulative forcing is greater than or equal to the specified total required forcing (either $F^{*}$ or the specified equation). Parameters for each model are as follows: For the Linear model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively and $T_{mean}$ is the average daily temperature between the spring start date and end using the parameters $Spring_{start}$ and $Spring_{start} + Spring_{length}$; in the Thermal Time model $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $T_{base}$ is the threshold daily mean temperature above which forcing accumulates; for the Alternating model $NCD$ is the number of chill days (daily mean temperature below 0$^{\circ}$C) from $DOY=1$ to the $DOY$ of the phenological event, $a$, $b$, and $c$ are the three fitted model coefficients; for the Uniforc model, is $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $b$ and $c$ are two additional fitted parameters which define the sigmoid function. For the Naive model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively, for the average Julian day of a phenological event corrected for latitude. The Linear, Thermal Time, Alternating, andn Uniforc models are used in the primary forecast ensemble. The Naive model is used as the long-term average for the annomally calculation.
 
 \tiny
 
@@ -62,15 +62,15 @@ We used a weighted ensemble of the four models for each species and phenophase. 
 6. Take the average weight for each model from all iterations as the final weight used in the ensemble. These will sum to 1.
 7. Fit the core models a final time on the full dataset. Parameters derived from this final iterations will be used to make predictions, which are then used in the final weighted average. 
 
-The four phenology models are applied to each of the five climate ensemble, with a final predicted value derived as:
+The four phenology models are applied to each of the five members of the climate ensemble, with a final predicted value, $\widehat{DOY}_{forecast}$, derived as:
 
-$$\frac{1}{5}\sum_{n=1}^{5}\sum_{i=1}^{4}w_{i}\widehat{DOY}_{n,i} $$
+$$\widehat{DOY}_{forecast} = \frac{1}{5}\sum_{n=1}^{5}\sum_{i=1}^{4}w_{i}\widehat{DOY}_{n,i}$$
 
 Where $n$ is the climate ensemble member, $i$ is the phenology model, $w$ is the phenology model weight, and $\widehat{DOY}$ the estimated Julian day. 
 
 Uncertainty is the 95% confidience interval of the estimates from the five climate ensembles:
 
-$$2 * \sqrt{var(\sum_{i=1}^{4}w_{i}\widehat{DOY}_{n,i})}$$
+$$2 * \sqrt{\frac{1}{5}\sum_{n=1}^{5}(\widehat{DOY}_{n} - \widehat{DOY}_{forecast})^{2}}$$
 
 \newpage
 
@@ -179,60 +179,78 @@ Species and their associated phenophases used in the forecast system. Note not a
 \newpage
 
 ### Table S2
-Species and their associated phenophases evaluated from the 2019 season. Data are from the USA National Phenology Network from Jan. 1, 2019 - May 5, 2019.
+Species and their associated phenophases evaluated from the 2019 season. Numbers indicate the total observations for the species and phenophase, with the mean Julian day in parentheses. Data are from the USA National Phenology Network from Jan. 1, 2019 - May 8, 2019.
 
 \tiny  
 
-|      |Species                 |Phenophase | Total Observations| Mean Julian Day|
-|-----:|:-----------------------|:---------------|---------:|--------:|
-|     1|Acer circinatum         |Budburst        |       682|     87.0|
-|     2|Acer circinatum         |Flowers         |        62|     96.0|
-|     3|Acer macrophyllum       |Budburst        |       186|     84.0|
-|     4|Acer macrophyllum       |Flowers         |        62|     90.0|
-|     5|Acer negundo            |Budburst        |        93|     94.0|
-|     6|Acer negundo            |Flowers         |        62|     52.0|
-|     7|Acer rubrum             |Budburst        |       651|     80.0|
-|     8|Acer rubrum             |Flowers         |       589|     68.0|
-|     9|Acer saccharinum        |Budburst        |        31|     86.0|
-|    10|Acer saccharinum        |Flowers         |        62|     88.0|
-|    11|Aesculus californica    |Budburst        |        31|     59.0|
-|    12|Alnus rubra             |Budburst        |        62|     72.0|
-|    13|Amelanchier alnifolia   |Budburst        |        31|     83.0|
-|    14|Betula nigra            |Flowers         |        31|     87.0|
-|    15|Carpinus caroliniana    |Budburst        |        31|     40.0|
-|    16|Carpinus caroliniana    |Flowers         |        31|     40.0|
-|    17|Carya glabra            |Budburst        |        62|     46.0|
-|    18|Carya glabra            |Flowers         |        31|     85.0|
-|    19|Cercis canadensis       |Budburst        |       155|     72.0|
-|    20|Cercis canadensis       |Flowers         |       124|     53.0|
-|    21|Cornus florida          |Budburst        |       620|     83.0|
-|    22|Cornus florida          |Flowers         |       186|     74.0|
-|    23|Cornus sericea          |Budburst        |        62|     84.0|
-|    24|Corylus cornuta         |Flowers         |        30|     76.0|
-|    25|Fagus grandifolia       |Budburst        |        31|     43.0|
-|    26|Hamamelis virginiana    |Budburst        |        31|     89.0|
-|    27|Liquidambar styraciflua |Budburst        |       310|     68.0|
-|    28|Liquidambar styraciflua |Flowers         |        31|     47.0|
-|    29|Liriodendron tulipifera |Budburst        |       279|     83.0|
-|    30|Liriodendron tulipifera |Flowers         |        62|     84.0|
-|    31|Magnolia grandiflora    |Budburst        |        93|     74.0|
-|    32|Nyssa sylvatica         |Budburst        |        31|     68.0|
-|    33|Populus tremuloides     |Flowers         |        62|     86.0|
-|    34|Prunus serotina         |Budburst        |       403|     75.0|
-|    35|Prunus serotina         |Flowers         |       217|     49.0|
-|    36|Prunus virginiana       |Budburst        |        93|     84.0|
-|    37|Quercus agrifolia       |Budburst        |       124|     72.0|
-|    38|Quercus alba            |Budburst        |        93|     62.0|
-|    39|Quercus alba            |Flowers         |        31|     81.0|
-|    40|Quercus laurifolia      |Budburst        |       279|     50.0|
-|    41|Quercus rubra           |Budburst        |        62|     59.0|
-|    42|Quercus virginiana      |Budburst        |       217|     52.0|
-|    43|Quercus virginiana      |Flowers         |       155|     59.0|
-|    44|Sassafras albidum       |Flowers         |        31|     61.0|
-|    45|Ulmus americana         |Budburst        |       124|     77.0|
-|    46|Vaccinium corymbosum    |Budburst        |       155|     66.0|
-|    47|Vaccinium corymbosum    |Flowers         |       186|     58.0|
-|      |Total                   |                |      7067|     72.8|
+|      |Species                   |Budburst   |Fall Colors |Flowers    |
+|-----:|:-------------------------|:----------|:-----------|:----------|
+|     1|Acer circinatum           |38 (93.1)  |            |25 (112.4) |
+|     2|Acer macrophyllum         |10 (90.6)  |            |6 (94.7)   |
+|     3|Acer negundo              |14 (98.7)  |            |13 (86.1)  |
+|     4|Acer pensylvanicum        |6 (93.8)   |            |2 (91)     |
+|     5|Acer rubrum               |177 (93)   |            |152 (86.1) |
+|     6|Acer saccharinum          |10 (107)   |            |6 (99.3)   |
+|     7|Acer saccharum            |56 (105.5) |            |30 (109.8) |
+|     8|Aesculus californica      |3 (46.3)   |2 (115)     |5 (118.2)  |
+|     9|Alnus incana              |1 (107)    |            |           |
+|    10|Alnus rubra               |6 (85.2)   |            |           |
+|    11|Amelanchier alnifolia     |1 (83)     |            |           |
+|    12|Betula alleghaniensis     |7 (114.3)  |            |4 (122.5)  |
+|    13|Betula lenta              |28 (99.2)  |            |11 (106.5) |
+|    14|Betula nigra              |1 (104)    |            |1 (87)     |
+|    15|Betula papyrifera         |5 (112)    |            |6 (113.8)  |
+|    16|Carpinus caroliniana      |28 (82.1)  |            |20 (80)    |
+|    17|Carya glabra              |6 (77.2)   |            |5 (112.8)  |
+|    18|Celtis occidentalis       |4 (105.5)  |            |           |
+|    19|Cephalanthus occidentalis |9 (102)    |            |           |
+|    20|Cercis canadensis         |22 (94.1)  |            |24 (93)    |
+|    21|Chilopsis linearis        |           |            |4 (119)    |
+|    22|Cornus florida            |69 (89.7)  |            |56 (101.8) |
+|    23|Cornus racemosa           |6 (102.5)  |            |           |
+|    24|Cornus sericea            |9 (103.4)  |            |           |
+|    25|Corylus cornuta           |           |            |4 (57.8)   |
+|    26|Diospyros virginiana      |1 (124)    |            |           |
+|    27|Fagus grandifolia         |45 (100.9) |            |10 (114.2) |
+|    28|Fouquieria splendens      |           |            |9 (97.7)   |
+|    29|Fraxinus americana        |3 (109.7)  |            |           |
+|    30|Fraxinus pennsylvanica    |2 (112.5)  |            |           |
+|    31|Ginkgo biloba             |5 (108.6)  |            |1 (111)    |
+|    32|Hamamelis virginiana      |23 (104.3) |            |           |
+|    33|Ilex verticillata         |3 (115.3)  |            |           |
+|    34|Juglans nigra             |5 (106.6)  |            |4 (107.2)  |
+|    35|Liquidambar styraciflua   |18 (75.2)  |            |13 (89)    |
+|    36|Liriodendron tulipifera   |41 (88.4)  |            |14 (86.2)  |
+|    37|Magnolia grandiflora      |5 (85.8)   |            |7 (104.7)  |
+|    38|Nyssa sylvatica           |17 (99)    |            |1 (76)     |
+|    39|Ostrya virginiana         |4 (91.5)   |            |           |
+|    40|Oxydendrum arboreum       |8 (98.6)   |            |1 (76)     |
+|    41|Platanus racemosa         |5 (22)     |            |3 (46)     |
+|    42|Populus deltoides         |8 (111.8)  |            |5 (110.6)  |
+|    43|Populus fremontii         |2 (102)    |            |           |
+|    44|Populus tremuloides       |10 (113)   |            |11 (97.6)  |
+|    45|Prunus americana          |1 (111)    |            |1 (112)    |
+|    46|Prunus serotina           |30 (84.1)  |            |10 (70.7)  |
+|    47|Prunus virginiana         |6 (95.2)   |            |1 (107)    |
+|    48|Quercus agrifolia         |32 (68.7)  |            |12 (83.2)  |
+|    49|Quercus alba              |32 (100)   |            |14 (112.7) |
+|    50|Quercus douglasii         |4 (81.8)   |            |3 (108)    |
+|    51|Quercus gambelii          |16 (114.2) |            |           |
+|    52|Quercus laurifolia        |9 (50.4)   |            |           |
+|    53|Quercus lobata            |14 (63.9)  |            |4 (81)     |
+|    54|Quercus macrocarpa        |23 (108.5) |            |10 (120.5) |
+|    55|Quercus palustris         |4 (103)    |            |2 (113)    |
+|    56|Quercus rubra             |47 (105.8) |            |24 (112.9) |
+|    57|Quercus velutina          |4 (102.8)  |            |3 (106)    |
+|    58|Quercus virginiana        |10 (58)    |            |11 (66.5)  |
+|    59|Sassafras albidum         |6 (108)    |            |8 (108)    |
+|    60|Sorbus americana          |2 (124)    |            |           |
+|    61|Tilia americana           |7 (101.9)  |            |           |
+|    62|Ulmus americana           |8 (80.8)   |            |2 (42)     |
+|    63|Umbellularia californica  |5 (98.8)   |            |5 (54.6)   |
+|    64|Vaccinium corymbosum      |10 (81.1)  |            |15 (90.4)  |
+|    65|Yucca brevifolia          |           |            |10 (76.4)  |
+|      |Total                     |991 (93.8) |2 (115)     |588 (94.8) |
 
 \normalsize
 \newpage
