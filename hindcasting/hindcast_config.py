@@ -1,3 +1,11 @@
+#######
+
+target_season=2018
+doy_0 = '2018-01-01'
+
+observation_site_info_file = 'evaluation/phenology_data_2018/ancillary_site_data.csv'
+observation_file = 'evaluation/phenology_2018_observations.csv'
+
 ######
 # Climate stuff
 num_climate_ensemble = 5
@@ -23,5 +31,3 @@ end_date   = '20180330'
 frequency = '4D'
 
 
-target_season=2018
-doy_0 = '2018-01-01'
