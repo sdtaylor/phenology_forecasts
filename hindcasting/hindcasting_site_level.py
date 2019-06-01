@@ -61,7 +61,7 @@ start_time = time.time()
 # final results
 all_hindcast_predictions = pd.DataFrame()
 
-for date_i, hindcast_issue_date in enumerate(date_range[0:1]):
+for date_i, hindcast_issue_date in enumerate(date_range):
     ################################################
     # The source data for this issue date
     climate_forecast_folder = config['data_folder']+'past_climate_forecasts/'+str(hindcast_issue_date.date())+'/'
@@ -140,7 +140,7 @@ for date_i, hindcast_issue_date in enumerate(date_range[0:1]):
             prediction_array = model.predict(to_predict=site_info_for_this_species,
                                              predictors=site_temp,
                                              aggregation='none',
-                                             n_jobs=6)
+                                             n_jobs=hindcast_config.n_prediction_jobs)
             
                         
             pheno_ensemble_names = [m['parameters'][0]['model_name'] for m in model._get_model_info()['core_models']]
@@ -159,3 +159,5 @@ for date_i, hindcast_issue_date in enumerate(date_range[0:1]):
             prediction_dataframe['issue_date'] = str(hindcast_issue_date.date())
             
             all_hindcast_predictions = all_hindcast_predictions.append(prediction_dataframe)
+
+all_hindcast_predictions.to_csv(hindcast_config.final_hindcast_file, index=False)

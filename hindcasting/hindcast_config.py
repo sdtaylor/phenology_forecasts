@@ -6,11 +6,13 @@ doy_0 = '2018-01-01'
 observation_site_info_file = 'evaluation/phenology_data_2018/ancillary_site_data.csv'
 observation_file = 'evaluation/phenology_2018_observations.csv'
 
+final_hindcast_file = 'evaluation/hindcast_data_2018.csv'
+
+n_prediction_jobs=2
 ######
 # Climate stuff
 num_climate_ensemble = 5
 climate_lead_time = 36 # This is in weeks
-
 
 ##
 #num_hipergator_workers=400
