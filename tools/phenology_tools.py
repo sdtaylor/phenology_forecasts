@@ -4,7 +4,7 @@ import xarray as xr
 from pyPhenology import utils
 
 def predict_phenology_from_climate(model, climate_forecast_files, post_process, 
-                          doy_0, species_range=None):
+                          doy_0, species_range=None, n_jobs=1):
     """Predict a phenology model over climate ensemble
     
     model
@@ -51,10 +51,12 @@ def predict_phenology_from_climate(model, climate_forecast_files, post_process,
         if type(model).__name__ == 'BootstrapModel' and post_process=='hindcast':
             species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
                                                               'doy_series' : doy_series},
-                                                  aggregation='none'))
+                                                  aggregation='none',
+                                                  n_jobs=n_jobs))
         else:
             species_ensemble.append(model.predict(predictors={'temperature': climate.tmean.values,
-                                                              'doy_series' : doy_series}))
+                                                              'doy_series' : doy_series},
+                                                  n_jobs=n_jobs))
     
     species_ensemble = np.array(species_ensemble).astype(np.float)
     # apply nan to non predictions

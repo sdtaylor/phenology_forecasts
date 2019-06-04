@@ -6,7 +6,20 @@
 load_config = function(){
   config = yaml::yaml.load_file('config.yaml')
   
-  data_folder = config$data_folder
+  hostname = Sys.info()['nodename']
+  # Check if we're on a hipergator node,
+  # which can have many different prefixes.
+  if(grepl('ufhpc', hostname)){
+    hostname = 'ufhpc'
+  }
+  
+  if(hostname %in% names(config$data_folder)){
+    data_folder = config$data_folder[hostname][[1]]
+  } else {
+    data_folder = config$data_folder['default'][[1]]
+  }
+  
+  config$data_folder = data_folder
   
   config_attributes = names(config)
   # Don't prepend the root data_folder

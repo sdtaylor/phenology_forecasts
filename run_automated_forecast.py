@@ -1,11 +1,16 @@
 from tools import tools
 import time
+import os
 import datetime
 import subprocess
 import pandas as pd
 
-from automated_forecasting.climate import download_latest_observations, cfs_forecasts
-from automated_forecasting.phenology import apply_phenology_models
+#########################################################
+# This is the primary script run by the cron job. From
+# here the remote hipergator job is kicked off, with the 
+# resulting phenology_forecast_YYYY_MM_DD.nc netCDF file
+# obtained afterwards. Then the static images are generated
+# and finally things synced to the server. 
 
 #####################
 divider='#'*90 + '\n'
@@ -26,38 +31,38 @@ today = str(now().date())
 
 message('Starting automated forecasting ' + str(now()))
 
-# Clear the climate forecast folder
-tools.cleanup_tmp_folder(config['current_forecast_folder'])
 ###############################
-# Update prism observations
-message('Downloading latest observations ' + str(now()))
-try:
-    download_latest_observations.run()
-    message(min_elapsed() + ' min in downloading latest observations succeeded ' + str(now()))
-except:
-    message(min_elapsed() + ' min in downloading latest observations failed ' + str(now()))
-    raise
-###############################
-# Get the latest climate forecasts
-message('Downloading latest forecasts ' + str(now()))
-try:
-    cfs_forecasts.get_forecasts_from_date(forecast_date = now(),
-                                          destination_folder = config['current_forecast_folder'])
-    message(min_elapsed() + ' min in downloading latest forecasts succeeded ' + str(now()))
-except:
-    message(min_elapsed() + ' min in downloading latest forecasts failed ' + str(now()))
-    raise
+# Start the hipergator job and wait for it to finish
+remote_control = tools.RemoteRunControl(con_info = config['remote_connection_info'],
+                                        remote_status_filename=config['run_status'])
+
+remote_control.clear_status_file()
+
+remote_control.submit_job(remote_job_script=config['slurm_job_script'])
+message('job submitted at ' + str(now()))
+
+while not remote_control.remote_run_complete():
+    time.sleep(60*10)
+
+run_info = remote_control.remote_run_info()
+
+if run_info['status'] == 'failed':
+    message('remote run failed. reason: ' + run_info['failure_reason'])
+    quit()
+else:
+    message('remote run succeeded at ' + str(now()))
 
 ###############################
-# apply phenology models
-message('Applying phenology models ' + str(now()))
-try:
-    phenology_forecast_filename = apply_phenology_models.run()
-    message(min_elapsed() + ' min in phenology models succeeded ' + str(now()))
-except:
-    message(min_elapsed() + ' min in phenology models failed ' + str(now()))
-    raise
+# Get the resulting file
+local_phenology_forecast_path = config['phenology_forecast_folder'] + os.path.basename(run_info['phenology_forecast_path'])
 
+transfer_successful = remote_control.get_file(remote_path=run_info['phenology_forecast_path'],
+                                              local_path=local_phenology_forecast_path)
+
+if not transfer_successful:
+    message('transfering phenology foreast file failed')
+    quit()
+    
 ###############################
 # Rebuild the website
 message('Updating phenology forecast website ' + str(now()))
@@ -66,13 +71,13 @@ try:
     subprocess.call(['/usr/bin/Rscript',
                      '--vanilla',
                      'automated_forecasting/presentation/build_png_maps.R',
-                     phenology_forecast_filename])
+                     local_phenology_forecast_path])
     message('building static images succeeded ' + str(now()))
 except:
     message('building static images failed ' + str(now()))
     raise
 
-# Sync the images folder and upload the new json file
+# Sync the images folder and update site metadata.
 from automated_forecasting.presentation import sync_website
 message('Syncing website data' + str(now()))
 try:

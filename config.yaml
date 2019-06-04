@@ -2,7 +2,9 @@
 ######################################################
 # Global attributes
 
-data_folder: /home/shawn/data/phenology_forecasting/
+data_folder: 
+    ufhpc: /home/shawntaylor/data/phenology_forecasting/
+    default: /home/shawn/data/phenology_forecasting/
 
 tmp_folder: tmp/
 
@@ -10,6 +12,20 @@ mask_file: land_mask.nc
 
 google_auth: /home/shawn/.google_cloud_auth/phenology_updater.json
 
+# holds status messages and details about the automated run.
+# useful when different aspects of the automated pipeline are
+# on different systems. currently configured for the hipergator.
+run_status: /home/shawntaylor/run_info.json
+slurm_job_script: phenology_forecasts/automated_forecast_job.sh
+
+remote_connection_info:
+    host: hpg.rc.ufl.edu
+    user: shawntaylor
+
+# Number of processes to use the pyPhenology.model.predict() method.
+# Because predict() works on the CFSv2 forecasts, the memory usage for
+# each process is quit large, 5-10GB.
+n_jobs: 2
 #######################################################
 # Phenology models attributes
 species_range_file: species_ranges.nc

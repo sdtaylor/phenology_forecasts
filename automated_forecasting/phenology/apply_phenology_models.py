@@ -99,7 +99,8 @@ def run(climate_forecast_folder = None,
                                                                    current_climate_forecast_files,
                                                                    post_process='automated',
                                                                    doy_0=doy_0,
-                                                                   species_range=species_range)
+                                                                   species_range=species_range,
+                                                                   n_jobs=config['n_jobs'])
         
         species_forecast = xr.Dataset(data_vars = {'doy_prediction':(('species','phenophase', 'lat','lon'), prediction),
                                                    'doy_sd':(('species', 'phenophase', 'lat','lon'), prediction_sd)},

@@ -81,7 +81,7 @@ def get_forecasts_from_date(forecast_date, destination_folder,
     downscale_model = broadcast_downscale_model(downscale_model,
                                                 start_date=first_forecast_day,
                                                 end_date=last_forecast_day)
-    downscale_model = downscale_model.chunk({'lat':20,'lon':20})
+    downscale_model = downscale_model.chunk({'lat':200,'lon':200})
     
     num_forecasts_added = 0
     print(len(most_recent_forecasts))
@@ -145,7 +145,7 @@ def get_forecasts_from_date(forecast_date, destination_folder,
             
             # Apply downscaling model
             forecast_obj = forecast_obj.rename({'forecast_time':'time'})
-            forecast_obj = forecast_obj.chunk({'lat':20,'lon':20})
+            forecast_obj = forecast_obj.chunk({'lat':200,'lon':200})
             
             forecast_obj = forecast_obj['tmean'] * downscale_model.slope + downscale_model.intercept
             forecast_obj = forecast_obj.to_dataset(name='tmean')
