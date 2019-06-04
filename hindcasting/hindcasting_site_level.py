@@ -48,9 +48,45 @@ today = datetime.datetime.today().date()
 land_mask = xr.open_dataset(config['mask_file'])
 
 ######################################################
+#from joblib import parallel_backend
+#from dask import delayed, compute
+#from dask.distributed import Client, LocalCluster
+from joblib import Parallel, delayed
+
+#cluster = LocalCluster(n_workers=hindcast_config.n_prediction_jobs)
+#client = Client(cluster)
+
+######################################################
 def dataframe_chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
+@delayed
+def process_species(model, site_info, site_temp, species, Phenophase_ID):
+    try:
+        prediction_array = model.predict(to_predict=site_info,
+                                             predictors=site_temp,
+                                             aggregation='none',
+                                             n_jobs=-1)
+        
+                    
+        pheno_ensemble_names = [m['parameters'][0]['model_name'] for m in model._get_model_info()['core_models']]
+        num_bootstraps = len(model.model_list[0].model_list)
+        
+        # prediction_array is a 3D 'phenology_esemble' x 'bootstrap' x 'site' array,
+        # use xarray to easily label it and convert to dataframe
+        prediction_dataframe = xr.DataArray(prediction_array, dims=('phenology_model','bootstrap','site_id'),
+                                        name='doy_prediction',
+                                        coords={'phenology_model':pheno_ensemble_names,
+                                                'bootstrap': range(num_bootstraps),
+                                                'site_id': site_info.site_id}).to_dataframe().reset_index()
+        
+        prediction_dataframe['species'] = species
+        prediction_dataframe['Phenophase_ID'] = Phenophase_ID
+        prediction_dataframe['issue_date'] = str(hindcast_issue_date.date())
+        
+        return prediction_dataframe
+    except:
+        return pd.DataFrame()
 ######################################################
 # for tracking progress
 total_dates=len(date_range)
@@ -59,7 +95,7 @@ start_time = time.time()
 
 ######################################################
 # final results
-all_hindcast_predictions = pd.DataFrame()
+all_hindcast_predictions = []
 
 for date_i, hindcast_issue_date in enumerate(date_range):
     ################################################
@@ -120,6 +156,7 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         
         ####################################################
         # Apply each model to the climate data
+        hindcasts_to_compute = []
         for species_i, forecast_info in enumerate(forecast_metadata.to_dict('records')):
             
             time_elapsed = np.round((time.time() - start_time)/60,0)
@@ -137,27 +174,20 @@ for date_i, hindcast_issue_date in enumerate(date_range):
             # only make predictions where this species is located.             
             sites_for_this_species = species_sites.query('species == @species & Phenophase_ID == @Phenophase_ID')
             site_info_for_this_species = site_info_for_prediction[site_info_for_prediction.site_id.isin(sites_for_this_species.site_id)]
-            prediction_array = model.predict(to_predict=site_info_for_this_species,
-                                             predictors=site_temp,
-                                             aggregation='none',
-                                             n_jobs=hindcast_config.n_prediction_jobs)
+            site_temp_for_this_species = site_temp[site_temp.site_id.isin(sites_for_this_species.site_id)]
+            #print('{s} - {p}'.format(s=species, p=Phenophase_ID))
+            #print('################## site info ###################')
+            #print(site_info_for_this_species)
+            #print('################## site temp ###################')
+            #print(site_temp_for_this_species)
+            hindcasts_to_compute.append(process_species(model=model,
+                                                            site_info = site_info_for_this_species,
+                                                            site_temp = site_temp_for_this_species,
+                                                            species = species,
+                                                            Phenophase_ID = Phenophase_ID))
             
-                        
-            pheno_ensemble_names = [m['parameters'][0]['model_name'] for m in model._get_model_info()['core_models']]
-            num_bootstraps = len(model.model_list[0].model_list)
-            
-            # prediction_array is a 3D 'phenology_esemble' x 'bootstrap' x 'site' array,
-            # use xarray to easily label it and convert to dataframe
-            prediction_dataframe = xr.DataArray(prediction_array, dims=('phenology_model','bootstrap','site_id'),
-                                            name='doy_prediction',
-                                            coords={'phenology_model':pheno_ensemble_names,
-                                                    'bootstrap': range(num_bootstraps),
-                                                    'site_id': site_info_for_this_species.site_id}).to_dataframe().reset_index()
-            
-            prediction_dataframe['species'] = species
-            prediction_dataframe['Phenophase_ID'] = Phenophase_ID
-            prediction_dataframe['issue_date'] = str(hindcast_issue_date.date())
-            
-            all_hindcast_predictions = all_hindcast_predictions.append(prediction_dataframe)
+        all_hindcast_predictions.extend(Parallel(n_jobs=hindcast_config.n_prediction_jobs)(hindcasts_to_compute))
 
-all_hindcast_predictions.to_csv(hindcast_config.final_hindcast_file, index=False)
+all_hindcast_predictions = pd.concat(all_hindcast_predictions)
+
+all_hindcast_predictions.to_csv(config['data_folder']+ hindcast_config.final_hindcast_file, index=False)

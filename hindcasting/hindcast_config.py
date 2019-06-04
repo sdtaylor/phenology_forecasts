@@ -8,7 +8,7 @@ observation_file = 'evaluation/phenology_2018_observations.csv'
 
 final_hindcast_file = 'evaluation/hindcast_data_2018.csv'
 
-n_prediction_jobs=2
+n_prediction_jobs=32
 ######
 # Climate stuff
 num_climate_ensemble = 5
