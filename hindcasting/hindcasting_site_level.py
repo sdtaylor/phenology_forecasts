@@ -87,6 +87,23 @@ def process_species(model, site_info, site_temp, species, Phenophase_ID):
         return prediction_dataframe
     except:
         return pd.DataFrame()
+
+def extract_single_site_temp(clim, site):
+    site_climate_chunk = clim.sel(lat = site.lat.values, 
+                                  lon = site.lon.values, 
+                                  method='nearest')
+    site['climate_lon'] = site_climate_chunk.lon
+    site['climate_lat'] = site_climate_chunk.lat
+            
+    site_climate_chunk = site_climate_chunk.to_dataframe().dropna().reset_index()
+            
+    site_climate_chunk.rename(index=str, columns={'lat':'climate_lat','lon':'climate_lon'}, inplace=True) 
+        
+    site_temp_chunk = site.merge(site_climate_chunk, how='left',
+                                 on=['climate_lon','climate_lat'])
+
+    return site_temp_chunk
+
 ######################################################
 # for tracking progress
 total_dates=len(date_range)
@@ -122,23 +139,8 @@ for date_i, hindcast_issue_date in enumerate(date_range):
         # climate file, which are slighly different than the points in site_info
         site_temp = pd.DataFrame()
         
-        # Also need to do this step iteravely because big data
-        for c in dataframe_chunker(site_info_for_prediction, 1):
-            site_climate_chunk = climate_member.sel(lat = c.lat.values, 
-                                                  lon = c.lon.values, 
-                                                  method='nearest')
-            c['climate_lon'] = site_climate_chunk.lon
-            c['climate_lat'] = site_climate_chunk.lat
-            
-            site_climate_chunk = site_climate_chunk.to_dataframe().dropna().reset_index()
-            
-            site_climate_chunk.rename(index=str, columns={'lat':'climate_lat','lon':'climate_lon'}, inplace=True) 
-        
-            site_temp_chunk = c.merge(site_climate_chunk, how='left',
-                                      on=['climate_lon','climate_lat'])
-            #last step
-            site_temp = site_temp.append(site_temp_chunk)
-        
+        site_temp = Parallel(n_jobs=8)(delayed(extract_single_site_temp)(clim=climate_member, site=s.copy()) for s in dataframe_chunker(site_info_for_prediction,1))
+        site_temp = pd.concat(site_temp)
         
         site_temp['doy'] = pd.TimedeltaIndex(site_temp.time.values - doy_0).days.values
         site_temp = site_temp[['site_id','tmean','doy']]

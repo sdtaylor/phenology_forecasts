@@ -8,6 +8,7 @@ observation_file = 'evaluation/phenology_2018_observations.csv'
 
 final_hindcast_file = 'evaluation/hindcast_data_2018.csv'
 
+observed_climate_file = 'current_season_observations_2018.nc'
 n_prediction_jobs=32
 ######
 # Climate stuff
@@ -26,10 +27,8 @@ num_head_workers=2
 ##
 #  Run a hindcast every 4 days
 # Start, end, and stepsize of when to run hindcasts
-#begin_date = '20180402'
-#end_date   = '20180601'
-begin_date = '20171102'
-end_date   = '20180330'
+begin_date = '20171201'
+end_date   = '20180601'
 frequency = '4D'
 
 
