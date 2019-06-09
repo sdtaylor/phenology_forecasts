@@ -16,7 +16,7 @@ date_range=pd.date_range(begin_date,
                          end_date,
                          freq = hindcast_config.frequency).to_pydatetime()
 
-current_season_observed_file = config['current_season_observations_file']
+current_season_observed_file = config['data_folder'] + hindcast_config.observed_climate_file
 
 today = datetime.datetime.today().date()
 
