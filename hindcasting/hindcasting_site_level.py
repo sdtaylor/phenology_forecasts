@@ -61,7 +61,7 @@ def dataframe_chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 @delayed
-def process_species(model, site_info, site_temp, species, Phenophase_ID):
+def process_species(model, site_info, site_temp, climate_member, species, Phenophase_ID):
     try:
         prediction_array = model.predict(to_predict=site_info,
                                              predictors=site_temp,
@@ -83,6 +83,7 @@ def process_species(model, site_info, site_temp, species, Phenophase_ID):
         prediction_dataframe['species'] = species
         prediction_dataframe['Phenophase_ID'] = Phenophase_ID
         prediction_dataframe['issue_date'] = str(hindcast_issue_date.date())
+        prediction_dataframe['climate_member'] = climate_member
         
         return prediction_dataframe
     except:
@@ -183,10 +184,11 @@ for date_i, hindcast_issue_date in enumerate(date_range):
             #print('################## site temp ###################')
             #print(site_temp_for_this_species)
             hindcasts_to_compute.append(process_species(model=model,
-                                                            site_info = site_info_for_this_species,
-                                                            site_temp = site_temp_for_this_species,
-                                                            species = species,
-                                                            Phenophase_ID = Phenophase_ID))
+                                                        site_info = site_info_for_this_species,
+                                                        site_temp = site_temp_for_this_species,
+                                                        climate_member = climate_i+1,
+                                                        species = species,
+                                                        Phenophase_ID = Phenophase_ID))
             
         all_hindcast_predictions.extend(Parallel(n_jobs=hindcast_config.n_prediction_jobs)(hindcasts_to_compute))
 
