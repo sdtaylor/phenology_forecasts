@@ -81,7 +81,7 @@ uncertainty_legend_breaks = c(1,10,20,30)
 uncertainty_legend_labels = c(1,10,20,'30+')
 
 anomaly_legend_breaks = c(-30,0,30)
-anomaly_legend_labels = c('30 Days Early',0,'30 Days Late')
+anomaly_legend_labels = c('30+ Days Early',0,'30+ Days Late')
 ########################################
 attribution_text_main="phenology.naturecast.org"
 attribution_text_data="
@@ -216,10 +216,17 @@ for(spp in available_species){
     
     ###################
     # calculate annomoly. Negative numbers means it's earlier, positive mean it's later than average
+    # max it out at 30 days to signify 30+
 
     # # static image for annomoly
     if(make_anomlay_image){
-      raster_df$anomaly = with(raster_df, doy_prediction-long_term_average)
+      raster_df = raster_df %>%
+        mutate(anomaly = doy_prediction-long_term_average) %>%
+        mutate(anomaly = case_when(
+          anomaly < -30 ~ -30,
+          anomaly >  30 ~  30,
+          TRUE        ~    anomaly
+        ))
       
       static_image_anomaly=static_image_base_plot +
         geom_raster(data = raster_df, aes(x=lat, y=lon, fill=anomaly)) +
