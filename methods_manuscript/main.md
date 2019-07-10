@@ -28,37 +28,13 @@ bibliography: refs.bib
 $^1$ School of Natural Resources and Environment, University of Florida Gainesville, FL, United States  
 $^2$ Department of Wildlife Ecology and Conservation, University of Florida, Gainesville, FL, United States
 
-Running title: Phenology Forecasting Infrastructure
-
-Keywords: climate, budburst, flowering, phenophase, ecology
-
-Article Type: Methods
-
-Abstract word count: 190  
-Main text word count: 4020; Reference count: 47  
-Figure count: 5; Table count: 0;  Text boxes: 0  
-
-Corresponding Author contact info:  
-shawntaylor@weecology.org  
-110 Newins-Ziegler Hall  
-PO Box 110430  
-Gainesville, FL 32611-0430  
-U.S.A.  
-Phone: +1 352-846-0643  
-Fax: +1 352-392-6984  
-
-Statement of authorship:  
-ST designed and built the automated system. ST and EW wrote the manuscript. 
-
-Data accessibility statement:  
-All data and code used in the analysis is permanently archived on Zenodo (https://doi.org/10.5281/zenodo.2577452).
-
-
 \normalsize
 \newpage
 
 ## Abstract
 Phenology - the timing of events such as flowering and leaf out - is an integral part of ecological systems with impacts on activities from management to tourism to agriculture. As a result, there are numerous potential applications for actionable predictions of when phenological events will occur. However, despite the availability of broad scale phenology data, and numerous phenology models, there has been no automated species-level forecasts of plant phenology. This is due in part to the challenges of building a system that integrates large volume of climate observations and forecasts, uses that data to fit models and make predictions for large numbers of species, and consistently disseminates the results of these forecasts in interpretable ways. Here we describe a new near-term phenology forecasting system that makes predictions for the timing of budburst, flowers, ripe fruit, and fall colors for 78 species across the United States up to 6 months in advance and is updated every four days. We use the lessons learned in developing this system to provide guidance developing large-scale near-term ecological forecast systems more generally, to help advance the use of automated forecasting in ecology. 
+
+Keywords: climate, budburst, flowering, phenophase, ecology, decision making
 
 \newpage 
 
