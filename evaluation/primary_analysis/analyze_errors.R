@@ -16,29 +16,31 @@ config = load_config()
 # Hindcast specific functions located here
 source('evaluation/data_prep/load_hindcast_data.R')
 
-# hindcasts_big_format = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2018.csv'),
-#                                           observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
-#                                year=2018)
-# 
-# hindcasts = hindcasts_big_format %>%
-#   calculate_point_estimates() %>%
-#   calculate_lead_time(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','year','observation_id'))
-
 hindcasts_18 = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2018.csv'),
-                                          observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
-                                          year=2018) %>%
-  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','latitude','longitude','year','observation_id','issue_date')) %>%
-  calculate_lead_time(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','year','observation_id'))
+                                  observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
+                                  year=2018) %>%
+  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','phenology_model','site_id','latitude','longitude','year','observation_id','issue_date'))
 
 hindcasts_19 = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2019.csv'),
                                   observations_file = paste0(config$data_folder,'evaluation/phenology_2019_observations.csv'),
                                   year=2019) %>%
-  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','latitude','longitude','year','observation_id','issue_date')) %>%
-  calculate_lead_time(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','year','observation_id'))
+  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','phenology_model','site_id','latitude','longitude','year','observation_id','issue_date')) 
 
 hindcasts = hindcasts_18 %>%
-  bind_rows(hindcasts_19)
+  bind_rows(hindcasts_19) %>%
+  mutate(error = doy_prediction - doy_observed)
 
+####################################
+# Apply the bias correction model using 2018 data only. 
+# This will setup the hindcasts data.frame with doy_prediction for both original and corrected hindcasts
+source('evaluation/primary_analysis/bias_correction_functions.R')
+bias_correction_model = create_error_model(df = filter(hindcasts, year==2018, issue_date=='2018-05-30'),
+                                           model_predictors = c('species','species','Phenophase_ID','phenology_model','longitude','latitude'))
+
+hindcasts = hindcasts %>%
+  apply_bias_model(error_model = bias_correction_model) %>%
+  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','latitude','longitude','year','observation_id','issue_date','bias_correction')) %>%
+  calculate_lead_time(hindcast_prediction_levels =  c('species','Phenophase_ID','site_id','year','observation_id','bias_correction'))
 
 ####################################
 # Only keep observations with at least 90 days of hindcasts and discard any which are greater
@@ -90,7 +92,7 @@ hindcasts = hindcasts %>%
 ####################################
 #####################################
 yearly_lead_time_errors = hindcasts %>%
-  group_by(lead_time, model_type, year) %>%
+  group_by(lead_time, model_type, year, bias_correction) %>%
   summarise(rmse = sqrt(mean(error**2)),
             mae = mean(abs(error)),
             n=n(),
@@ -98,8 +100,8 @@ yearly_lead_time_errors = hindcasts %>%
   ungroup()
 
 yearly_lead_time_errors$model_type = factor(yearly_lead_time_errors$model_type, levels = c('naive_model','primary_model'), labels = c('Naive','Primary'))
-yearly_lead_time_errors$year = factor(yearly_lead_time_errors$year, levels = c(2018,2019), labels = c('2018 Observations (n=837)','2019 Observations (n=1586)'))
-ggplot(yearly_lead_time_errors, aes(x=lead_time, y=mae, color=model_type)) + 
+#yearly_lead_time_errors$year = factor(yearly_lead_time_errors$year, levels = c(2018,2019), labels = c('2018 Observations (n=837)','2019 Observations (n=1586)'))
+ggplot(filter(yearly_lead_time_errors, bias_correction=='original'), aes(x=lead_time, y=mae, color=model_type)) + 
   geom_line(size=3) +
   scale_color_manual(values=c("black", "grey60")) + 
   facet_wrap(~year, ncol=2) +
@@ -113,6 +115,29 @@ ggplot(yearly_lead_time_errors, aes(x=lead_time, y=mae, color=model_type)) +
         legend.background = element_rect(color='black'),
         legend.position = c(0.3, 0.8)) +
   labs(x = 'Lead Time in Days', y='Mean Absolute Error (MAE)', color='')
+
+#################################
+#################################
+# Figure 6: 2019 error only with bias corrected vs non-corrected
+yearly_lead_time_errors %>%
+  filter(year==2019) %>%
+  select(lead_time, bias_correction, mae, model_type) %>%
+  spread(model_type, mae) %>%
+ggplot(aes(x=lead_time, y=Primary, color=bias_correction)) + 
+  geom_line(size=3) +
+  geom_line(aes(y=Naive), size=2, linetype='solid', color='black') + 
+  scale_color_manual(values=c("black", "grey60")) + 
+  scale_x_continuous(breaks=seq(-120,0,20), labels = function(x){x*-1}) + 
+  theme_bw() + 
+  theme(text = element_text(size=24),
+        strip.text = element_text(size=28),
+        legend.text = element_text(size=30),
+        legend.key.width = unit(20,'mm'),
+        legend.title = element_blank(),
+        legend.background = element_rect(color='black'),
+        legend.position = c(0.3, 0.8)) +
+  labs(x = 'Lead Time in Days', y='Mean Absolute Error (MAE)', color='')
+
 
 # density of errors by year and naive/primary model
 ggplot(filter(hindcasts, lead_time==0), aes(x=error, color=model_type)) + 
@@ -133,6 +158,7 @@ abbreviate_species_names = function(s){
 }
 
 species_errors = hindcasts %>%
+  filter(bias_correction=='original') %>%
   group_by(species, Phenophase_ID, lead_time, year) %>%
   summarise(me = mean(error),
             sd = sd(error),
@@ -172,17 +198,10 @@ ggplot(species_errors ,aes(x=me, y=species_label, color=as.factor(lead_time))) +
 
 #####################################
 #####################################
-# The error model
+# The error model to create pdp plots with
+# This is based off the non-bias corrected hindcasts only
 #####################################
 #####################################
-# acer rubrum errors only
-
-ggplot(filter(hindcasts, species=='acer rubrum'), aes(x=error,y=latitude,color=as.factor(lead_time))) + 
-  geom_point()
-
-ggplot(filter(hindcasts, species=='acer rubrum'), aes(x=error,color=as.factor(Phenophase_ID))) + 
-  geom_density() +
-  geom_vline(xintercept = 0)
 
 #####################################
 library(gbm)
@@ -192,15 +211,20 @@ hindcasts$Phenophase_ID = as.factor(hindcasts$Phenophase_ID)
 hindcasts$species = as.factor(hindcasts$species)
 hindcasts$year = as.factor(hindcasts$year)
 
-error_model = gbm(error ~  species + Phenophase_ID  + latitude + longitude + lead_time + year, 
-                  n.trees = 5000, interaction.depth = 3, shrinkage = 0.01, n.cores = 4,
-                  data=filter(hindcasts, model_type=='primary_model'))
-gbm::gbm.perf(error_model, plot.it = T)
+full_error_model = gbm(error ~  species + Phenophase_ID  + latitude + longitude + lead_time + year, 
+                       n.trees = 2000, interaction.depth = 2, shrinkage = 0.01, n.cores = 4,
+                       data=filter(hindcasts, model_type=='primary_model',  bias_correction=='original'))
+# 
+# full_error_model = create_error_model(df = filter(hindcasts, model_type=='primary_model', bias_correction=='original'),
+#                                       model_predictors = c('species','Phenophase_ID','latitude','longitude','lead_time','year'),
+#                                       n.trees = 5000, interaction.depth = 5, shrinkage = 0.1)
+
+gbm::gbm.perf(full_error_model, plot.it = T)
 
 #######################################
 # Figure 5: Modelled errors with respect to latitude
 ######################################
-partial(error_model, pred.var = c('latitude','year'), n.trees=5000, plot=F) %>%
+pdp::partial(full_error_model, pred.var = c('latitude','year'), n.trees=2000, plot=F) %>%
   ggplot(aes(y=latitude, x=yhat, color=as.factor(year))) + 
   geom_path(size=3) +
   scale_color_manual(values=c("black", "grey60")) + 
@@ -218,7 +242,7 @@ partial(error_model, pred.var = c('latitude','year'), n.trees=5000, plot=F) %>%
 #######################################
 # Figure XX: Modelled errors with respect to lead time
 ######################################
-partial(error_model, pred.var = c('lead_time','year'), n.trees=5000, plot=F) %>%
+partial(full_error_model, pred.var = c('lead_time','year'), n.trees=2000, plot=F) %>%
   ggplot(aes(y=yhat, x=lead_time, color=as.factor(year))) + 
   geom_path(size=3) +
   scale_color_manual(values=c("black", "grey60")) + 
