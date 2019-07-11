@@ -123,9 +123,10 @@ yearly_lead_time_errors %>%
   filter(year==2019) %>%
   select(lead_time, bias_correction, mae, model_type) %>%
   spread(model_type, mae) %>%
+  mutate(bias_correction = factor(bias_correction, levels = c('original','corrected'), labels = c('Original','Corrected'))) %>%
 ggplot(aes(x=lead_time, y=Primary, color=bias_correction)) + 
   geom_line(size=3) +
-  geom_line(aes(y=Naive), size=2, linetype='solid', color='black') + 
+  geom_line(aes(y=Naive), size=2, linetype='dashed', color='black') + 
   scale_color_manual(values=c("black", "grey60")) + 
   scale_x_continuous(breaks=seq(-120,0,20), labels = function(x){x*-1}) + 
   theme_bw() + 
@@ -135,7 +136,7 @@ ggplot(aes(x=lead_time, y=Primary, color=bias_correction)) +
         legend.key.width = unit(20,'mm'),
         legend.title = element_blank(),
         legend.background = element_rect(color='black'),
-        legend.position = c(0.3, 0.8)) +
+        legend.position = c(0.8, 0.85)) +
   labs(x = 'Lead Time in Days', y='Mean Absolute Error (MAE)', color='')
 
 
