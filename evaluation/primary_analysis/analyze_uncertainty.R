@@ -20,20 +20,21 @@ source('evaluation/data_prep/load_hindcast_data.R')
 hindcasts_big_format = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2018.csv'),
                                           observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
                                year=2018) %>%
-  calculate_lead_time(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','phenology_model','year','climate_member','observation_id'))
+  group_by(species, Phenophase_ID, observation_id) %>%
+  filter(runif(1) < 0.25) %>% # drop most observations for memory sake
+  ungroup() %>%
+  calculate_lead_time(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','phenology_model','bootstrap','year','climate_member','observation_id'))
 
 # hindcasts_18 = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2018.csv'),
 #                                   observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
-#                                   year=2018) %>%
-#   calculate_lead_time(hindcast_prediction_levels =c('species','Phenophase_ID','site_id','phenology_model','year','climate_member','observation_id'))
+#                                   year=2018)
 # 
 # hindcasts_19 = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2019.csv'),
 #                                   observations_file = paste0(config$data_folder,'evaluation/phenology_2019_observations.csv'),
 #                                   year=2019) %>%
 #   calculate_lead_time(hindcast_prediction_levels =c('species','Phenophase_ID','site_id','phenology_model','year','climate_member','observation_id'))
 # 
-# hindcasts_big_format = hindcasts_18 %>%
-#   bind_rows(hindcasts_19)
+# hindcasts_big_format = hindcasts_19
 
 ####################################
 # Only keep observations with at least 90 days of hindcasts and discard any which are greater
@@ -100,8 +101,8 @@ aggregate_uncertainty = all_uncertainty %>%
             n=n())
 
 aggregate_uncertainty$uncertainty_source = factor(aggregate_uncertainty$uncertainty_source,
-                                                  levels=c('total_sd','model_sd','parameter_sd','climate_sd'),
-                                                  labels=c('Total','Model','Parameter','Climate'),
+                                                  levels=c('total_sd','parameter_sd','model_sd','climate_sd'),
+                                                  labels=c('Total','Parameter','Model','Climate'),
                                                   ordered = T)
 ####################################################################
 # Figure XX: total/parameter/model/climate uncertainty over lead time (ie. the ribbon plot)
@@ -109,7 +110,7 @@ aggregate_uncertainty$uncertainty_source = factor(aggregate_uncertainty$uncertai
 
 ggplot(aggregate_uncertainty, aes(x=lead_time, y=0, fill=uncertainty_source)) + 
   geom_ribbon(aes(ymin=-SD*1.96, ymax=SD*1.96), alpha=0.8, size=1.2) +
-  scale_fill_manual(values=c('#4b3f72','#ffc857','#119da4','grey10')) +
+  scale_fill_manual(values=c('#4b3f72','#119da4','#ffc857','grey10')) +
   theme_bw() + 
   theme(text=element_text(size=20),
         legend.position = 'bottom') +
@@ -125,18 +126,13 @@ forecast_coverage = all_uncertainty %>%
   ungroup() %>%
   mutate(year=2018) %>%
   mutate(uncertainty_source = factor(uncertainty_source,
-                                                        levels=c('total_sd','model_sd','parameter_sd','climate_sd'),
-                                                        labels=c('Total','Model','Parameter','Climate'),
-                                                        ordered = T))
-
-forecast_coverage$uncertainty_source = factor(forecast_coverage$uncertainty_source,
-                                                  levels=c('total_sd','model_sd','parameter_sd','climate_sd'),
-                                                  labels=c('Total','Model','Parameter','Climate'),
-                                                  ordered = T)
+                                     levels=c('total_sd','parameter_sd','model_sd','climate_sd'),
+                                     labels=c('Total','Parameter','Model','Climate'),
+                                     ordered = T))
 
 ggplot(forecast_coverage,aes(x=lead_time, y=coverage, color=uncertainty_source)) + 
   geom_line(size=2) +
-  scale_color_manual(values=c('#4b3f72','#ffc857','#119da4','grey10')) +
+  scale_color_manual(values=c('#4b3f72','#119da4','#ffc857','grey10')) +
   scale_y_continuous(breaks=seq(0,1,0.2), limits = c(0,1)) + 
   scale_x_continuous(breaks = seq(-120,0,20), labels = function(d){d*-1}) + 
   geom_hline(yintercept = 0.95, size=1, linetype='dashed') + 
