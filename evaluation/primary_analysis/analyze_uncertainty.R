@@ -61,24 +61,32 @@ total_uncertainty = hindcasts_big_format %>%
             doy_prediction = mean(doy_prediction)) %>%
   ungroup()
 
-parameter_uncertainty = hindcasts_big_format %>%
-  group_by(species, Phenophase_ID, site_id,observation_id, year, lead_time,    phenology_model, climate_member) %>%
-  summarise(parameter_sd = sd(doy_prediction)) %>%
-  ungroup() %>%
-  group_by(species, Phenophase_ID, site_id,observation_id, year, lead_time) %>%
-  summarise(parameter_sd = mean(parameter_sd)) %>%
-  ungroup()
+# parameter_uncertainty = hindcasts_big_format %>%
+#   group_by(species, Phenophase_ID, site_id,observation_id, year, lead_time,    phenology_model, climate_member) %>%
+#   summarise(parameter_sd = sd(doy_prediction)) %>%
+#   ungroup() %>%
+#   group_by(species, Phenophase_ID, site_id,observation_id, year, lead_time) %>%
+#   summarise(parameter_sd = mean(parameter_sd)) %>%
+#   ungroup()
+# 
+# model_uncertainty = hindcasts_big_format %>%
+#   group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time,    phenology_model, climate_member) %>%
+#   summarise(doy_prediction = mean(doy_prediction)) %>%
+#   ungroup() %>%
+#   group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time,    climate_member) %>%
+#   summarise(model_sd = sd(doy_prediction)) %>%
+#   ungroup() %>%
+#   group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time) %>%
+#   summarise(model_sd = mean(model_sd)) %>%
+#   ungroup()
 
-model_uncertainty = hindcasts_big_format %>%
+model_climate_uncertainty = hindcasts_big_format %>%
   group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time,    phenology_model, climate_member) %>%
   summarise(doy_prediction = mean(doy_prediction)) %>%
   ungroup() %>%
-  group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time,    climate_member) %>%
-  summarise(model_sd = sd(doy_prediction)) %>%
-  ungroup() %>%
   group_by(species, Phenophase_ID, site_id, observation_id, year, lead_time) %>%
-  summarise(model_sd = mean(model_sd)) %>%
-  ungroup()
+  summarise(model_climate_sd = sd(model_climate_sd)) %>%
+  ungroup() 
 
 climate_uncertainty = hindcasts_big_format %>%
   group_by(species, Phenophase_ID, site_id, observation_id,year, lead_time,    climate_member) %>%
@@ -89,10 +97,11 @@ climate_uncertainty = hindcasts_big_format %>%
   ungroup()
 
 all_uncertainty = total_uncertainty %>%
-  left_join(parameter_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
-  left_join(model_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
+  #left_join(parameter_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
+  #left_join(model_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
   left_join(climate_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
-  gather(uncertainty_source,SD, total_sd, parameter_sd, model_sd, climate_sd)
+  left_join(model_climate_uncertainty, by=c('species','Phenophase_ID','site_id','observation_id','year','lead_time')) %>%
+  gather(uncertainty_source,SD, total_sd, climate_sd, model_climate_sd)
 
 aggregate_uncertainty = all_uncertainty %>%
   group_by(uncertainty_source, lead_time) %>%
@@ -101,16 +110,17 @@ aggregate_uncertainty = all_uncertainty %>%
             n=n())
 
 aggregate_uncertainty$uncertainty_source = factor(aggregate_uncertainty$uncertainty_source,
-                                                  levels=c('total_sd','parameter_sd','model_sd','climate_sd'),
-                                                  labels=c('Total','Parameter','Model','Climate'),
+                                                  levels=c('total_sd','model_climate_sd','climate_sd'),
+                                                  labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
                                                   ordered = T)
 ####################################################################
 # Figure XX: total/parameter/model/climate uncertainty over lead time (ie. the ribbon plot)
 #####################################
 
 ggplot(aggregate_uncertainty, aes(x=lead_time, y=0, fill=uncertainty_source)) + 
-  geom_ribbon(aes(ymin=-SD*1.96, ymax=SD*1.96), alpha=0.8, size=1.2) +
+  geom_ribbon(aes(ymin=-SD*1.96, ymax=SD*1.96), alpha=0.95, size=1.2) +
   scale_fill_manual(values=c('#4b3f72','#119da4','#ffc857','grey10')) +
+  #ggthemes::scale_fill_colorblind() + 
   theme_bw() + 
   theme(text=element_text(size=20),
         legend.position = 'bottom') +
@@ -126,19 +136,22 @@ forecast_coverage = all_uncertainty %>%
   ungroup() %>%
   mutate(year=2018) %>%
   mutate(uncertainty_source = factor(uncertainty_source,
-                                     levels=c('total_sd','parameter_sd','model_sd','climate_sd'),
-                                     labels=c('Total','Parameter','Model','Climate'),
+                                     levels=c('total_sd','model_climate_sd','climate_sd'),
+                                     labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
                                      ordered = T))
 
 ggplot(forecast_coverage,aes(x=lead_time, y=coverage, color=uncertainty_source)) + 
   geom_line(size=2) +
   scale_color_manual(values=c('#4b3f72','#119da4','#ffc857','grey10')) +
+  #ggthemes::scale_color_colorblind() + 
   scale_y_continuous(breaks=seq(0,1,0.2), limits = c(0,1)) + 
   scale_x_continuous(breaks = seq(-120,0,20), labels = function(d){d*-1}) + 
   geom_hline(yintercept = 0.95, size=1, linetype='dashed') + 
   theme_bw() + 
   theme(text=element_text(size=20),
-        legend.position = 'bottom') +
+        legend.position = c(0.4,0.2),
+        legend.background = element_rect(color='black'),
+        legend.key.width = unit(25,'mm')) +
   labs(x='Lead Time', y = 'Coverage',color='Uncertainty Source')
 
 ######################################################################
