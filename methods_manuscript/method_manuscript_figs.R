@@ -32,7 +32,7 @@ individual_plant_info = forecast_data %>%
   select(individual_id, species,Phenophase_ID, site_id, latitude, longitude) %>%
   distinct()
                     
-focal_individuals = c(79752,13596, 182516, 91840, 25365, 98168)
+focal_individuals = c(79752,13596, 91840, 25365, 98168)
 
 # These are the dates show in the timeseries of the map figure
 timeseries_issue_dates = lubridate::ymd(c('2018-12-03','2018-12-14',
@@ -68,13 +68,16 @@ generate_individual_timeseries = function(id){
     bind_rows(tibble(phenophase=c('Budburst','Flowers')))
   
   plot_title = individual_data %>%
-    mutate(individual_title = paste0(capitilize(species))) %>%
+    mutate(individual_title = paste0(capitilize(species), ' - #',individual_id)) %>%
     pull(individual_title) %>%
     unique() 
-  plot_subtitle = individual_data %>%
-    mutate(individual_title = paste0('(Plant: ',individual_id,', Site: ',site_id,')')) %>%
-    pull(individual_title) %>%
-    unique() 
+  
+  # don't show the last x-axis date for the upper left figure since it's blurred with the map
+  if(id==91840){
+    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01'))
+  } else {
+    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01','2019-05-01'))
+  }
   
   plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 4
   plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 4
@@ -88,15 +91,16 @@ generate_individual_timeseries = function(id){
     scale_color_manual(values=c('springgreen4','#CC79A7')) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
-    scale_x_date(date_labels = '%b. %e') + 
-    labs(color='Phenophase',x='',y='',title=plot_title,subtitle = plot_subtitle) +
+    scale_x_date(date_labels = '%b. %e', breaks = x_axis_dates) + 
+    labs(color='Phenophase',x='Forecast Issue Date',y='Predicted Date',title=plot_title) +
     theme_bw() +
     theme(plot.title = element_text(size=12, margin=margin(b=1),vjust = 0, debug = F),
           plot.subtitle = element_text(size=8, margin=margin(b=0), hjust = 0, debug=F),
           axis.text = element_text(size=10, color='black'),
+          axis.title = element_text(size=12),
           strip.background = element_rect(fill='grey90'),
-          panel.background = element_rect(fill = "white"),
-          plot.background = element_rect(fill = "transparent", color = NA))
+          panel.background = element_rect(fill = alpha("white",0.7)),
+          plot.background = element_rect(fill = alpha("white",0), color = NA))
 }
 
 get_individual_map_points = function(individual_ids){
@@ -113,7 +117,7 @@ basemap = map_data('state')
 
 individual_points = get_individual_map_points(focal_individuals)
 baseplot = ggplot() + 
-  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='black', size=0.5) +
+  geom_polygon(data = basemap, aes(x=long, y = lat, group = group), fill=NA, color='grey50', size=0.5) +
   geom_point(data=evaluated_sites, aes(x=longitude, y=latitude), shape=1, stroke=0.8, size=2, color='#0072B2') + 
   geom_point(data=all_site_info, aes(x=longitude, y=latitude), size=0.5, color='#D55E00') + 
   theme_bw() +
@@ -134,19 +138,19 @@ no_legend = theme(legend.position = 'none')
 
 timeseries79752 = generate_individual_timeseries(79752) + no_legend
 timeseries25365 = generate_individual_timeseries(25365) + no_legend
-timeseries13596 = generate_individual_timeseries(13596) + no_legend
-timeseries182516 = generate_individual_timeseries(182516) + no_legend
+#timeseries13596 = generate_individual_timeseries(13596) + no_legend
+#timeseries182516 = generate_individual_timeseries(182516) + no_legend
 timeseries91840 = generate_individual_timeseries(91840) + no_legend
 timeseries98168 = generate_individual_timeseries(98168) + no_legend
 
 connecting_lines = tribble(
   ~individual_id, ~x_start, ~y_start, ~x_end, ~y_end,
-  79752,          0.512,      0.61,      0.608,   0.725,
-  25365,          0.508,      0.435,      0.43,    0.3,
-  13596,          0.57,      0.38,      0.658,    0.315,
-  182516,         0.36,      0.615,      0.37,    0.72,
-  91840,          0.358,      0.527,       0.332,    0.54,
-  98168,          0.56,      0.493,      0.7,    0.508,
+  79752,          0.512,      0.61,      0.608,   0.725, # P. tremuloides
+  25365,          0.508,      0.435,      0.38,    0.40, # C. canadensis
+#  13596,          0.57,      0.38,      0.658,    0.315, # P. serotina
+#  182516,         0.36,      0.615,      0.37,    0.72, # C. cornuta
+  91840,          0.358,      0.527,       0.332,    0.64, # A. californica
+  98168,          0.56,      0.493,       0.605,    0.43, # A. ruburm
   NA, NA, NA, NA, NA
 )
 
@@ -159,17 +163,20 @@ timeseries_legend = cowplot::get_legend(generate_individual_timeseries(25365) +
 
 full_map_plot = ggdraw() + 
   draw_plot(baseplot, scale=0.4) +
-  geom_segment(data=connecting_lines, aes(x=x_start, y=y_start, xend=x_end, yend=y_end), size=1, color='grey30') + 
-  draw_plot(timeseries79752, x=0.5, y=0.6, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries25365, x=0.1, y=0.02, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries91840, x=-0.02, y=0.3, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries98168, x=0.58, y=0.29, width = 0.4, height = 0.4, scale=.8) +
-  draw_plot(timeseries_legend, x=0.45, y=0.15, width=0.15, height=0.15, scale=0.2) +
+  geom_segment(data=connecting_lines, aes(x=x_start, y=y_start, xend=x_end, yend=y_end), 
+               arrow = arrow(length = unit(3, "mm")),
+               size=1, color='grey20') + 
+  geom_point(data = connecting_lines, aes(x=x_start, y=y_start), size=2) + 
+  draw_plot(timeseries79752, x=0.57, y=0.55, width = 0.4, height = 0.4, scale=.8) + # P. tremuloides
+  draw_plot(timeseries25365, x=0.02, y=0.2, width = 0.4, height = 0.4, scale=.8) + # C. canadensis
+#  draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) + # P. serotina
+#  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) + # C. cornuta
+  draw_plot(timeseries91840, x=0.02, y=0.55, width = 0.4, height = 0.4, scale=.8) + # A. californica
+  draw_plot(timeseries98168, x=0.57, y=0.2, width = 0.4, height = 0.4, scale=.8) + # A. ruburm
+  draw_plot(timeseries_legend, x=0.42, y=0.7, width=0.15, height=0.15, scale=0.2) +
   geom_blank()
 
-ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 500)
+ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 300)
   
 
 ################################
@@ -212,15 +219,16 @@ metric_plot = ggplot(forecast_metrics, aes(x=issue_date, y=metric_value, color=m
   geom_point(size=3) + 
   geom_line(size=1.2) +
   scale_color_manual(values=c("grey10", "grey60",'red')) + 
-  labs(x = 'Issue Date', y='', color='') +
+  labs(x = 'Issue Date', y='RMSE or S.D. in Days', color='') +
   theme_bw() +
-  theme(legend.position = c(0.15,0.15),
+  theme(legend.position = c(0.15,0.145),
         legend.title = element_blank(),
         legend.key.width = unit(20,'mm'),
         legend.background = element_rect(fill='white', color='black', size=0.25),
         axis.text = element_text(size=14, color='black'),
-        axis.title = element_text(size=18),
-        legend.text = element_text(size=12),
+        axis.title.x = element_text(size=18),
+        axis.title.y = element_text(size=16),
+        legend.text = element_text(size=11),
         panel.background = element_rect(fill='NA'),
         plot.background = element_rect(fill='white'))
 

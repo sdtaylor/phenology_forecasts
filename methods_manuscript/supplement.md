@@ -16,41 +16,23 @@ fontsize: 12pt
 bibliography: refs.bak.bib
 ---
 
-# Automated data-intensive forecasting of plant phenology throughout the United States
-
-Shawn D. Taylor, Ethan P. White
+# Automated data-intensive forecasting of plant phenology throughout the United States  
+## Ecological Applications  
+Shawn D. Taylor, Ethan P. White  
 
 **Supplemental Information**  
-Phenology Model Descriptions  
-Description of the phenology model weighting  
-Description of the climate downscaling model   
+Section S1: Description of the phenology model weighting  
+Section S2: Description of the climate downscaling model   
 
-**Supplemental Tables 1-2**
+Table S1: Phenology Models  
+Table S2: Species and phenophases used in the forecast system  
+Table S3: Species and phenophases used in forecast evaluation  
 
-\newpage
-### Phenology Model Descriptions
 
-For all models, except the Linear and Naive models, the daily mean temperature $T_{i}$ is first transformed via the specified forcing equation. The cumulative sum of forcing is then calculated from a specific start date (either $DOY=1$ or using the fitted parameter $t_{1}$). The phenological event is estimated to be the $DOY$ where cumulative forcing is greater than or equal to the specified total required forcing (either $F^{*}$ or the specified equation). Parameters for each model are as follows: For the Linear model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively and $T_{mean}$ is the average daily temperature between the spring start date and end using the parameters $Spring_{start}$ and $Spring_{start} + Spring_{length}$; in the Thermal Time model $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $T_{base}$ is the threshold daily mean temperature above which forcing accumulates; for the Alternating model $NCD$ is the number of chill days (daily mean temperature below 0$^{\circ}$C) from $DOY=1$ to the $DOY$ of the phenological event, $a$, $b$, and $c$ are the three fitted model coefficients; for the Uniforc model, is $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $b$ and $c$ are two additional fitted parameters which define the sigmoid function. For the Naive model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively, for the average Julian day of a phenological event corrected for latitude. The Linear, Thermal Time, Alternating, andn Uniforc models are used in the primary forecast ensemble. The Naive model is used as the long-term average for the annomally calculation.
-
-\tiny
-
-| Name         |                     DOY Estimator                    |                Forcing Equations                | Reference                                 |
-|--------------|:----------------------------------------------------:|:-----------------------------------------------:|-------------------------------------------|
-| Linear       |       $DOY = \beta_{1} + \beta_{2}T_{mean}$          |                        -                        | -                                         |
-|||||
-| Thermal Time |     $\sum_{t=t_{1}}^{DOY}R_{f}(T_{i})\geq F^{*}$     |   $R_{f}(T_{i}) = max(T_{i} - T_{base}, 0)$     | [@reaumur1735; @wang1960; @hunter1992]    |
-|||||
-| Alternating  | $\sum_{t=1}^{DOY}R_{f}(T_{i})\geq a + be^{cNCD(t)}$  |        $R_{f}(T_{i}) = max(T_{i}-5, 0)$         | [@cannell1983]                            |
-|||||
-| Uniforc      |    $\sum_{t=t_{1}}^{DOY}R_{f}(T_{i})\geq F^{*}$      | $R_{f}(T_{i}) = \frac{1}{1 + e^{b(T_{i}-c)}}$   | [@chuine2000]                             |
-|||||
-| Naive        |    $DOY = \beta_{1} + \beta_{2}Latitude$             |                                                 |                                           |
-
-\normalsize
 
 \newpage
 
-### Description of the phenology model weighting
+###Section S1: Description of the phenology model weighting
 
 We used a weighted ensemble of the four models for each species and phenophase. The weights for each model within the ensemble were derived via stacking as described in -@dormann2018. The steps for calculating weights are as followed:
 
@@ -74,23 +56,45 @@ $$2 * \sqrt{\frac{1}{5}\sum_{n=1}^{5}(\widehat{DOY}_{n} - \widehat{DOY}_{forecas
 
 \newpage
 
-### Description of the climate downscaling model
+### Section S2: Description of the climate downscaling model
 
 The Climate Forecast System Version 2 (CFSv2) is a coupled atmosphere-ocean-land global circulation model maintained by the National Oceanic and Atmospheric Administration (NOAA)[@saha2014]. The model tracks over 1000 global state variables of varying resolution and forecast length, such as ocean temperature and heights of pressure bands. Here we use the 2-meter temperature variable, which has a 6-hour timestep and a spatial resolution of 0.25 degrees latitude/longitude. The forecast is updated every 6 hours with the latest initial conditions and projected out 9 months. 
 
 The CFSv2 also has a reanalysis available. A climate reanalysis is a run of the full model over a prior time period with constant assimilation of known conditions. In practice this allows for analysis of state variables which are not able to be measured (such as the 500mb height over the arctic in winter). Here it allows us to build a downscaling model using the CFSv2 model’s best estimate of past conditions of land surface temperature. These past conditions are regressed against finer grained “known” conditions from a different gridded dataset on a per pixel basis. We used the 2-m temperature output from the reanalysis from 1995-2015 as well as 4km daily mean temperature from the PRISM dataset [@prismdata] to build a downscaling model using asynchronous regression (Figure 1, E-G). The model and theory are described in -@stoner2013 and references therein. The CFSv2 data is first interpolated from the original 0.25 degree grid to a 4km grid using distance weighted sampling, then the following method is applied to each 4km pixel and calendar month.
 
-Collect all daily mean temperature observations from 21 years of data from both the CFSv2 reanalysis and the PRISM dataset. This provides 588 - 641 points representing daily temperature for a single pixel and calendar month. 
-In addition to the data from each calendar month, also include data for the 14 days prior and 14 days following the calendar month, adding an addition 588 data points (21*(14+14)). This helps account for future novel conditions.
-Order each dataset by their rank, such that the lowest value from the PRISM dataset is matched to the lowest value from the CFSv2 reanalysis.
-Fit a linear regression model.
+1. Collect all daily mean temperature observations from 21 years of data from both the CFSv2 reanalysis and the PRISM dataset. This provides 588 - 641 points representing daily temperature for a single pixel and calendar month.
+2. In addition to the data from each calendar month, also include data for the 14 days prior and 14 days following the calendar month, adding an addition 588 data points (21*(14+14)). This helps account for future novel conditions.
+3. Order each dataset by their rank, such that the lowest value from the PRISM dataset is matched to the lowest value from the CFSv2 reanalysis.
+4. Fit a linear regression model.
 
 The two parameters from the regression model are saved in a netCFD file which can later be referenced by location and calendar month (Figure 1, H). This downscaling model, at the scale of the continental U.S.A., is used to downscale the most recent CFSv2 forecasts to a 4km resolution during the automated steps. 
 
+
+\newpage
+### Table S1: Phenology Models  
+
+For all models, except the Linear and Naive models, the daily mean temperature $T_{i}$ is first transformed via the specified forcing equation. The cumulative sum of forcing is then calculated from a specific start date (either $DOY=1$ or using the fitted parameter $t_{1}$, where $DOY$ is the day of year). The phenological event is estimated to be the $DOY$ where cumulative forcing is greater than or equal to the specified total required forcing (either $F^{*}$ or the specified equation). Parameters for each model are as follows: For the Linear model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively and $T_{mean}$ is the average daily temperature between the spring start date and end using the parameters $Spring_{start}$ and $Spring_{start} + Spring_{length}$; in the Thermal Time model $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $T_{base}$ is the threshold daily mean temperature above which forcing accumulates; for the Alternating model $NCD$ is the number of chill days (daily mean temperature below 0$^{\circ}$C) from $DOY=1$ to the $DOY$ of the phenological event, $a$, $b$, and $c$ are the three fitted model coefficients; for the Uniforc model, is $F^{*}$ is the total accumulated forcing required, $t_{1}$ is the start date of forcing accumulation, and $b$ and $c$ are two additional fitted parameters which define the sigmoid function. For the Naive model $\beta_{1}$ and $\beta_{2}$ are the intercept and slope, respectively, for the average Julian day of a phenological event corrected for latitude. The Linear, Thermal Time, Alternating, andn Uniforc models are used in the primary forecast ensemble. The Long Term Average model does not use temperature data, and represents the long-term average, spatially correct average of a species/phenophase for use in annomoly calculations.
+
+\tiny
+
+| Name         |                     DOY Estimator                    |                Forcing Equations                | Reference                                 |
+|--------------|:----------------------------------------------------:|:-----------------------------------------------:|-------------------------------------------|
+| Linear       |       $DOY = \beta_{1} + \beta_{2}T_{mean}$          |                        -                        | -                                         |
+|||||
+| Thermal Time |     $\sum_{t=t_{1}}^{DOY}R_{f}(T_{i})\geq F^{*}$     |   $R_{f}(T_{i}) = max(T_{i} - T_{base}, 0)$     | [@reaumur1735; @wang1960; @hunter1992]    |
+|||||
+| Alternating  | $\sum_{t=1}^{DOY}R_{f}(T_{i})\geq a + be^{cNCD(t)}$  |        $R_{f}(T_{i}) = max(T_{i}-5, 0)$         | [@cannell1983]                            |
+|||||
+| Uniforc      |    $\sum_{t=t_{1}}^{DOY}R_{f}(T_{i})\geq F^{*}$      | $R_{f}(T_{i}) = \frac{1}{1 + e^{b(T_{i}-c)}}$   | [@chuine2000]                             |
+|||||
+| Long Term Average |    $DOY = \beta_{1} + \beta_{2}Latitude$             |                                                 |                                           |
+
+\normalsize
+
 \newpage
 
-### Table S1
-Species and their associated phenophases used in the forecast system. Note not all species have forecasts for all phenophases due to data availabilty.
+### Table S2: Species and phenophases used in the forecast system. 
+Species and their associated phenophases used in the forecast system. Note not all species have forecasts for all phenophases due to data availabilty. A * indicates a contributed model which was not built using USA-NPN data.
 \tiny
 
 |      |Species                   |Budburst     |Fall Colors  |Flowers      |Ripe Fruits  |
@@ -108,7 +112,7 @@ Species and their associated phenophases used in the forecast system. Note not a
 |    11|Alnus rubra               |$\checkmark$ |$\checkmark$ |             |             |
 |    12|Amelanchier alnifolia     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    13|Artemisia tridentata      |             |             |$\checkmark$ |             |
-|    14|Berberis aquifolium       |             |             |$\checkmark$ |$\checkmark$ |
+|    14|Berberis aquifolium*      |             |             |$\checkmark$ |$\checkmark$ |
 |    15|Betula alleghaniensis     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    16|Betula lenta              |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    17|Betula nigra              |$\checkmark$ |             |$\checkmark$ |             |
@@ -123,13 +127,13 @@ Species and their associated phenophases used in the forecast system. Note not a
 |    26|Cornus florida            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    27|Cornus racemosa           |$\checkmark$ |             |             |             |
 |    28|Cornus sericea            |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
-|    29|Corylus cornuta           |             |             |$\checkmark$ |$\checkmark$ |
+|    29|Corylus cornuta*          |             |             |$\checkmark$ |$\checkmark$ |
 |    30|Diospyros virginiana      |$\checkmark$ |             |             |             |
 |    31|Fagus grandifolia         |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    32|Fouquieria splendens      |             |             |$\checkmark$ |             |
 |    33|Fraxinus americana        |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    34|Fraxinus pennsylvanica    |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
-|    35|Gaultheria shallon        |             |             |$\checkmark$ |$\checkmark$ |
+|    35|Gaultheria shallon*       |             |             |$\checkmark$ |$\checkmark$ |
 |    36|Ginkgo biloba             |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    37|Gleditsia triacanthos     |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    38|Hamamelis virginiana      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
@@ -171,14 +175,14 @@ Species and their associated phenophases used in the forecast system. Note not a
 |    74|Ulmus americana           |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
 |    75|Umbellularia californica  |$\checkmark$ |             |$\checkmark$ |             |
 |    76|Vaccinium corymbosum      |$\checkmark$ |$\checkmark$ |$\checkmark$ |             |
-|    77|Vaccinium membranaceum    |             |             |$\checkmark$ |$\checkmark$ |
+|    77|Vaccinium membranaceum*   |             |             |$\checkmark$ |$\checkmark$ |
 |    78|Yucca brevifolia          |             |             |$\checkmark$ |             |
 |      |**Total**                 |**67**       |**47**       |**72**       |**4**        |
 
 \normalsize
 \newpage
 
-### Table S2
+### Table S3: Species and phenophases used in forecast evaluation
 Species and their associated phenophases evaluated from the 2019 season. Numbers indicate the total observations for the species and phenophase, with the mean Julian day in parentheses. Data are from the USA National Phenology Network from Jan. 1, 2019 - May 8, 2019.
 
 \tiny  
