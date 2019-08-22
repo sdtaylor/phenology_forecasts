@@ -6,7 +6,7 @@ source('tools/tools.R')
 # This script reads in the raw forecasts, naive forecasts, and observations
 # and combines them for primary analysis.
 
-load_hindcast_data = function(hindcasts_file, observations_file, year){
+load_hindcast_data = function(hindcasts_file, observations_file=NULL, year){
   # Returns a dataframe of hindcasts combined with the associated observed values
   # no aggregation is done, so the predictions are from all climate, model, and bootstrap members. 
   # has the following columns
@@ -18,31 +18,31 @@ load_hindcast_data = function(hindcasts_file, observations_file, year){
   # validations_file is a csv with the following columns and produced by validation/data_prep/process_current_season_observations.R
   #    site_id,individual_id,Phenophase_ID,Genus,Species,latitude,longitude,year,doy,species,observation_id
 
-  hindcast_data = read_csv(hindcasts_file)
+  hindcasts = read_csv(hindcasts_file)
   
   # There is just not that much leaf senesence phenophase
-  hindcast_data = hindcast_data %>% 
+  hindcasts = hindcasts %>% 
     filter(Phenophase_ID != 498)
   
-  # temporary fix until I redo the hindcasts with this info
-  hindcast_data = hindcast_data %>% 
-    group_by(phenology_model, bootstrap, site_id, species, Phenophase_ID, issue_date) %>%
-    mutate(climate_member = 1:5) %>%
-    ungroup()
+  # 
   
-  observation_data = read_csv(observations_file) %>%
-    select(site_id, observation_id, Phenophase_ID, species, latitude, longitude, year, doy_observed = doy)
-  
-  hindcasts = hindcast_data %>%
-    inner_join(observation_data, by=c('species','Phenophase_ID','site_id'))
-  
-  # remove any instances of NA predictions, where if any prediction within the 
+  if(!is.null(observations_file)){
+    observation_data = read_csv(observations_file) %>%
+      select(site_id, observation_id, Phenophase_ID, species, latitude, longitude, year, doy_observed = doy)
+    
+    hindcasts = hindcasts %>%
+      inner_join(observation_data, by=c('species','Phenophase_ID','site_id'))
+  } else {
+    # This normally comes with the observation data.
+    hindcasts$year = year
+  }
+  # remove any instances of NA or 999 predictions, where if any prediction within the 
   # full climate/phenology ensemble is NA than drop the whole thing.
   # This is ~1% of hindcasts. I theorize it happens cause a species model gets applied well
-  # outside it's range (or the range of the training data), and the pyPhenology model then returns an NA
+  # outside it's range (or the range of the training data).
   hindcasts = hindcasts %>%
     group_by(species, Phenophase_ID, issue_date, site_id) %>%
-    filter(all(!is.na(doy_prediction))) %>% # all doy_prediction within each grouping must be non-na, otherwise the whole grouping is dropped
+    filter(all(!is.na(doy_prediction)) & all(doy_prediction!=999)) %>% # all doy_prediction within each grouping must be non-na, otherwise the whole grouping is dropped
     ungroup()
   
   
@@ -66,19 +66,32 @@ load_naive_forecasts = function(naive_forecast_file, year){
    naive = naive %>%
      select(-latitude, -longitude)
  }
- 
+ naive$year = year
  return(naive)
 }
 
-calculate_point_estimates = function(hindcasts){
+calculate_point_estimates = function(hindcasts, hindcast_prediction_levels, add_sd=F){
   # Get the absolute mean of predictions. hindcasts should be output from load_hindcast_data()
-  point_estimates = hindcasts %>%
-    group_by(species, Phenophase_ID, site_id, latitude, longitude, observation_id, year, issue_date) %>%
-    summarise(doy_prediction = mean(doy_prediction),
-              doy_observed_mean = mean(doy_observed),
-              doy_observed_unique = unique(doy_observed)) %>%
-    ungroup()
 
+  if(add_sd){
+    point_estimates = hindcasts %>%
+      group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
+      summarise(doy_prediction_sd = sd(doy_prediction),
+                doy_prediction = mean(doy_prediction),
+                doy_observed_mean = mean(doy_observed),
+                doy_observed_unique = unique(doy_observed)) %>%
+      ungroup()
+    
+  } else {
+    point_estimates = hindcasts %>%
+      group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
+      summarise(doy_prediction = mean(doy_prediction),
+                doy_observed_mean = mean(doy_observed),
+                doy_observed_unique = unique(doy_observed)) %>%
+      ungroup()
+    
+  }
+  
   # Sanity check. the mean and unique value of doy observed should be the same
   if(!all(with(point_estimates, doy_observed_mean == doy_observed_unique))){
     mismatched_entries = which(!with(point_estimates, doy_observed_mean == doy_observed_unique))
