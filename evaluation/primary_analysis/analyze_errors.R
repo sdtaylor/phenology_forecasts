@@ -207,6 +207,7 @@ ggplot(species_errors ,aes(x=me, y=species_label, color=as.factor(lead_time))) +
 #####################################
 library(gbm)
 library(pdp)
+library(gridExtra)
 
 hindcasts$Phenophase_ID = as.factor(hindcasts$Phenophase_ID)
 hindcasts$species = as.factor(hindcasts$species)
@@ -225,7 +226,7 @@ gbm::gbm.perf(full_error_model, plot.it = T)
 #######################################
 # Figure 5: Modelled errors with respect to latitude
 ######################################
-pdp::partial(full_error_model, pred.var = c('latitude','year'), n.trees=2000, plot=F) %>%
+latitude_pdp_plot = pdp::partial(full_error_model, pred.var = c('latitude','year'), n.trees=2000, plot=F) %>%
   ggplot(aes(y=latitude, x=yhat, color=as.factor(year))) + 
   geom_path(size=3) +
   scale_color_manual(values=c("black", "grey60")) + 
@@ -239,6 +240,26 @@ pdp::partial(full_error_model, pred.var = c('latitude','year'), n.trees=2000, pl
         legend.text = element_text(size=25),
         legend.key.width = unit(20,'mm'),
         legend.background = element_rect(color='black'))
+
+# trying to get a carpet plot on the PDP plot to show training data distribution over latutde
+# training_data = map_df(list.files(config$phenology_observations_folder, full.names = T), read_csv) %>%
+#   filter(interaction(species, Phenophase_ID) %in% unique(interaction(hindcasts$species, hindcasts$Phenophase_ID)))
+# 
+# ggExtra::ggMarginal(p = latitude_pdp_plot,
+#                     data = training_data, 
+#                     x = latitude, y)
+# 
+# latitude_histogram = ggplot(training_data, aes(latitude)) + 
+#   geom_histogram() +
+#   xlim(25,45) + 
+#   coord_flip() +
+#   theme_bw(15) +
+#   theme(axis.title = element_blank())
+# 
+# grid.arrange(latitude_pdp_plot, latitude_histogram, ncol=2, nrow=1, widths=c(4, 1), heights=c(1,0.8))
+
+
+
 
 #######################################
 # Figure XX: Modelled errors with respect to lead time
