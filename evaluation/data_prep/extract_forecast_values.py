@@ -1,6 +1,7 @@
 import xarray as xr
 import pandas as pd
 import glob
+from os import path
 from tools import tools
 from copy import deepcopy
 config = tools.load_config()
@@ -16,7 +17,10 @@ available_forecasts = glob.glob(config['phenology_forecast_folder']+'*.nc')
 forecast_data = []
 for forecast_file in available_forecasts:
     forecast_obj = xr.open_dataset(forecast_file)   
-    forecast_issue_date = forecast_obj.issue_date
+    try:
+        forecast_issue_date = forecast_obj.issue_date
+    except:
+        forecast_issue_date = path.basename(forecast_file).split('_')[-1].split('.')[0]
     forecast_obj.load()
     print(forecast_issue_date)
     for row in forecast_data_needed.to_dict('records'):
@@ -37,26 +41,5 @@ for forecast_file in available_forecasts:
     forecast_obj.close()
 
 
-# Don't forget naive forecasts
-naive_forecast = xr.open_dataset('/home/shawn/data/phenology_forecasting/phenology_naive_models.nc')
-
-naive_model_data = []
-for row in forecast_data_needed.to_dict('records'):
-    if row['Phenophase_ID'] not in naive_forecast.phenophase.values:
-        continue
-    if row['species'] not in naive_forecast.species.values:
-        continue
-        
-        
-    subset = naive_forecast.sel(lat=row['latitude'], lon=row['longitude'], 
-                              method='nearest').sel(species=row['species'], phenophase=row['Phenophase_ID'])
-    
-    row.update({'doy_prediction':float(subset.doy_prediction.values),
-                'doy_sd':float(subset.doy_sd.values)})
-    naive_model_data.append(row)
-    
 forecast_data = pd.DataFrame(forecast_data)
-naive_model_data = pd.DataFrame(naive_model_data)
-
-forecast_data.to_csv('/home/shawn/data/phenology_forecasting/evaluation/forecast_data_2019.csv', index=False)
-naive_model_data.to_csv('/home/shawn/data/phenology_forecasting/evaluation/naive_model_data.csv', index=False)
+forecast_data.to_csv(config['data_folder'] + 'evaluation/forecast_data_2019.csv', index=False)

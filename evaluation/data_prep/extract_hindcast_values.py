@@ -47,26 +47,5 @@ for forecast_date_folder in available_forecast_date_folders:
         forecast_obj.close()
 
 
-# Don't forget naive forecasts
-naive_forecast = xr.open_dataset('/home/shawn/data/phenology_forecasting/phenology_naive_models.nc')
-
-naive_model_data = []
-for row in forecast_data_needed.to_dict('records'):
-    if row['Phenophase_ID'] not in naive_forecast.phenophase.values:
-        continue
-    if row['species'] not in naive_forecast.species.values:
-        continue
-        
-        
-    subset = naive_forecast.sel(lat=row['latitude'], lon=row['longitude'], 
-                              method='nearest').sel(species=row['species'], phenophase=row['Phenophase_ID'])
-    
-    row.update({'doy_prediction':float(subset.doy_prediction.values),
-                'doy_sd':float(subset.doy_sd.values)})
-    naive_model_data.append(row)
-    
 forecast_data = pd.DataFrame(forecast_data)
-naive_model_data = pd.DataFrame(naive_model_data)
-
 forecast_data.to_csv('/home/shawn/data/phenology_forecasting/validation/forecast_data.csv', index=False)
-naive_model_data.to_csv('/home/shawn/data/phenology_forecasting/validation/naive_model_data.csv', index=False)
