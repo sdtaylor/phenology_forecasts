@@ -44,6 +44,10 @@ phenology_observations_folder: phenology_observations/
 
 phenology_naive_model_file: phenology_naive_models.nc
 
+# This holds the yearly phenology predictions which calculate the long term average below
+long_term_average_folder: long_term_averages/
+
+phenology_long_term_averages_file: phenology_long_term_averages.nc
 
 phenology_observations_temperature_file: phenology_observations/observation_temperatures.csv
 
