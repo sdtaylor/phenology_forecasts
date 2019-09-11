@@ -10,8 +10,6 @@ header-includes:
 - \usepackage{setspace}
 - \usepackage{booktabs}
 - \doublespacing
-- \usepackage{lineno}
-- \linenumbers
 fontsize: 12pt
 bibliography: refs.bak.bib
 ---
