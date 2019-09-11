@@ -72,12 +72,7 @@ generate_individual_timeseries = function(id){
     pull(individual_title) %>%
     unique() 
   
-  # don't show the last x-axis date for the upper left figure since it's blurred with the map
-  if(id==91840){
-    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01'))
-  } else {
-    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01','2019-05-01'))
-  }
+  x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01','2019-05-01'))
   
   plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 4
   plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 4
@@ -91,13 +86,13 @@ generate_individual_timeseries = function(id){
     scale_color_manual(values=c('springgreen4','#CC79A7')) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
-    scale_x_date(date_labels = '%b. %e', breaks = x_axis_dates) + 
+    scale_x_date(date_labels = '%b%e', breaks = x_axis_dates) + 
     labs(color='Phenophase',x='Forecast Issue Date',y='Predicted Date',title=plot_title) +
     theme_bw() +
     theme(plot.title = element_text(size=12, margin=margin(b=1),vjust = 0, debug = F),
           plot.subtitle = element_text(size=8, margin=margin(b=0), hjust = 0, debug=F),
-          axis.text = element_text(size=10, color='black'),
-          axis.title = element_text(size=12),
+          axis.text = element_text(size=12, color='black'),
+          axis.title = element_text(size=14),
           strip.background = element_rect(fill='grey90'),
           panel.background = element_rect(fill = alpha("white",0.7)),
           plot.background = element_rect(fill = alpha("white",0), color = NA))
@@ -145,12 +140,12 @@ timeseries98168 = generate_individual_timeseries(98168) + no_legend
 
 connecting_lines = tribble(
   ~individual_id, ~x_start, ~y_start, ~x_end, ~y_end,
-  79752,          0.512,      0.61,      0.608,   0.725, # P. tremuloides
-  25365,          0.508,      0.435,      0.38,    0.40, # C. canadensis
+  79752,          0.512,      0.61,      0.62,   0.725, # P. tremuloides
+  25365,          0.508,      0.435,      0.45,    0.375, # C. canadensis
 #  13596,          0.57,      0.38,      0.658,    0.315, # P. serotina
 #  182516,         0.36,      0.615,      0.37,    0.72, # C. cornuta
-  91840,          0.358,      0.527,       0.332,    0.64, # A. californica
-  98168,          0.56,      0.493,       0.605,    0.43, # A. ruburm
+  91840,          0.358,      0.527,       0.332,    0.65, # A. californica
+  98168,          0.56,      0.493,       0.595,    0.42, # A. ruburm
   NA, NA, NA, NA, NA
 )
 
@@ -167,13 +162,13 @@ full_map_plot = ggdraw() +
                arrow = arrow(length = unit(3, "mm")),
                size=1, color='grey20') + 
   geom_point(data = connecting_lines, aes(x=x_start, y=y_start), size=2) + 
-  draw_plot(timeseries79752, x=0.57, y=0.55, width = 0.4, height = 0.4, scale=.8) + # P. tremuloides
-  draw_plot(timeseries25365, x=0.02, y=0.2, width = 0.4, height = 0.4, scale=.8) + # C. canadensis
+  draw_plot(timeseries79752, x=0.55, y=0.615, width = 0.4, height = 0.4, scale=.8) + # P. tremuloides
+  draw_plot(timeseries25365, x=0.09, y=0.10, width = 0.4, height = 0.4, scale=.8) + # C. canadensis
 #  draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) + # P. serotina
 #  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) + # C. cornuta
-  draw_plot(timeseries91840, x=0.02, y=0.55, width = 0.4, height = 0.4, scale=.8) + # A. californica
-  draw_plot(timeseries98168, x=0.57, y=0.2, width = 0.4, height = 0.4, scale=.8) + # A. ruburm
-  draw_plot(timeseries_legend, x=0.42, y=0.7, width=0.15, height=0.15, scale=0.2) +
+  draw_plot(timeseries91840, x=0.09, y=0.615, width = 0.4, height = 0.4, scale=.8) + # A. californica
+  draw_plot(timeseries98168, x=0.55, y=0.1, width = 0.4, height = 0.4, scale=.8) + # A. ruburm
+  draw_plot(timeseries_legend, x=0.45, y=0.75, width=0.15, height=0.15, scale=0.2) +
   geom_blank()
 
 ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 300)
