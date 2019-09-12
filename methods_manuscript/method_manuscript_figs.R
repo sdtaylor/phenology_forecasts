@@ -255,15 +255,15 @@ error_plot = forecast_data %>%
   #filter(latitude <= 35) %>%
   mutate(absolute_error = (doy_prediction - doy_observed)) %>%
 ggplot(aes(x=issue_date, y=absolute_error)) + 
-  geom_jitter(width = 2.5, height = 0, size=2, alpha=0.15, color='#0072B2') + 
-  geom_boxplot(aes(group=issue_date), width=6, size=1, color='black',fill=NA, outlier.color = 'transparent') + 
+  geom_jitter(width = 2.75, height = 0, size=1.5, alpha=0.15, color='#0072B2') + 
+  geom_boxplot(aes(group=issue_date), width=8, size=0.5, color='black',fill=NA, outlier.color = 'transparent') + 
   geom_hline(yintercept = 0, size=1, color='black', linetype='dashed') + 
-  geom_label(data=mean_errors, aes(y=-55, label=mae), size=8, alpha=0.6) +
+  geom_label(data=mean_errors, aes(y=-55, label=mae), size=5, alpha=0.6) +
   scale_x_date(date_labels = '%b. %e') +
   theme_bw() +
-  theme(axis.text = element_text(color='black', size=22),
+  theme(axis.text = element_text(color='black', size=18),
         panel.grid = element_blank(),
-        axis.title = element_text(size=30)) + 
+        axis.title = element_text(size=15)) + 
   labs(x='Issue Date', y='Absolute Error')
 
-ggsave('methods_manuscript/figure_5_error_timeseries.png', plot=error_plot, width=40, height = 16, units = 'cm', dpi=500)
+ggsave('methods_manuscript/figure_5_error_timeseries.png', plot=error_plot, width=20, height = 8, units = 'cm', dpi=500)
