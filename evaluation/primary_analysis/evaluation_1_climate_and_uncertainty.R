@@ -58,29 +58,23 @@ hindcasts = hindcasts %>%
   filter(has_adequate_lead_time) %>%
   select(-has_adequate_lead_time) %>%
   filter(lead_time >= -120, lead_time <=0) %>%
-  #group_by(species, Phenophase_ID, observation_id) %>%
-  #filter(n() == 121) %>% # some obs (like 20) flowered/budbursted after May 30 (the last hindcast day) so don't have exactly 120 days of lead time
-  #ungroup() %>%
+  group_by(species, Phenophase_ID, observation_id, method) %>%
+  filter(n() == 121) %>% # some obs (about 20 total) flowered/budbursted after May 30 (the last hindcast day) so don't have exactly 120 days of lead time
+  ungroup() %>%
   I()
 
 #####################################
 #####################################
 # combine the hindcast, naive, and long term averages
 
-# naive_data = load_naive_forecasts(naive_forecast_file = paste0(config$data_folder,'evaluation/naive_model_data_2018.csv'),
-#                                   year=2018)
-
 long_term_average_data = load_long_term_averages(long_term_average_file = paste0(config$data_folder,'evaluation/long_term_average_model_data_2018.csv'),
                                                  year=2018)
-
 
 hindcasts = hindcasts %>%
   select(-issue_date, -issue_doy) %>%
   spread(method, doy_prediction) %>%
-  #left_join(select(naive_data, -doy_sd_naive), by=c('species','Phenophase_ID','site_id','year')) %>%
   left_join(select(long_term_average_data, -doy_sd_lta), by=c('species','Phenophase_ID','site_id','year')) %>%
   rename(primary_model = with_forecasts,
-         #naive_model = doy_prediction_naive,
          lta_model = doy_prediction_lta) %>%
   gather(model_type, doy_prediction, primary_model, lta_model, observed_temp_only)
 
@@ -100,6 +94,7 @@ yearly_lead_time_errors = hindcasts %>%
   summarise(rmse = sqrt(mean(error**2)),
             mae = mean(abs(error), na.rm = T),
             n=n(),
+            num_na = mean(is.na(error)),
             n_species_phenophase = n_distinct(interaction(species, Phenophase_ID))) %>%
   ungroup()
 
