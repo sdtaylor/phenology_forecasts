@@ -70,6 +70,19 @@ load_naive_forecasts = function(naive_forecast_file, year){
  return(naive)
 }
 
+load_long_term_averages = function(long_term_average_file, year){
+  lta = read_csv(long_term_average_file) %>%
+    rename(doy_prediction_lta = doy_prediction,
+           doy_sd_lta = doy_sd)
+  
+  if('latitude' %in% colnames(lta)){
+    lta = lta %>%
+      select(-latitude, -longitude)
+  }
+  lta$year = year
+  return(lta)
+}
+
 calculate_point_estimates = function(hindcasts, hindcast_prediction_levels, add_sd=F){
   # Get the absolute mean of predictions. hindcasts should be output from load_hindcast_data()
 
