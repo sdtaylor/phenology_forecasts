@@ -143,7 +143,7 @@ calculate_lead_time = function(hindcasts, hindcast_prediction_levels,
       TRUE ~ issue_doy
     )) 
   
-  
+
   # save coordinates since they get weird in the next step
   if('latitude' %in% colnames(h)){
     site_info = h %>%
@@ -151,18 +151,32 @@ calculate_lead_time = function(hindcasts, hindcast_prediction_levels,
       distinct()
   }
   
+  includes_sd = 'doy_prediction_sd' %in% colnames(h)
+  
   if(fill_in_all_doys){
     # fills in predictions for every doy. 
     # ie. if there was a hindcast on doy 20 and 25. Then this copies the doy 20 prediction
     # to doy 21-24.
-    h = h %>%
-      complete(issue_doy=(min_issue_doy:max_issue_doy), nesting(!!!rlang::syms(hindcast_prediction_levels))) %>%
-      arrange(issue_doy) %>%
-      group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
-      mutate(doy_prediction = zoo::na.locf(doy_prediction, na.rm=FALSE),
-             doy_observed = zoo::na.locf(doy_observed, na.rm=FALSE),
-             issue_date = zoo::na.locf(issue_date, na.rm=FALSE)) %>%
-      ungroup()
+    if(includes_sd){
+      h = h %>%
+        complete(issue_doy=(min_issue_doy:max_issue_doy), nesting(!!!rlang::syms(hindcast_prediction_levels))) %>%
+        arrange(issue_doy) %>%
+        group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
+        mutate(doy_prediction = zoo::na.locf(doy_prediction, na.rm=FALSE),
+               doy_prediction_sd = zoo::na.locf(doy_prediction_sd, na.rm=FALSE),
+               doy_observed = zoo::na.locf(doy_observed, na.rm=FALSE),
+               issue_date = zoo::na.locf(issue_date, na.rm=FALSE)) %>%
+        ungroup()
+    } else {
+      h = h %>%
+        complete(issue_doy=(min_issue_doy:max_issue_doy), nesting(!!!rlang::syms(hindcast_prediction_levels))) %>%
+        arrange(issue_doy) %>%
+        group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
+        mutate(doy_prediction = zoo::na.locf(doy_prediction, na.rm=FALSE),
+               doy_observed = zoo::na.locf(doy_observed, na.rm=FALSE),
+               issue_date = zoo::na.locf(issue_date, na.rm=FALSE)) %>%
+        ungroup()
+    }
   }
   
   # put coordinates back in
