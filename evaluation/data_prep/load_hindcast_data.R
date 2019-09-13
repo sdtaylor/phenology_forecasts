@@ -118,7 +118,8 @@ calculate_point_estimates = function(hindcasts, hindcast_prediction_levels, add_
   return(point_estimates)
 }
 
-calculate_lead_time = function(hindcasts, hindcast_prediction_levels, fill_in_all_doys=TRUE){
+calculate_lead_time = function(hindcasts, hindcast_prediction_levels, 
+                               fill_in_all_doys=TRUE, min_issue_doy = -30, max_issue_doy = 150){
   # expects a data.frame as returned by load_hindcast_data()
   # and adds an issue_doy and lead_time columns
   # 
@@ -155,7 +156,7 @@ calculate_lead_time = function(hindcasts, hindcast_prediction_levels, fill_in_al
     # ie. if there was a hindcast on doy 20 and 25. Then this copies the doy 20 prediction
     # to doy 21-24.
     h = h %>%
-      complete(issue_doy=min(issue_doy):(max(issue_doy)), nesting(!!!rlang::syms(hindcast_prediction_levels))) %>%
+      complete(issue_doy=(min_issue_doy:max_issue_doy), nesting(!!!rlang::syms(hindcast_prediction_levels))) %>%
       arrange(issue_doy) %>%
       group_by(!!!rlang::syms(hindcast_prediction_levels)) %>%
       mutate(doy_prediction = zoo::na.locf(doy_prediction, na.rm=FALSE),
