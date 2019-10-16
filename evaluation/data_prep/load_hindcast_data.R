@@ -6,7 +6,7 @@ source('tools/tools.R')
 # This script reads in the raw forecasts, naive forecasts, and observations
 # and combines them for primary analysis.
 
-load_hindcast_data = function(hindcasts_file, observations_file=NULL, year){
+load_hindcast_data = function(hindcasts_file, observations_file=NULL, year, filter_na=TRUE){
   # Returns a dataframe of hindcasts combined with the associated observed values
   # no aggregation is done, so the predictions are from all climate, model, and bootstrap members. 
   # has the following columns
@@ -40,10 +40,12 @@ load_hindcast_data = function(hindcasts_file, observations_file=NULL, year){
   # full climate/phenology ensemble is NA than drop the whole thing.
   # This is ~1% of hindcasts. I theorize it happens cause a species model gets applied well
   # outside it's range (or the range of the training data).
-  hindcasts = hindcasts %>%
-    group_by(species, Phenophase_ID, issue_date, site_id) %>%
-    filter(all(!is.na(doy_prediction)) & all(doy_prediction!=999)) %>% # all doy_prediction within each grouping must be non-na, otherwise the whole grouping is dropped
-    ungroup()
+  if(filter_na){
+    hindcasts = hindcasts %>%
+      group_by(species, Phenophase_ID, observation_id) %>%
+      filter(all(!is.na(doy_prediction)) & all(doy_prediction!=999)) %>% # all doy_prediction within each grouping must be non-na, otherwise the whole grouping is dropped
+      ungroup()
+  }
   
   
   # sanity check
