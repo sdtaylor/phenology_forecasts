@@ -15,57 +15,131 @@ config = load_config()
 # Setup the hindcast data for evaluation
 ########################################
 # Hindcast specific functions located here
-source('evaluation/data_prep/load_hindcast_data.R')
+# This script produces the following
+# Figure X: rmse/mae values over lead time for 2018 and 2019
+# Figure X: the gbm modelled errors for latitude x year
+# Figure X: the species specific errors (mae on x axis, species/phenophase list on y)
+
+
+##################################################################
+# calculate uncertainty for each component. These are big dataframes, so the heavy
+# lifting is done with data.table commands before switching to tidyverse.
+#####################################
+calculate_point_predictions = function(hindcast_data_table){
+    hindcast_data_table[,list(doy_prediction_sd = sd(doy_prediction, na.rm=T),
+                              doy_prediction = mean(doy_prediction, na.rm=T),
+                              n=.N,
+                              num_na = sum(is.na(doy_prediction)),
+                              num_999 = sum(doy_prediction==999, na.rm=T)), 
+                          by=list(species, Phenophase_ID, site_id, issue_date)] %>%
+    as_tibble()
+}
+#####################################
+#####################################
+# Setup the hindcast data for evaluation
+########################################
+# Hindcast specific functions located here
+#source('evaluation/data_prep/load_hindcast_data.R')
 
 # Load the two main hindcasts. The original ones produced by integrating observation data (PRISM) and
 # weather forecasts (CFSv2).
-hindcasts_primary_method = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_data_2018.csv'),
-                                  observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
-                                  year=2018) %>%
-  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','latitude','longitude','year','observation_id','issue_date'),
-                            add_sd=T) 
+hindcasts_primary_method = data.table::fread(paste0(config$data_folder,'evaluation/hindcast_data_2018.csv')) %>%
+  calculate_point_predictions()
 
 # And the one to compare with which uses only observations (PRISM) integrated with long term averages
 # the group_split %> map_dfr is important here to keep memory usage reasonable. Files are 4-9 GB
-hindcasts_lta_method = load_hindcast_data(hindcasts_file = paste0(config$data_folder,'evaluation/hindcast_lta_method_data_2018.csv'),
-                                      observations_file = paste0(config$data_folder,'evaluation/phenology_2018_observations.csv'),
-                                      year=2018) %>%
-  calculate_point_estimates(hindcast_prediction_levels = c('species','Phenophase_ID','site_id','latitude','longitude','year','observation_id','issue_date'),
-                            add_sd=T) 
+hindcasts_lta_method = data.table::fread(paste0(config$data_folder,'evaluation/hindcast_lta_method_data_2018.csv')) %>%
+  calculate_point_predictions()
+
+hindcasts_climatology_method = data.table::fread(paste0(config$data_folder,'evaluation/hindcast_climatology_method_data_2018.csv'))
+# ~300 predictions from the Linear model are NA due to weird temperature years
+hindcasts_climatology_method = hindcasts_climatology_method[!is.na(doy_prediction)]
+hindcasts_climatology_method = calculate_point_predictions(hindcasts_climatology_method)
+
+# Climatology isn't updated with every issue date, so needs to be copied to each one manually
+hindcasts_climatology_method = map_dfr(unique(hindcasts_primary_method$issue_date), function(x){mutate(hindcasts_climatology_method, issue_date=x)})
 
 hindcasts_primary_method$method = 'primary'
-hindcasts_lta_method$method = 'observed_temp_only'
+hindcasts_lta_method$method = 'observed_temp_only'  
+hindcasts_climatology_method$method = 'climatology'
 
-hindcasts_with_issue_dates = hindcasts_primary_method %>%
-  bind_rows(hindcasts_lta_method)
+all_hindcasts = hindcasts_primary_method %>%
+  bind_rows(hindcasts_lta_method) %>%
+  bind_rows(hindcasts_climatology_method) %>%
+  mutate(issue_date = lubridate::ymd(issue_date))
 
-#####################################
-#####################################
-# combine the hindcast, naive, and long term averages.
-# do some fancy pivots to make a tidy data.frame like
-# species, phenophase, site_id, obseration_id, ... , doy_observed, method, doy_prediction, doy_prediciton_sd
-# acer, 501, 1531, 441,                              30,          primary_model, 65, 2   
-# acer, 501, 1531, 441,                              30,          lta          , 55, 5
-#
-# pivot_wider and pivot_longer require tidyr>=1.0.0
+# remove any instances of NA or 999 predictions, where if any prediction within the 
+# full climate/phenology ensemble is NA than drop the whole thing.
+# This is ~1% of hindcasts. I theorize it happens cause a species model gets applied well
+# outside it's range (or the range of the training data).
+all_hindcasts = all_hindcasts %>%
+  group_by(species, Phenophase_ID, site_id) %>%
+  filter(num_na==0 & num_999 ==0) %>% # all doy_prediction within each grouping must be non-na, otherwise the whole grouping is dropped
+  ungroup() 
 
-long_term_average_data = load_long_term_averages(long_term_average_file = paste0(config$data_folder,'evaluation/long_term_average_model_data_2018.csv'),
-                                                 year=2018) %>%
-  rename(doy_prediction_sd_lta = doy_sd_lta)
+# Also drop fall color as there is just not that many of them
+all_hindcasts = all_hindcasts %>%
+  filter(Phenophase_ID!=498)
 
-hindcasts_with_issue_dates = hindcasts_with_issue_dates %>%
-  pivot_wider(names_from = 'method', values_from = c('doy_prediction','doy_prediction_sd')) %>%
-  left_join(long_term_average_data, by=c('species','Phenophase_ID','site_id','year')) %>%
-  pivot_longer(cols = contains('doy_prediction'),
-               names_to = c('.value','method'),
-               names_pattern = '(doy_prediction_sd|doy_prediction)_(primary|observed_temp_only|lta)')
+# Some of the less observed species (~9) were not caluclated with the climatology methods
+all_hindcasts = all_hindcasts %>%
+  group_by(species, Phenophase_ID, site_id) %>%
+  filter(n_distinct(method)==3) %>% 
+  ungroup() 
+
+x = all_hindcasts %>%
+  group_by(species, Phenophase_ID) %>%
+  summarise(n_methods = n_distinct(method),
+            methods = paste(unique(method), collapse = ' '))
 
 #####################################
 ####################################
 
-hindcasts_with_issue_dates = hindcasts_with_issue_dates %>%
+# Join with observations
+
+observation_data = read_csv(paste0(config$data_folder,'evaluation/phenology_2018_observations.csv')) %>%
+  select(site_id, observation_id, Phenophase_ID, species, latitude, longitude, year, doy_observed = doy)
+
+all_hindcasts = all_hindcasts %>%
+  inner_join(observation_data, by=c('species','Phenophase_ID','site_id'))
+
+all_hindcasts = all_hindcasts %>%
   mutate(error = doy_prediction - doy_observed)
 
+######################################
+most_abundant_spp = all_hindcasts %>%
+  select(species, Phenophase_ID, observation_id, site_id, latitude, longitude) %>%
+  distinct() %>%
+  count(species) %>%
+  arrange(-n) %>%
+  head(4)
+
+doy_to_date = function(doy){
+  as.Date(paste0('2018-',doy), format = '%Y-%j')
+}
+doy_to_date_str = function(doy){
+  format(doy_to_date(doy), '%b %d')
+}
+assing_nice_method_names = function(df){
+  df$method = factor(df$method, 
+                    levels = c('climatology','observed_temp_only','primary'), 
+                    labels = c('Climatology Only','Observed Temp. + Climatology','Observed Temp. + Forecasts Integration'))
+  return(df)
+}
+
+
+####################################
+# lta_errors_only = hindcasts_with_issue_dates %>%
+#   filter(method == 'lta') %>%
+#   select(-issue_date) %>%
+#   distinct()
+# 
+# lower_quantile = quantile(lta_errors_only$error, 0.025)
+# upper_quantile = quantile(lta_errors_only$error, 0.975)
+# 
+# extreme_events = lta_errors_only %>%
+#   mutate(is_extreme_event = error <= lower_quantile | error >= upper_quantile) %>%
+#   select(species, Phenophase_ID, observation_id, is_extreme_event)
 #####################################
 ####################################
 # Figure X: total RMSE vs lead time or issue date
@@ -77,7 +151,7 @@ plot_theme =  theme_bw() +
                     axis.text = element_text(size=16),
                     axis.title = element_text(size=18),
                     strip.text = element_text(size=28),
-                    legend.text = element_text(size=16),
+                    legend.text = element_text(size=14),
                     legend.key.width = unit(20,'mm'),
                     legend.title = element_blank(),
                     legend.background = element_rect(color='black'),
@@ -89,8 +163,7 @@ rmse_range = c(8,24)
 coverage_range = c(0.6, 0.98)
 
 # Issue date plots
-issue_date_errors = hindcasts_with_issue_dates %>%
-  #filter(species == 'acer rubrum') %>%
+issue_date_errors = all_hindcasts %>%
   mutate(p = pnorm(doy_observed, doy_prediction, doy_prediction_sd)) %>% # probability of observation given prediction, used for coverage
   group_by(issue_date, year, method) %>%
   summarise(rmse = sqrt(mean(error**2, na.rm = T)),
@@ -99,24 +172,20 @@ issue_date_errors = hindcasts_with_issue_dates %>%
             n=n(),
             num_na = sum(is.na(error)),
             n_species_phenophase = n_distinct(interaction(species, Phenophase_ID))) %>%
-  ungroup()
-
-
-issue_date_errors$method = factor(issue_date_errors$method, 
-                                  levels = c('lta','observed_temp_only','primary'), 
-                                  labels = c('Long Term Average','Observed Temp. Integration Only','Observed Temp. + Forecasts Integration'))
+  ungroup() %>%
+  assing_nice_method_names()
 
 issue_date_rmse_plot = ggplot(issue_date_errors, aes(x=issue_date, y=rmse, color=method)) + 
   geom_line(size=3) +
   scale_color_manual(values = line_colors) + 
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01'))) + 
   #scale_y_continuous(limits = c(14,23)) + 
-  labs(y='RMSE', title = 'A. RMSE with respect to issue date') +
+  labs(y='RMSE', title = 'A. RMSE', x='Issue Date') +
   plot_theme +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
-        legend.position = 'none')
+        legend.position = c(0.75,0.85))
 
 issue_date_coverage_plot = ggplot(issue_date_errors, aes(x=issue_date, y=coverage, color=method)) + 
   geom_line(size=3) +
@@ -125,19 +194,88 @@ issue_date_coverage_plot = ggplot(issue_date_errors, aes(x=issue_date, y=coverag
   scale_color_manual(values = line_colors) + 
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
                labels = function(x){format(x,'%b. %d')}) + 
-  #scale_y_continuous(limits = coverage_range) + 
-  labs(y = 'Coverage', x= 'Issue Date', title = 'B. Coverage with respect to issue date') +
+  #facet_wrap(~species) + 
+  scale_y_continuous(limits = coverage_range) + 
+  labs(y = 'Coverage', x= 'Issue Date', title = 'B. Coverage') +
   plot_theme 
 
 ###############################################
 
 
-issue_date_rmse_plot + issue_date_mae_plot +  issue_date_coverage_plot + plot_layout(ncol=1)
+issue_date_rmse_plot +  issue_date_coverage_plot + plot_layout(ncol=1)
 
 
+##############################################
+# errors for 4 most abundant species
+facet_labels = most_abundant_spp %>%
+  mutate(letter = LETTERS[1:4]) %>%
+  mutate(facet_label = paste0(letter,'. ', snakecase::to_sentence_case(species))) %>%
+  select(species, facet_label)
 
 
+# Issue date plots
+species_level_issue_date_errors = all_hindcasts %>%
+  filter(species %in% most_abundant_spp$species) %>%
+  mutate(p = pnorm(doy_observed, doy_prediction, doy_prediction_sd)) %>% # probability of observation given prediction, used for coverage
+  group_by(issue_date, year, method, species) %>%
+  summarise(rmse = sqrt(mean(error**2, na.rm = T)),
+            mae = mean(abs(error), na.rm = T),
+            coverage = mean(p > 0.025 & p < 0.975, na.rm=T),
+            n=n(),
+            num_na = sum(is.na(error)),
+            n_species_phenophase = n_distinct(interaction(species, Phenophase_ID))) %>%
+  ungroup() %>%
+  assing_nice_method_names() %>%
+  left_join(facet_labels, by='species')
 
+ggplot(species_level_issue_date_errors, aes(x=issue_date, y=rmse, color=method)) + 
+  geom_line(size=3) +
+  scale_color_manual(values = line_colors) + 
+  scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01'))) + 
+  #scale_y_continuous(limits = c(14,23)) + 
+  facet_wrap(~facet_label, scales='free_y') + 
+  labs(y='RMSE', title = '', x='Issue Date') +
+  plot_theme +
+  theme(axis.title = element_text(size=12),
+        axis.text.x = element_text(size=12, angle=25, hjust=1),
+        strip.text = element_text(size=18, hjust = 0),
+        strip.background = element_blank(),
+        legend.text = element_text(size=14),
+        legend.position = c(0.85,0.385))
 
+# histogram of actual events for the 4 spp
+lta_errors_only %>%
+  filter(species %in% most_abundant_spp$species) %>%
+ggplot(aes(doy_observed)) + 
+  geom_histogram(bins=50) +
+  scale_x_continuous(labels = doy_to_date_str) + 
+  facet_wrap(~species) +
+  theme_bw()
 
+###################################################################3
+# Supplemental figures of the actual forecasts
+spp_to_plot = most_abundant_spp$species
 
+obs_to_plot = c(1,10,20,25,12,14,34,55)
+
+all_hindcasts %>%
+  filter(species %in% spp_to_plot,
+         Phenophase_ID == 501,
+         observation_id %in% obs_to_plot) %>%
+  assing_nice_method_names() %>%
+  ggplot(aes(x = issue_date, y=doy_prediction)) +
+  geom_line(aes(color=method), size=2) +
+  geom_hline(aes(yintercept = doy_observed), linetype='dotted', size=1) + 
+  geom_vline(aes(xintercept = doy_to_date(doy_observed)), linetype='dotted', size=1) + 
+  scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
+               labels = function(x){format(x,'%b. %d')}) + 
+  scale_color_manual(values = line_colors) + 
+  facet_wrap(species ~ observation_id, scales='free', labeller = label_both) +
+  theme_bw() +
+  theme(legend.position = c(0.8,0.1),
+        axis.text.x = element_text(angle = 45, hjust=1, size=8),
+        axis.title = element_text(size=14),
+        legend.text = element_text(size=14),
+        legend.key.width = unit(20,'mm')) +
+  labs(x='Issue Date', y='Day of Year (DOY)')
+  
