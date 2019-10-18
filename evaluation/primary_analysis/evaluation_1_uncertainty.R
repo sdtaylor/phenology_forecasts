@@ -2,7 +2,6 @@ library(tidyverse)
 library(data.table)
 library(viridis)
 library(patchwork)
-library(reticulate)
 source('tools/tools.R')
 
 config = load_config()
@@ -110,6 +109,15 @@ all_uncertainty = all_uncertainty %>%
 #                                                   labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
 #                                                   ordered = T)
 
+all_uncertainty$uncertainty_source= factor(all_uncertainty$uncertainty_source,
+                                           levels=c('total_sd','model_climate_sd','climate_sd'),
+                                           labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
+                                           ordered = T)
+
+all_uncertainty$method = factor(all_uncertainty$method, 
+                                  levels = c('primary','observed_temp_only','climatology'), 
+                                  labels = c('A. Observed Temp. + Forecasts Integration','B. Observed Temp. + Climatology','C. Climatology Only'))
+
 ######################################################################
 # Figure XX: forecast coverage for each of the sources of uncertainty
 ###################################################
@@ -118,15 +126,9 @@ forecast_coverage = all_uncertainty %>%
   group_by(issue_date, uncertainty_source, method) %>%
   summarise(coverage = mean(p > 0.025 & p < 0.975, na.rm=T), n=n()) %>%
   ungroup() %>%
-  mutate(year=2018) %>%
-  mutate(uncertainty_source = factor(uncertainty_source,
-                                     levels=c('total_sd','model_climate_sd','climate_sd'),
-                                     labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
-                                     ordered = T))
+  mutate(year=2018)
+ 
 
-forecast_coverage$method = factor(forecast_coverage$method, 
-                   levels = c('primary','observed_temp_only','climatology'), 
-                   labels = c('A. Observed Temp. + Forecasts Integration','B. Observed Temp. + Climatology','C. Climatology Only'))
 
 ggplot(forecast_coverage,aes(x=issue_date, y=coverage, color=uncertainty_source)) + 
   geom_line(size=2) +
@@ -148,3 +150,29 @@ ggplot(forecast_coverage,aes(x=issue_date, y=coverage, color=uncertainty_source)
         axis.text = element_text(size=14),
         axis.title = element_text(size=16)) +
   labs(x='Issue Date', y = 'Coverage',color='Uncertainty Source')
+
+###########################################################################
+aggregate_uncertainty = all_uncertainty %>%
+  group_by(issue_date, method, uncertainty_source) %>%
+  summarise(SD = mean(SD, na.rm=T)) %>%
+  ungroup()
+
+ggplot(aggregate_uncertainty, aes(x=issue_date, fill=uncertainty_source)) + 
+  geom_ribbon(aes(ymax=SD,ymin=-SD)) +
+  scale_fill_manual(values=c('#4b3f72','#119da4','#ffc857')) +
+  scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
+               labels = function(x){format(x,'%b. %d')}) + 
+  facet_wrap(~method, ncol=1) +
+  theme_bw() + 
+  theme(strip.text =element_text(size=18, hjust = 0),
+        strip.background = element_blank(),
+        legend.position = 'bottom',
+        legend.background = element_rect(color='black'),
+        legend.key.width = unit(25,'mm'),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+        axis.text = element_text(size=14),
+        axis.title = element_text(size=16)) +
+  labs(x='Issue Date', y = 'Average Prediction Interval Size (days)',fill='Uncertainty Source')
+  
+
