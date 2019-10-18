@@ -125,8 +125,8 @@ forecast_coverage = all_uncertainty %>%
                                      ordered = T))
 
 forecast_coverage$method = factor(forecast_coverage$method, 
-                   levels = c('climatology','observed_temp_only','primary'), 
-                   labels = c('A. Climatology Only','B. Observed Temp. + Climatology','C. Observed Temp. + Forecasts Integration'))
+                   levels = c('primary','observed_temp_only','climatology'), 
+                   labels = c('A. Observed Temp. + Forecasts Integration','B. Observed Temp. + Climatology','C. Climatology Only'))
 
 ggplot(forecast_coverage,aes(x=issue_date, y=coverage, color=uncertainty_source)) + 
   geom_line(size=2) +
@@ -140,7 +140,7 @@ ggplot(forecast_coverage,aes(x=issue_date, y=coverage, color=uncertainty_source)
   theme_bw() + 
   theme(strip.text =element_text(size=18, hjust = 0),
         strip.background = element_blank(),
-        legend.position = c(0.8,0.78),
+        legend.position = c(0.8,0.08),
         legend.background = element_rect(color='black'),
         legend.key.width = unit(25,'mm'),
         legend.text = element_text(size=10),
