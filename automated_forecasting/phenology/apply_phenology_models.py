@@ -61,6 +61,9 @@ def run(climate_forecast_folder = None,
     # Only forecast species and phenophases in the current season
     species_list = species_list[(current_doy >= species_list.season_start_doy) & (current_doy <= species_list.season_end_doy)]
     
+    if len(species_list) == 0:
+        raise RuntimeError('No species currenly in season, which is roughly Dec. 1 - Nov. 1')
+    
     phenology_model_metadata = pd.read_csv(config['phenology_model_metadata_file'])
     
     forecast_metadata = species_list.merge(phenology_model_metadata, 
