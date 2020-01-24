@@ -72,12 +72,7 @@ generate_individual_timeseries = function(id){
     pull(individual_title) %>%
     unique() 
   
-  # don't show the last x-axis date for the upper left figure since it's blurred with the map
-  if(id==91840){
-    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01'))
-  } else {
-    x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01','2019-05-01'))
-  }
+  x_axis_dates = lubridate::ymd(c('2018-12-01','2019-01-01','2019-02-01','2019-03-01','2019-04-01','2019-05-01'))
   
   plot_y_min = min(c(individual_data$doy_observed,individual_data$doy_prediction-individual_data$doy_sd*2)) - 4
   plot_y_max = max(c(individual_data$doy_observed,individual_data$doy_prediction+individual_data$doy_sd*2)) + 4
@@ -91,13 +86,13 @@ generate_individual_timeseries = function(id){
     scale_color_manual(values=c('springgreen4','#CC79A7')) +
     #scale_color_brewer(palette = 'Dark2') + 
     scale_y_continuous(labels = doy_to_date, limits=c(plot_y_min, plot_y_max)) + 
-    scale_x_date(date_labels = '%b. %e', breaks = x_axis_dates) + 
+    scale_x_date(date_labels = '%b%e', breaks = x_axis_dates) + 
     labs(color='Phenophase',x='Forecast Issue Date',y='Predicted Date',title=plot_title) +
     theme_bw() +
     theme(plot.title = element_text(size=12, margin=margin(b=1),vjust = 0, debug = F),
           plot.subtitle = element_text(size=8, margin=margin(b=0), hjust = 0, debug=F),
-          axis.text = element_text(size=10, color='black'),
-          axis.title = element_text(size=12),
+          axis.text = element_text(size=12, color='black'),
+          axis.title = element_text(size=14),
           strip.background = element_rect(fill='grey90'),
           panel.background = element_rect(fill = alpha("white",0.7)),
           plot.background = element_rect(fill = alpha("white",0), color = NA))
@@ -145,12 +140,12 @@ timeseries98168 = generate_individual_timeseries(98168) + no_legend
 
 connecting_lines = tribble(
   ~individual_id, ~x_start, ~y_start, ~x_end, ~y_end,
-  79752,          0.512,      0.61,      0.608,   0.725, # P. tremuloides
-  25365,          0.508,      0.435,      0.38,    0.40, # C. canadensis
+  79752,          0.512,      0.61,      0.62,   0.725, # P. tremuloides
+  25365,          0.508,      0.435,      0.45,    0.375, # C. canadensis
 #  13596,          0.57,      0.38,      0.658,    0.315, # P. serotina
 #  182516,         0.36,      0.615,      0.37,    0.72, # C. cornuta
-  91840,          0.358,      0.527,       0.332,    0.64, # A. californica
-  98168,          0.56,      0.493,       0.605,    0.43, # A. ruburm
+  91840,          0.358,      0.527,       0.332,    0.65, # A. californica
+  98168,          0.56,      0.493,       0.595,    0.42, # A. ruburm
   NA, NA, NA, NA, NA
 )
 
@@ -167,13 +162,13 @@ full_map_plot = ggdraw() +
                arrow = arrow(length = unit(3, "mm")),
                size=1, color='grey20') + 
   geom_point(data = connecting_lines, aes(x=x_start, y=y_start), size=2) + 
-  draw_plot(timeseries79752, x=0.57, y=0.55, width = 0.4, height = 0.4, scale=.8) + # P. tremuloides
-  draw_plot(timeseries25365, x=0.02, y=0.2, width = 0.4, height = 0.4, scale=.8) + # C. canadensis
+  draw_plot(timeseries79752, x=0.55, y=0.615, width = 0.4, height = 0.4, scale=.8) + # P. tremuloides
+  draw_plot(timeseries25365, x=0.09, y=0.10, width = 0.4, height = 0.4, scale=.8) + # C. canadensis
 #  draw_plot(timeseries13596, x=0.55, y=0.02, width = 0.4, height = 0.4, scale=.8) + # P. serotina
 #  draw_plot(timeseries182516, x=0.1, y=0.6, width = 0.4, height = 0.4, scale=.8) + # C. cornuta
-  draw_plot(timeseries91840, x=0.02, y=0.55, width = 0.4, height = 0.4, scale=.8) + # A. californica
-  draw_plot(timeseries98168, x=0.57, y=0.2, width = 0.4, height = 0.4, scale=.8) + # A. ruburm
-  draw_plot(timeseries_legend, x=0.42, y=0.7, width=0.15, height=0.15, scale=0.2) +
+  draw_plot(timeseries91840, x=0.09, y=0.615, width = 0.4, height = 0.4, scale=.8) + # A. californica
+  draw_plot(timeseries98168, x=0.55, y=0.1, width = 0.4, height = 0.4, scale=.8) + # A. ruburm
+  draw_plot(timeseries_legend, x=0.45, y=0.75, width=0.15, height=0.15, scale=0.2) +
   geom_blank()
 
 ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width = 30, height = 15, units = 'cm', dpi = 300)
@@ -210,7 +205,7 @@ ggsave('methods_manuscript/figure_3_map_figure.png', plot=full_map_plot, width =
 forecast_metrics = forecast_data %>%
   group_by(issue_date) %>%
   summarize(mean_uncertainty = mean(doy_sd),
-            rmse = sqrt(mean(doy_observed - doy_prediction)^2)) %>%
+            rmse = sqrt(mean((doy_observed - doy_prediction)^2))) %>%
   ungroup() %>%
   gather(metric, metric_value, mean_uncertainty, rmse)
 forecast_metrics$metric = factor(forecast_metrics$metric, levels=c('rmse','mean_uncertainty'), labels=c('RMSE','Average S.D.'))
@@ -221,7 +216,7 @@ metric_plot = ggplot(forecast_metrics, aes(x=issue_date, y=metric_value, color=m
   scale_color_manual(values=c("grey10", "grey60",'red')) + 
   labs(x = 'Issue Date', y='RMSE or S.D. in Days', color='') +
   theme_bw() +
-  theme(legend.position = c(0.15,0.145),
+  theme(legend.position = c(0.85,0.45),
         legend.title = element_blank(),
         legend.key.width = unit(20,'mm'),
         legend.background = element_rect(fill='white', color='black', size=0.25),
@@ -260,15 +255,15 @@ error_plot = forecast_data %>%
   #filter(latitude <= 35) %>%
   mutate(absolute_error = (doy_prediction - doy_observed)) %>%
 ggplot(aes(x=issue_date, y=absolute_error)) + 
-  geom_jitter(width = 2.5, height = 0, size=2, alpha=0.15, color='#0072B2') + 
-  geom_boxplot(aes(group=issue_date), width=6, size=1, color='black',fill=NA, outlier.color = 'transparent') + 
+  geom_jitter(width = 2.75, height = 0, size=1.5, alpha=0.15, color='#0072B2') + 
+  geom_boxplot(aes(group=issue_date), width=8, size=0.5, color='black',fill=NA, outlier.color = 'transparent') + 
   geom_hline(yintercept = 0, size=1, color='black', linetype='dashed') + 
-  geom_label(data=mean_errors, aes(y=-55, label=mae), size=8, alpha=0.6) +
+  geom_label(data=mean_errors, aes(y=-55, label=mae), size=5, alpha=0.6) +
   scale_x_date(date_labels = '%b. %e') +
   theme_bw() +
-  theme(axis.text = element_text(color='black', size=22),
+  theme(axis.text = element_text(color='black', size=18),
         panel.grid = element_blank(),
-        axis.title = element_text(size=30)) + 
+        axis.title = element_text(size=15)) + 
   labs(x='Issue Date', y='Absolute Error')
 
-ggsave('methods_manuscript/figure_5_error_timeseries.png', plot=error_plot, width=40, height = 16, units = 'cm', dpi=500)
+ggsave('methods_manuscript/figure_5_error_timeseries.png', plot=error_plot, width=20, height = 8, units = 'cm', dpi=500)
