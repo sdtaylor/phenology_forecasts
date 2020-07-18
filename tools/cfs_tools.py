@@ -5,6 +5,7 @@ import datetime
 import numpy as np
 import xmap
 import os
+from warnings import warn
 import urllib
 import time
 from tools import tools
@@ -25,10 +26,12 @@ class cfs_ftp_info:
                                    'pre_2011':'CFSR/HP_time_series/'}
                             }
 
-        self.connect()
+        # Do not connect t the ftp by default
+        #self.connect()
         self._folder_file_lists={}
     
     def connect(self, attempts_made=0):
+        warn('noaa FTP server has been down for a while')
         connect_attempts=5
         retry_wait_time=300
         try:
@@ -42,7 +45,10 @@ class cfs_ftp_info:
                 self.connect(attempts_made = attempts_made + 1)
     
     def close(self):
-        self.con.close()
+        if hasattr(self, 'con'):
+            self.con.close()
+        else:
+            pass
     
     def _query_ftp_folder(self, folder, attempts_made=0):
         connect_attempts=5
@@ -99,7 +105,7 @@ class cfs_ftp_info:
     # folder returns the containing folder but not the protocal or 
     # filename returns only the filename
     # full path returns the full download link
-    def forecast_url_from_timestamp(self, forecast_time, path_type='full_path', protocal='ftp'):
+    def forecast_url_from_timestamp(self, forecast_time, path_type='full_path', protocal='http'):
         assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
         assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
         if isinstance(forecast_time, str):
@@ -120,7 +126,7 @@ class cfs_ftp_info:
         to_return['full_path'] = protocal+'://' + self.host +'/' + to_return['folder'] + to_return['filename']
         return to_return[path_type]
     
-    def reanalysis_url_from_timestamp(self, reanalysis_time, path_type='full_path', protocal='ftp'):
+    def reanalysis_url_from_timestamp(self, reanalysis_time, path_type='full_path', protocal='http'):
         assert path_type in ['full_path','folder','filename'] , 'unknown path type: '+str(path_type)
         assert protocal in ['http','ftp'] , 'unknown protocal: '+str(protocal)
         if isinstance(reanalysis_time, str):
@@ -166,7 +172,7 @@ class cfs_ftp_info:
             latest_forecast_str = tools.date_to_string(latest_forecast_timestamp, h=True)
             
             all_forecasts.append({'initial_time':latest_forecast_str,
-                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='ftp')})
+                                  'download_url':self.forecast_url_from_timestamp(latest_forecast_timestamp, protocal='http')})
 
         return all_forecasts
     
