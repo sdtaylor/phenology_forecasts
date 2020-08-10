@@ -6,23 +6,17 @@ source('tools/tools.R')
 config = load_config()
 ########################################
 # This script produces the following
-# Figure X: rmse/mae values over lead time for 2018 and 2019
-# Figure X: the gbm modelled errors for latitude x year
-# Figure X: the species specific errors (mae on x axis, species/phenophase list on y)
+# Figure 2: rmse/coverage aggregated for all observations over all 2018 issue dates
+# Figure 3: rmse/coverage for 4 spp. for 2018 issue dates
+# Figure S2: point forecasts from the 3 different methods plotted along with dotted line observations
 
 #####################################
 #####################################
 # Setup the hindcast data for evaluation
 ########################################
-# Hindcast specific functions located here
-# This script produces the following
-# Figure X: rmse/mae values over lead time for 2018 and 2019
-# Figure X: the gbm modelled errors for latitude x year
-# Figure X: the species specific errors (mae on x axis, species/phenophase list on y)
-
 
 ##################################################################
-# calculate uncertainty for each component. These are big dataframes, so the heavy
+# calculate point predictions (ie. the ensemble average) for each component. These are big dataframes, so the heavy
 # lifting is done with data.table commands before switching to tidyverse.
 #####################################
 calculate_point_predictions = function(hindcast_data_table){
@@ -123,35 +117,22 @@ doy_to_date_str = function(doy){
 assing_nice_method_names = function(df){
   df$method = factor(df$method, 
                     levels = c('climatology','observed_temp_only','primary'), 
-                    labels = c('Climatology Only','Observed Temp. + Climatology','Observed Temp. + Forecasts Integration'))
+                    labels = c('Climatology Only','Observed Temp. + Climatology','Observed Temp. + Forecasts Assimilation'))
   return(df)
 }
 
-
-####################################
-# lta_errors_only = hindcasts_with_issue_dates %>%
-#   filter(method == 'lta') %>%
-#   select(-issue_date) %>%
-#   distinct()
-# 
-# lower_quantile = quantile(lta_errors_only$error, 0.025)
-# upper_quantile = quantile(lta_errors_only$error, 0.975)
-# 
-# extreme_events = lta_errors_only %>%
-#   mutate(is_extreme_event = error <= lower_quantile | error >= upper_quantile) %>%
-#   select(species, Phenophase_ID, observation_id, is_extreme_event)
 #####################################
 ####################################
-# Figure X: total RMSE vs lead time or issue date
+# Figure 2: total RMSE & coverage vs issue date
 ####################################
 #####################################
 
 plot_theme =  theme_bw() + 
-              theme(plot.title = element_text(size=18),
-                    axis.text = element_text(size=16),
-                    axis.title = element_text(size=18),
+              theme(plot.title = element_text(size=26),
+                    axis.text = element_text(size=18, color='black'),
+                    axis.title = element_text(size=22),
                     strip.text = element_text(size=28),
-                    legend.text = element_text(size=14),
+                    legend.text = element_text(size=16),
                     legend.key.width = unit(20,'mm'),
                     legend.title = element_blank(),
                     legend.background = element_rect(color='black'),
@@ -185,7 +166,7 @@ issue_date_rmse_plot = ggplot(issue_date_errors, aes(x=issue_date, y=rmse, color
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
-        legend.position = c(0.75,0.85))
+        legend.position = c(0.65,0.85))
 
 issue_date_coverage_plot = ggplot(issue_date_errors, aes(x=issue_date, y=coverage, color=method)) + 
   geom_line(size=3) +
@@ -199,14 +180,17 @@ issue_date_coverage_plot = ggplot(issue_date_errors, aes(x=issue_date, y=coverag
   labs(y = 'Coverage', x= 'Issue Date', title = 'B. Coverage') +
   plot_theme 
 
-###############################################
 
+avg_error_plot = issue_date_rmse_plot +  issue_date_coverage_plot + plot_layout(ncol=1)
 
-issue_date_rmse_plot +  issue_date_coverage_plot + plot_layout(ncol=1)
-
+ggsave('evaluation1_manuscript/figs/fig2_avg_rmse_coverage.png',avg_error_plot, height = 10, width=10, dpi=150)
 
 ##############################################
-# errors for 4 most abundant species
+##############################################
+# Figure 4 errors for 4 most abundant taxon
+##############################################
+##############################################
+
 facet_labels = most_abundant_spp %>%
   mutate(letter = LETTERS[1:4]) %>%
   mutate(facet_label = paste0(letter,'. ', snakecase::to_sentence_case(species))) %>%
@@ -228,37 +212,34 @@ species_level_issue_date_errors = all_hindcasts %>%
   assing_nice_method_names() %>%
   left_join(facet_labels, by='species')
 
-ggplot(species_level_issue_date_errors, aes(x=issue_date, y=rmse, color=method)) + 
+abundant_spp_error_fig= ggplot(species_level_issue_date_errors, aes(x=issue_date, y=rmse, color=method)) + 
   geom_line(size=3) +
   scale_color_manual(values = line_colors) + 
-  scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01'))) + 
+  scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
+               labels = function(x){format(x,'%b. %d')}) + 
   #scale_y_continuous(limits = c(14,23)) + 
   facet_wrap(~facet_label, scales='free_y') + 
   labs(y='RMSE', title = '', x='Issue Date') +
   plot_theme +
-  theme(axis.title = element_text(size=12),
-        axis.text.x = element_text(size=12, angle=25, hjust=1),
+  theme(axis.title = element_text(size=20),
+        axis.text.x = element_text(size=14,hjust = 0.55),
+        axis.text.y = element_text(size=16),
         strip.text = element_text(size=18, hjust = 0),
         strip.background = element_blank(),
-        legend.text = element_text(size=14),
-        legend.position = c(0.85,0.385))
+        legend.text = element_text(size=10),
+        legend.position = c(0.83,0.385))
 
-# histogram of actual events for the 4 spp
-lta_errors_only %>%
-  filter(species %in% most_abundant_spp$species) %>%
-ggplot(aes(doy_observed)) + 
-  geom_histogram(bins=50) +
-  scale_x_continuous(labels = doy_to_date_str) + 
-  facet_wrap(~species) +
-  theme_bw()
+ggsave('evaluation1_manuscript/figs/fig3_abund_spp_errors.png',abundant_spp_error_fig, width=35, height = 20, units='cm', dpi=120)
 
-###################################################################3
-# Supplemental figures of the actual forecasts
+
+###################################################################
+# Figure S2: point forecasts from the 3 different methods plotted along with dotted line observations
+###################################################################
 spp_to_plot = most_abundant_spp$species
 
-obs_to_plot = c(1,10,20,25,12,14,34,55)
+obs_to_plot = c(1,10,20,25)
 
-all_hindcasts %>%
+point_forecast_examples_fig = all_hindcasts %>%
   filter(species %in% spp_to_plot,
          Phenophase_ID == 501,
          observation_id %in% obs_to_plot) %>%
@@ -273,9 +254,12 @@ all_hindcasts %>%
   facet_wrap(species ~ observation_id, scales='free', labeller = label_both) +
   theme_bw() +
   theme(legend.position = c(0.8,0.1),
+        axis.text = element_text(color='black'),
         axis.text.x = element_text(angle = 45, hjust=1, size=8),
         axis.title = element_text(size=14),
         legend.text = element_text(size=14),
         legend.key.width = unit(20,'mm')) +
   labs(x='Issue Date', y='Day of Year (DOY)')
-  
+
+
+ggsave('evaluation1_manuscript/figs/figS2_point_forecast_examples.png', height = 30, width=40, dpi=80, units='cm')  
