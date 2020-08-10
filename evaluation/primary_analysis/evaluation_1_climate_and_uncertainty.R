@@ -32,8 +32,6 @@ calculate_point_predictions = function(hindcast_data_table){
 #####################################
 # Setup the hindcast data for evaluation
 ########################################
-# Hindcast specific functions located here
-#source('evaluation/data_prep/load_hindcast_data.R')
 
 # Load the two main hindcasts. The original ones produced by integrating observation data (PRISM) and
 # weather forecasts (CFSv2).
@@ -88,7 +86,6 @@ x = all_hindcasts %>%
 
 #####################################
 ####################################
-
 # Join with observations
 
 observation_data = read_csv(paste0(config$data_folder,'evaluation/phenology_2018_observations.csv')) %>%
@@ -160,7 +157,6 @@ issue_date_rmse_plot = ggplot(issue_date_errors, aes(x=issue_date, y=rmse, color
   geom_line(size=3) +
   scale_color_manual(values = line_colors) + 
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01'))) + 
-  #scale_y_continuous(limits = c(14,23)) + 
   labs(y='RMSE', title = 'A. RMSE', x='Issue Date') +
   plot_theme +
   theme(axis.title.x = element_blank(),
@@ -175,7 +171,6 @@ issue_date_coverage_plot = ggplot(issue_date_errors, aes(x=issue_date, y=coverag
   scale_color_manual(values = line_colors) + 
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
                labels = function(x){format(x,'%b. %d')}) + 
-  #facet_wrap(~species) + 
   scale_y_continuous(limits = coverage_range) + 
   labs(y = 'Coverage', x= 'Issue Date', title = 'B. Coverage') +
   plot_theme 
@@ -217,7 +212,6 @@ abundant_spp_error_fig= ggplot(species_level_issue_date_errors, aes(x=issue_date
   scale_color_manual(values = line_colors) + 
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
                labels = function(x){format(x,'%b. %d')}) + 
-  #scale_y_continuous(limits = c(14,23)) + 
   facet_wrap(~facet_label, scales='free_y') + 
   labs(y='RMSE', title = '', x='Issue Date') +
   plot_theme +

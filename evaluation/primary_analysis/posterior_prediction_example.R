@@ -51,7 +51,6 @@ uncertainty_posterior_examples_fig = ggplot(all_posteriors, aes(x=doy_prediction
   geom_histogram(bins=50) + 
   geom_vline(xintercept = final_doy_prediction, color='#D55E00', size=2) + 
   geom_vline(data = prediction_intervals, aes(xintercept = doy_prediction_interval), color='#D55E00', linetype='dashed', size=2) + 
-  #ggthemes::scale_fill_colorblind() + 
   scale_fill_manual(values =  c("#000000", "#E69F00", "#56B4E9", "#009E73", "#0072B2")) + 
   facet_wrap(~posterior, ncol=1, scales='free_y') +
   theme_bw() +

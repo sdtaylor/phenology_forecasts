@@ -49,8 +49,6 @@ calculate_uncertainty = function(hindcast_data_table){
 #####################################
 # Setup the hindcast data for evaluation
 ########################################
-# Hindcast specific functions located here
-#source('evaluation/data_prep/load_hindcast_data.R')
 
 # Load the two main hindcasts. The original ones produced by integrating observation data (PRISM) and
 # weather forecasts (CFSv2).
@@ -96,17 +94,6 @@ observation_data = read_csv(paste0(config$data_folder,'evaluation/phenology_2018
 all_uncertainty = all_uncertainty %>%
   inner_join(observation_data, by=c('species','Phenophase_ID','site_id'))
 
-# aggregate_uncertainty = all_uncertainty %>%
-#   group_by(uncertainty_source, issue_date) %>%
-#   summarise(SD = mean(SD, na.rm = T),
-#             sum_na = sum(is.na(SD)),
-#             n=n())
-# 
-# aggregate_uncertainty$uncertainty_source = factor(aggregate_uncertainty$uncertainty_source,
-#                                                   levels=c('total_sd','model_climate_sd','climate_sd'),
-#                                                   labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
-#                                                   ordered = T)
-
 all_uncertainty$uncertainty_source= factor(all_uncertainty$uncertainty_source,
                                            levels=c('total_sd','model_climate_sd','climate_sd'),
                                            labels=c('Climate + Model + Parameter','Climate + Model','Climate Only'),
@@ -130,7 +117,6 @@ forecast_coverage = all_uncertainty %>%
 coverage_vs_lead_time_fig = ggplot(forecast_coverage,aes(x=issue_date, y=coverage, color=uncertainty_source)) + 
   geom_line(size=2) +
   scale_color_manual(values=c('#4b3f72','#119da4','#ffc857','grey10')) +
-  #ggthemes::scale_color_colorblind() + 
   scale_y_continuous(breaks=seq(0,1,0.2), limits = c(0,1)) +
   scale_x_date(breaks = as.Date(c('2017-12-01','2018-01-01', '2018-02-01', '2018-03-01', '2018-04-01', '2018-05-01', '2018-06-01')),
                labels = function(x){format(x,'%b. %d')}) + 
