@@ -1,6 +1,12 @@
 library(tidyverse)
 library(patchwork)
 
+########################################
+# This script produces the following
+# Figure 1: timeseries example of the 3 methodologies for producing forecasts.
+# Note this figure uses randomized data. 
+########################################
+
 set.seed(20)
 make_temp_timeseries = function(ts_length = 60,
                                 temp_initial = 20,
@@ -72,7 +78,7 @@ historic_climate_colors = get_random_palette('Greens', num_past_climate_members)
 common_theme = theme_bw() +
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=14))
+        axis.text.y = element_text(size=14, color='black'))
 
 method1_plot = ggplot(forecast_temps, aes(x=doy, y=temp)) + 
   geom_line(aes(color=as.factor(climate_member)), size=line_size) +
@@ -84,7 +90,7 @@ method1_plot = ggplot(forecast_temps, aes(x=doy, y=temp)) +
   scale_y_continuous(limits = y_range) + 
   common_theme +
   theme(plot.title = element_text(color='black')) + 
-  labs(x='',y='',title = 'A. Method 1: Integrated Observed Temperature and Climate Forecasts')
+  labs(x='',y='',title = 'A. Method 1: Assimilate Observed Temperature and Climate Forecasts')
 
 method2_plot = ggplot(filter(historic_temps, doy>=issue_doy), aes(x=doy, y=temp)) +
   geom_line(aes(color=as.factor(climate_member)), size=line_size) +
@@ -95,7 +101,7 @@ method2_plot = ggplot(filter(historic_temps, doy>=issue_doy), aes(x=doy, y=temp)
   scale_y_continuous(limits = y_range) + 
   common_theme +
   theme(plot.title = element_text(color='black')) + 
-  labs(x='',y='',title = 'B. Method 2: Integrated Observed Temperature Only')
+  labs(x='',y='Daily Mean Temperature (C°)',title = 'B. Method 2: Assimilate Observed Temperature Only')
 
 method3_plot = ggplot(historic_temps, aes(x=doy, y=temp)) +
   geom_line(aes(color=as.factor(climate_member)), size=line_size) +
@@ -104,13 +110,14 @@ method3_plot = ggplot(historic_temps, aes(x=doy, y=temp)) +
   scale_y_continuous(limits = y_range) + 
   scale_x_continuous(breaks = x_breaks, labels = x_labels) + 
   common_theme + 
-  theme(axis.text.x = element_text(size=12),
+  theme(axis.text.x = element_text(size=12, color='black'),
         plot.title = element_text(color='black')) +
   labs(x='',y='',title = 'C. Method 3: Long Term Climate Only')
 
-method1_plot + 
-  method2_plot +
-  method3_plot +
-  plot_layout(ncol = 1)
+method_explainer_fig = method1_plot + 
+                    method2_plot +
+                    method3_plot +
+                    plot_layout(ncol = 1)
 
+ggsave('evaluation1_manuscript/figs/fig1_method_explainer.png', method_explainer_fig, width=20, height = 25, units='cm', dpi=150)
 

@@ -1,5 +1,5 @@
-prepare data for evaluation of phenology forecasts.
-
+#### prepare data for evaluation of phenology forecasts.
+Note several of the functions used here were for some preliminary analysis and are not longer used in the primary_analysis/ scripts
 
 process_current_season_observations.R
     put the current season (ie. newest data) NPN into the format used throughout.

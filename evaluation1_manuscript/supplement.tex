@@ -1,0 +1,65 @@
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{graphicx}
+\usepackage{a4wide}
+\usepackage{adjustbox}
+\usepackage{float}
+\usepackage{lineno}
+\usepackage{setspace}
+  \doublespacing
+
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+\begin{document}
+
+\textbf{Influence of climate forecasts, data assimilation, and uncertainty propagation on the performance of near-term phenology forecasts }
+
+\textit{Shawn D. Taylor, Ethan P. White}
+
+Supplementary images S1 - S3
+
+
+%%%%%%%%%%%%%%%%%
+%% Figure S1
+%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/figS1_posterior_predictions_example.png}
+\caption{The posterior distribution for a single forecast. Panels represent the posterior using only uncertainty from climate (A), from climate and phenology models (B), and from all sources (C). While the mean prediction (solid red line) stays the same, the posterior 95\% prediction interval (dashed red lines) is widest when uncertainty from all sources is propagated.}
+\label{figS1}
+\end{figure}
+
+\newpage
+
+%%%%%%%%%%%%%%%%%
+%% Figure S2
+%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/figS2_point_forecast_examples.png}
+\caption{Actual predictions from the hindcasts of 14 budburst observations from 2018. Colors indicate the three different methods used in the analysis. Dotted lines indicate the observed budburst date on both axes.}
+\label{figS2}
+\end{figure}
+
+\newpage
+
+%%%%%%%%%%%%%%%%%
+%% Figure S3
+%%%%%%%%%%%%%%%%%
+\newpage
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/figS3_uncertainty_interval_size.png}
+\caption{The average contribution to uncertainty from the different forecast components. The panels represent the three different methodologies in assimilating observed, forecast, and historical temperature. Colors indicate different attributes from the three sources of uncertainty. The y-axis indicates the average 95\% confidence interval of all forecasts at each issue date from Dec. 1, 2017 to June 1, 2018.}
+\label{figS3}
+\end{figure}
+
+
+
+\end{document}}
